@@ -1,0 +1,9 @@
+import type { ForestItem } from "@/types";
+
+export const forestItems = [
+  { id: "why-exploratory-websites-invite-more-clicks", slug: "why-exploratory-websites-invite-more-clicks", title: "为什么探索式网站会让人更愿意继续点击？", summary: "关于好奇心、信息隐藏和交互节奏的思考。", trails: ["Design & Experience"], region: "Forest", contentType: "Question", categories: ["Design & Experience"], status: "Sprout", cta: "Follow this question →", detailLevel: "full" },
+  { id: "does-ai-help-thinking-or-organize-answers", slug: "does-ai-help-thinking-or-organize-answers", title: "AI 可以帮助人思考，还是只是在替人组织答案？", summary: "关于辅助、依赖与思考边界的问题。", trails: ["Humans & AI"], region: "Forest", contentType: "Question", categories: ["Humans & AI"], status: "Seed", cta: "Walk deeper →", detailLevel: "short" },
+  { id: "why-people-fear-forgetting", slug: "why-people-fear-forgetting", title: "人为什么会害怕遗忘？", summary: "关于记忆、自我与记录欲望的思考。", trails: ["Stories & Memory", "Mind & Behavior"], region: "Forest", contentType: "Question", categories: ["Stories & Memory", "Mind & Behavior"], status: "Sprout", cta: "Follow the memory →", detailLevel: "full" },
+  { id: "how-psychology-shapes-product-and-web-design", slug: "how-psychology-shapes-product-and-web-design", title: "心理学如何影响产品和网页设计？", summary: "关于行为、注意和用户体验之间关系的探索。", trails: ["Mind & Behavior", "Design & Experience"], region: "Forest", contentType: "Question", categories: ["Mind & Behavior", "Design & Experience"], status: "Sprout", cta: "See where it leads →", detailLevel: "short" },
+  { id: "when-a-question-moves-from-forest-to-garden", slug: "when-a-question-moves-from-forest-to-garden", title: "一个问题什么时候应该从 Forest 移到 Garden？", summary: "关于思考如何变成行动的自我观察。", trails: ["Mind & Behavior"], region: "Forest", contentType: "Question", categories: ["Mind & Behavior"], status: "Seed", cta: "Take the first step →", detailLevel: "short" },
+] satisfies ForestItem[];

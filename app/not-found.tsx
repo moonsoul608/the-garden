@@ -16,7 +16,7 @@ export default function NotFound() {
         <p className="not-found-copy">Return to the entrance, or use the Garden Index to choose another path.</p>
         <nav className="not-found-actions" aria-label="Continue from the missing path">
           <Link className="button button-primary" href="/">Back to the entrance</Link>
-          <Link className="button button-secondary" href="/index">Open Garden Index</Link>
+          <Link className="button button-secondary" href="/garden-index">Open Garden Index</Link>
         </nav>
       </section>
     </main>

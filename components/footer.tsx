@@ -7,7 +7,7 @@ export function Footer() {
       <p>Tended by Xianhong.</p>
       <nav className="footer-links" aria-label="Footer">
         <a href="#garden-guide-toggle">Garden Guide</a>
-        <Link href="/index">Garden Index</Link>
+        <Link href="/garden-index">Garden Index</Link>
         <Link href="/search">Search the Garden</Link>
         <span aria-disabled="true">Leave a note</span>
       </nav>

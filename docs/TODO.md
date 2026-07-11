@@ -182,7 +182,7 @@ Phase 4 verification note: UI states, actions, request cancellation, Forest pref
 - [x] Add a shared `Skip to main content` link targeting the real page `main`
 - [x] Verify 320, 390, 500, 768, 1024, and 1440 CSS-pixel viewports
 - [x] Verify all eight main pages and full/short detail templates with browser automation and axe
-- [x] Verify all 19 detail routes and the `/index` rewrite return 200
+- [x] Verify all 19 detail routes and `/garden-index` return 200
 - [x] Verify the Seed Gardener API keeps safe validation behaviour
 - [x] Run lint, type check, production build, existing tests, and the Phase 5 browser audit
 
@@ -223,6 +223,8 @@ Phase 6 issues found and fixed:
 - Removed browser profiles, screenshots, and temporary Phase 5/6 audit artifacts from the workspace.
 
 Phase 6 verification note: visual review covered all eight main pages and one full plus one short detail page per Region at 320px and 1440px, with automated overflow regression at 320, 390, 500, 768, 1024, and 1440 CSS pixels. The final production audit reported zero axe violations and zero Phase 5 browser-audit failures. HTTP checks returned 200 for all eight main routes and all 19 details, the invalid detail returned the branded 404, and 41 rendered internal link targets resolved without empty or placeholder href values. Client chunks contained neither the configured secret nor server-only DeepSeek markers. A production console audit across 17 representative routes reported zero hydration warnings and zero browser exceptions after the Garden Guide fix.
+
+Production route follow-up: Garden Index now uses `/garden-index` as its only public route. The conflicting `/index` rewrite and `/garden-index` redirect were removed, and shared navigation, documentation, and automated browser coverage now use the canonical route.
 
 Known non-blocking release notes:
 

@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "test:seed-gardener": "node --test tests/seed-gardener.test.cjs",
     "test:phase5": "node tests/phase5-browser-audit.cjs",
+    "test:smoke:garden-index": "node tests/garden-index-route-smoke.cjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

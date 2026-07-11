@@ -18,7 +18,7 @@ export const regions = [
 ] satisfies RegionMetadata[];
 
 export const utilities = [
-  { name: "Garden Index", href: "/index" },
+  { name: "Garden Index", href: "/garden-index" },
   { name: "Search the Garden", href: "/search" },
   { name: "Back to the entrance", href: "/" },
 ] as const;

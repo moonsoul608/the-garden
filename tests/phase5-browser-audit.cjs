@@ -7,7 +7,7 @@ const chromePath = process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome
 const baseUrl = process.env.BASE_URL || "http://localhost:3001";
 const axeSource = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
 const defaultRoutes = [
-  "/", "/garden", "/forest", "/lake", "/ruins", "/greenhouse", "/index", "/search",
+  "/", "/garden", "/forest", "/lake", "/ruins", "/greenhouse", "/garden-index", "/search",
   "/garden/building-the-garden", "/garden/exploring-ai-tools",
   "/forest/why-exploratory-websites-invite-more-clicks", "/forest/does-ai-help-thinking-or-organize-answers",
   "/lake/reverse-1999", "/lake/jung-and-mandala",
@@ -178,7 +178,7 @@ async function press(cdp, sessionId, key, modifiers = 0) {
       ["/garden", ".bed-filter:nth-child(2)"],
       ["/forest", ".trail-filter:nth-child(2)"],
       ["/lake", ".ripple-filter:nth-child(2)"],
-      ["/index", ".filter-row button:nth-child(2)"],
+      ["/garden-index", ".filter-row button:nth-child(2)"],
     ];
     for (const [route, selector] of keyboardChecks) {
       await navigate(cdp, sessionId, `${baseUrl}${route}`);
@@ -192,7 +192,7 @@ async function press(cdp, sessionId, key, modifiers = 0) {
 
     for (const [route, inputSelector, clearLabel] of [
       ["/garden", ".garden-search input", "Clear Garden search"],
-      ["/index", ".discovery-search-field input", "Clear index search"],
+      ["/garden-index", ".discovery-search-field input", "Clear index search"],
       ["/search", ".search-call-field input", "Clear garden search"],
     ]) {
       await navigate(cdp, sessionId, `${baseUrl}${route}`);

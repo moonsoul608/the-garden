@@ -58,7 +58,7 @@ Provider decision:
 ├── /ruins
 ├── /ruins/[slug]
 ├── /greenhouse
-├── /index
+├── /garden-index
 ├── /search
 └── /api/seed-gardener
 ```
@@ -547,7 +547,7 @@ AI endpoint must be server-side.
 
 ## 15. Garden Index
 
-Route: `/index`
+Route: `/garden-index`
 
 Visible title: `Garden Index`
 

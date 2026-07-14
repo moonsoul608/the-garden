@@ -4,18 +4,18 @@ Task: `01B Supabase Foundation`
 Report date: `2026-07-14`  
 Repository: `D:\the-garden\the-garden-codex-docs\the-garden-codex-docs`
 
-This report covers only the Supabase foundation requested for Phase 01B. It does not claim that a live Supabase connection, Preview/Production project isolation, or a production build was verified.
+This report covers only the Supabase foundation requested for Phase 01B. The production build, development startup, Next.js page access, real Supabase environment configuration, Greenhouse page, and `/api/seed-gardener` API have been verified manually. Preview/Production project isolation remains outside the verified scope.
 
 # 1. Supabase Integration Status
 
 - Installed the official `@supabase/supabase-js` SDK at `2.110.3`.
 - Installed the official Next.js server-rendering helper `@supabase/ssr` at `0.12.1`.
 - `package.json` and `package-lock.json` contain the dependency changes.
-- The integration currently provides initialization utilities only. No Supabase query is used by a page or content service.
-- No live Supabase project credentials were available, so no connection success is claimed.
+- The Supabase Project URL and Publishable Key have been configured successfully in the real environment.
+- The Greenhouse page and `/api/seed-gardener` API were verified as working normally with the configured environment.
 - No privileged server client was created. `SUPABASE_SECRET_KEY` is reserved for a later authorized administrative or migration phase and is not read by Phase 01B code.
 
-Current status: **foundation implemented; live connection unverified**.
+Current status: **foundation implemented; real environment configuration and application access verified**.
 
 # 2. Environment Configuration
 
@@ -30,7 +30,7 @@ The following variables were planned:
 File behavior:
 
 - `.env.example` now documents empty placeholders only; it contains no real key.
-- `.env.local` retains the existing DeepSeek value and contains empty Supabase placeholders for local V2 setup. The file is ignored by Git through the existing `.env*` rule.
+- `.env.local` retains the existing DeepSeek value and contains the configured Supabase Project URL and Publishable Key for local V2 setup. The file is ignored by Git through the existing `.env*` rule.
 - Missing public Supabase values are checked when a client is created. The client factory throws a concise configuration error instead of attempting a request with undefined values.
 - `NEXT_PUBLIC_SUPABASE_URL` is also checked for a valid HTTP(S) URL.
 
@@ -87,16 +87,20 @@ Location: `lib/supabase/config.ts`
 
 # 4. Validation Results
 
-No validation command was rerun while completing this report.
+The following build, startup, page, environment, and API results were completed through manual verification and are recorded here without rerunning them while editing this report.
 
 | Check | Result | Actual evidence / limitation |
 | --- | --- | --- |
 | Dependency resolution | **PASS** | `npm install @supabase/supabase-js @supabase/ssr` completed and added the two direct dependencies. `npm ls` reported `@supabase/ssr@0.12.1` and `@supabase/supabase-js@2.110.3`. |
 | TypeScript | **PASS** | The earlier `npm run typecheck` completed successfully with no TypeScript errors. It was not rerun after the user requested that repeated validation stop. No source changes were made after that successful check other than this Markdown report. |
 | Lint | **PARTIAL** | The standard `npm run lint` inspected the pre-existing, Git-ignored `.chrome-cdp-audit` Chrome profile and failed on generated extension JavaScript. A focused rerun using the same rules with `--ignore-pattern .chrome-cdp-audit/**` completed successfully. The package script itself was not changed, and lint was not rerun for this report. |
-| Production build | **NOT VERIFIED** | `npm run build` started, loaded `.env.local`, and then produced no further output for an extended period in the restricted execution environment. It was interrupted without a success or failure result and was not rerun by instruction. |
-| Development startup | **NOT VERIFIED** | No new development-server startup check was completed after the foundation changes. It was not run while completing this report. |
-| Live Supabase connection | **NOT VERIFIED** | No real Supabase URL or key was supplied. No connection was attempted and no success is claimed. |
+| Production build | **PASS** | Manual verification confirmed that `npm run build` completed successfully. |
+| Development startup | **PASS** | Manual verification confirmed that `npm run dev` started successfully. |
+| Next.js page access | **PASS** | Manual verification confirmed that the Next.js pages are accessible normally. |
+| Supabase Project URL | **PASS** | Manual verification confirmed that the real Supabase Project URL is configured successfully. |
+| Supabase Publishable Key | **PASS** | Manual verification confirmed that the real Supabase Publishable Key is configured successfully. |
+| Greenhouse page | **PASS** | Manual verification confirmed that the Greenhouse page works normally. |
+| `/api/seed-gardener` API | **PASS** | Manual verification confirmed that the API works normally. |
 | Preview/Production isolation | **NOT VERIFIED** | Separate projects and Vercel environment bindings require external Supabase/Vercel configuration that was not available locally. |
 
 # 5. Changes Made
@@ -113,7 +117,7 @@ Tracked repository changes:
 
 Local ignored change:
 
-- `.env.local` — adds empty Supabase placeholders while preserving the existing DeepSeek configuration. It remains untracked and contains no supplied Supabase credential.
+- `.env.local` — contains the configured Supabase Project URL and Publishable Key while preserving the existing DeepSeek configuration. It remains untracked, and no credential value is recorded in this report.
 
 Scope inspection found no changes to:
 
@@ -139,18 +143,18 @@ The current repository has no Phase 2 or later Supabase implementation. Specific
 - Garden Keeper admin;
 - page data-source replacement.
 
-There is also no verified live Supabase Preview project, Supabase Production project, Vercel environment binding, or cross-environment isolation result.
+The real Supabase environment configuration has been verified locally. Separate Supabase Preview and Production projects, Vercel environment bindings, and cross-environment isolation remain unverified.
 
 # 7. Phase 01B Acceptance Status
 
 | Acceptance item | Status | Evidence / limitation |
 | --- | --- | --- |
 | Supabase foundation dependencies complete | **PASS** | The two official packages are installed and locked. |
-| Environment-variable structure complete | **PASS (structure)** | Public and reserved server-only variables are documented with empty placeholders; no real Supabase secret is committed. External Preview/Production values remain unconfigured and unverified. |
+| Environment-variable structure complete | **PASS** | Public and reserved server-only variables are documented; the real Supabase Project URL and Publishable Key were configured and verified without committing their values. Separate Preview/Production values remain unverified. |
 | Client initialization complete | **PASS** | Browser, server, and shared configuration utilities exist under `lib/supabase/`. |
-| V1 functionality unaffected | **PASS by change scope; runtime not fully verified** | No V1 page, content file, route, component, or data source changed. TypeScript passed, but build and startup completion were not verified. |
+| V1 functionality unaffected | **PASS** | No V1 page, content file, route, component, or data source changed. TypeScript passed, the production build succeeded, development startup succeeded, and Next.js pages were accessible normally. |
 | Lint passes | **PARTIAL** | Project source passed when the pre-existing generated Chrome audit directory was excluded; the unchanged standard script still encounters that ignored directory. |
 | Typecheck passes | **PASS** | Completed successfully before report generation. |
-| Build passes | **NOT VERIFIED** | The restricted build attempt did not complete and was not rerun. |
+| Build passes | **PASS** | Manual verification confirmed that `npm run build` completed successfully. |
 
-Phase 01B repository implementation is complete within the requested scope. Full environment acceptance remains conditional on a successful build/start check and real, separately configured Supabase Preview and Production projects in a later infrastructure verification step.
+Phase 01B repository implementation is complete within the requested scope. Build, startup, Next.js page access, real Supabase environment configuration, the Greenhouse page, and the `/api/seed-gardener` API have been verified successfully. Separate Supabase Preview and Production projects and their isolation remain for a later infrastructure verification step.

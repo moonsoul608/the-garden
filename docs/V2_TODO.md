@@ -115,9 +115,9 @@ Acceptance:
 
 ## 2B. Storage
 
-- [ ] Create cover-image bucket
-- [ ] Limit upload formats
-- [ ] Limit upload size
+- [x] Create cover-image bucket
+- [x] Limit upload formats
+- [x] Limit upload size
 - [ ] Define public-read behavior for Published covers
 - [ ] Restrict upload, replace, and delete to Garden Keeper
 

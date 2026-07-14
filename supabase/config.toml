@@ -1,0 +1,6 @@
+project_id = "the-garden"
+
+[storage.buckets.cover-images]
+public = false
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]

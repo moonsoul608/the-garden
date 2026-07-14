@@ -123,15 +123,15 @@ Acceptance:
 
 ## 2C. Constraints
 
-- [ ] Region enum/validation
-- [ ] Content Type enum/validation
-- [ ] Growth Stage enum/validation
-- [ ] lifecycle enum/validation
-- [ ] unique Region + slug constraint
-- [ ] relation self-reference prevention
-- [ ] duplicate relation prevention
-- [ ] maximum one cover image per item
-- [ ] required alt text before publication
+- [x] Region enum/validation
+- [x] Content Type enum/validation
+- [x] Growth Stage enum/validation
+- [x] lifecycle enum/validation
+- [x] unique Region + slug constraint
+- [x] relation self-reference prevention
+- [x] duplicate relation prevention
+- [x] maximum one cover image per item
+- [x] required alt text before publication
 
 ## 2D. RLS and permissions
 

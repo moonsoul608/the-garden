@@ -135,19 +135,19 @@ Acceptance:
 
 ## 2D. RLS and permissions
 
-- [ ] Public reads only approved Published content
-- [ ] Draft and Review are not publicly queryable
-- [ ] Archived content body is not publicly queryable by collection endpoints
+- [x] Public reads only approved Published content
+- [x] Draft and Review are not publicly queryable
+- [x] Archived content body is not publicly queryable by collection endpoints
 - [ ] Visitor note insert is allowed safely
-- [ ] Visitor note list/read is admin-only
-- [ ] Admin writes require authenticated Garden Keeper
-- [ ] Analytics read is admin-only
+- [x] Visitor note list/read is admin-only
+- [x] Admin writes require authenticated Garden Keeper
+- [x] Analytics read is admin-only
 - [ ] Storage writes are admin-only
 
 Acceptance:
 
-- [ ] database migrations reproducible
-- [ ] RLS tests pass
+- [x] database migrations reproducible
+- [x] RLS tests pass
 - [ ] no secret exposed client-side
 - [ ] Preview database reset procedure documented
 

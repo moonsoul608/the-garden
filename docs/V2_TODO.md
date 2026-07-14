@@ -118,8 +118,8 @@ Acceptance:
 - [x] Create cover-image bucket
 - [x] Limit upload formats
 - [x] Limit upload size
-- [ ] Define public-read behavior for Published covers
-- [ ] Restrict upload, replace, and delete to Garden Keeper
+- [x] Define public-read behavior for Published covers
+- [x] Restrict upload, replace, and delete to Garden Keeper
 
 ## 2C. Constraints
 
@@ -142,12 +142,13 @@ Acceptance:
 - [x] Visitor note list/read is admin-only
 - [x] Admin writes require authenticated Garden Keeper
 - [x] Analytics read is admin-only
-- [ ] Storage writes are admin-only
+- [x] Storage writes are admin-only
 
 Acceptance:
 
 - [x] database migrations reproducible
 - [x] RLS tests pass
+- [x] Storage policy tests pass
 - [ ] no secret exposed client-side
 - [ ] Preview database reset procedure documented
 

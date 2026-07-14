@@ -1,51 +1,46 @@
 # The Garden V2 Phase 02D Report
 
-Task: `02D-1 Database Security Foundation`  
-Report date: `2026-07-14`  
+Task: `02D Security & Access`
+Subtasks: `02D-1 Database Security Foundation`, `02D-2 Storage Policies`
+Report date: `2026-07-14`
 Environment verified: Supabase Preview only
 
-This report records the completed database portion of Phase 02D. The versioned security migration was applied through the Supabase Preview Dashboard SQL Editor, and the permission test suite completed successfully with all fixtures rolled back. Production was not modified.
+This report records the completed Phase 02D database and Storage security foundation. Both versioned migrations were applied through the Supabase Preview Dashboard SQL Editor, both permission test suites passed, and all test fixtures were rolled back. Production was not modified.
 
-# 1. Phase 02D-1 Purpose
+# 1. Full Phase 02D Scope
 
-Phase 02D-1 establishes the database authorization boundary required before database-backed public pages or Garden Keeper administration are introduced.
+Phase 02D establishes the authorization boundary required before database-backed public content, Garden Keeper authentication, or content-management workflows are introduced.
 
-The work provides:
+Completed work includes:
 
-- deny-by-default Garden Keeper authorization infrastructure;
+- a private, deny-by-default Garden Keeper identity allow-list;
+- a secure Garden Keeper authorization helper;
 - least-privilege database grants;
-- Row Level Security on every Phase 02A application table;
-- Published-only public reads;
+- Row Level Security on all 13 Phase 02A application tables;
+- Published-only public database reads;
 - protection for Draft, Review, Archived, moderation, analytics, configuration, redirect, version, and preview-token data;
-- reproducible permission tests against Preview.
+- policy-controlled public access to Published cover images while keeping the bucket private;
+- Garden Keeper-only cover read, upload, update, and delete policies;
+- reproducible database and Storage permission tests in Preview.
 
-This subtask does not configure an Auth provider, bind a real Garden Keeper, add application authorization, or implement Storage policies.
+Anonymous `visitor_notes` insertion remains deliberately disabled. Auth provider configuration, GitHub OAuth, identity binding, admin routes, and application authorization remain later-phase work.
 
 # 2. Security Model
 
-The database prepares the two effective Version 2 roles defined by the master specification:
+Phase 02D prepares the two effective Version 2 roles defined by the master specification:
 
-| Effective actor | Database behavior after Phase 02D-1 |
-| --- | --- |
-| Public visitor (`anon`) | May read approved public data only when its owning content is Published. Has no application-table write access. |
-| Authenticated non-Keeper | Retains the same public read access as a visitor but cannot use any Garden Keeper policy. |
-| Future Garden Keeper | Administrative policies exist, but access requires an authenticated user present in the private allow-list. The allow-list is empty in this phase. |
-| Privileged migration operation | Remains an explicitly server-controlled database operation and is not exposed through public client credentials. |
+| Effective actor | Database access | Cover-image access |
+| --- | --- | --- |
+| Public visitor (`anon`) | Reads only approved public data connected to Published content. Has no application-table writes. | Reads only an object exactly referenced by a Published `contents` row. Cannot upload, update, or delete. |
+| Authenticated non-Keeper | Retains visitor-level public reads but cannot use Garden Keeper policies. | Retains Published-cover reads only. Cannot upload, update, delete, or read private covers. |
+| Future Garden Keeper | Administrative policies require an authenticated user present in the private allow-list. | May read private covers and insert, update, or delete objects in `cover-images`, subject to bucket and path checks. |
+| Privileged migration operation | Remains an explicitly server-controlled operation and is not exposed through public client credentials. | May perform controlled migration work through privileged infrastructure, outside ordinary visitor or Keeper requests. |
 
-Broad default privileges for the `anon` and `authenticated` API roles were revoked before narrower grants were added. Public `contents` and `site_copy` reads use column-level grants so internal actor UUIDs and migration-only identity fields are not exposed from otherwise public rows.
+Broad default application-table privileges for `PUBLIC`, `anon`, and `authenticated` were revoked before narrower grants were added. Public `contents` and `site_copy` reads use column-level grants so internal actor UUIDs and migration-only identity fields are not exposed from otherwise public rows.
 
-Public read policies cover only the approved public graph:
+The `cover-images` bucket remains private. Published delivery is authorized per object by `storage.objects` RLS policies; the bucket was not made public, and signed URLs are not the primary Published-cover delivery mechanism.
 
-- `contents`: rows whose lifecycle is `Published`;
-- `growth_notes`: public notes whose parent content is Published;
-- `content_relations`: relations whose source and target are both Published;
-- `tags` and `content_tags`: tags and bindings connected to Published content;
-- `home_curation`: entries whose content is Published;
-- `site_copy`: approved fixed-copy rows, without the internal `updated_by` field.
-
-No public policy exposes Archived content. A later resting-state implementation must use an explicitly safe projection rather than making archived bodies queryable.
-
-# 3. Tables Protected by RLS
+# 3. Database Security Foundation and RLS Architecture
 
 Row Level Security is enabled on all 13 Phase 02A application tables:
 
@@ -63,9 +58,18 @@ Row Level Security is enabled on all 13 Phase 02A application tables:
 12. `route_redirects`
 13. `preview_tokens`
 
-The following data remains unavailable to anonymous visitors and unapproved authenticated users:
+Public database policies expose only the approved public graph:
 
-- Draft, Review, and Archived content rows;
+- `contents`: rows whose lifecycle is `Published`;
+- `growth_notes`: public notes whose parent content is Published;
+- `content_relations`: relations whose source and target are both Published;
+- `tags` and `content_tags`: tags and bindings connected to Published content;
+- `home_curation`: entries whose content is Published;
+- `site_copy`: approved fixed-copy rows without the internal `updated_by` field.
+
+The following remain unavailable to anonymous visitors and unapproved authenticated users:
+
+- Draft, Review, and Archived content rows and bodies;
 - private Growth Notes and relations involving non-Published content;
 - version history;
 - AI settings;
@@ -74,19 +78,21 @@ The following data remains unavailable to anonymous visitors and unapproved auth
 - redirect records;
 - preview-token hashes.
 
-Anonymous `visitor_notes` insertion is intentionally not granted. It remains deferred to Phase 10 together with validation, sanitization, rate limiting, and spam protection.
+Every application table also has a Garden Keeper policy using the shared authorization helper. With no bound Keeper identity, those administrative policies remain deny-by-default.
+
+Anonymous `visitor_notes` insertion was not granted. It remains deferred until Phase 10 can add application validation, sanitization, rate limiting, and spam protection.
 
 # 4. Garden Keeper Authorization Foundation
 
-The migration creates the private table:
+Phase 02D-1 created the private table:
 
 ```text
 private.garden_keeper_identities
 ```
 
-It is designed to hold the future Supabase Auth user UUID, GitHub provider, immutable GitHub provider account ID, and an optional readable username. The table contains no rows in Phase 02D-1.
+It is designed to hold the future Supabase Auth user UUID, GitHub provider, immutable GitHub provider account ID, and an optional readable username. No real Garden Keeper identity was added in Phase 02D.
 
-The migration also creates:
+Phase 02D-1 also created:
 
 ```text
 private.is_garden_keeper()
@@ -98,69 +104,118 @@ The helper:
 - has a fixed `pg_catalog, private` search path;
 - checks the current `auth.uid()` against the private allow-list;
 - returns false when no matching identity exists;
-- is used by every Garden Keeper RLS policy;
+- is used by database and Storage Garden Keeper policies;
 - does not expose the allow-list table to public API roles.
 
-The `private` schema and allow-list table grant no direct access to `PUBLIC`, `anon`, or `authenticated`. The helper is callable only as required by the stored policy expressions. With the allow-list empty, all administrative policies remain safely deny-by-default.
+The `private` schema and allow-list table grant no direct access to `PUBLIC`, `anon`, or `authenticated`. A transaction-only synthetic identity was used solely to verify the positive Storage Keeper path; it was rolled back and did not bind a real account.
 
-# 5. Policy Verification Results
+# 5. Storage Policy Architecture
 
-| Requirement | Preview result |
+The existing Storage foundation remains unchanged:
+
+- bucket: `cover-images`;
+- visibility: private;
+- maximum object size: 5 MiB;
+- accepted MIME types: JPEG, PNG, and WebP;
+- object-name convention: `contents/{content-id}/{unique-file-name}`.
+
+Phase 02D-2 added five policies on `storage.objects`, all scoped to `bucket_id = 'cover-images'`:
+
+| Policy purpose | Rule |
 | --- | --- |
-| RLS enabled on all 13 application tables | **PASS** |
-| Anonymous access limited to Published public content | **PASS** |
-| Draft and Review hidden from public queries | **PASS** |
-| Archived bodies hidden from public queries | **PASS** |
-| Private Growth Notes and unpublished relationships hidden | **PASS** |
-| Versions, AI settings, notes, analytics, redirects, and preview tokens protected | **PASS** |
-| Anonymous visitor-note insertion disabled | **PASS** |
-| Unapproved authenticated user denied Keeper writes | **PASS** |
-| Unapproved authenticated user denied private operational reads | **PASS** |
-| Garden Keeper helper rejects an identity absent from the allow-list | **PASS** |
-| Authorization internals inaccessible to public API roles | **PASS** |
+| Public read | `anon` and `authenticated` may select an object only when its exact `name` is stored in `contents.cover_image_path` and that content lifecycle is `Published`. |
+| Garden Keeper read | An authenticated allow-listed Keeper may read cover objects for administration, including non-Published covers. |
+| Garden Keeper insert | Requires Keeper authorization, the `cover-images` bucket, the confirmed path convention, and an existing content UUID in the path. |
+| Garden Keeper update | Requires Keeper authorization for both the existing row and resulting row; the resulting name must retain the confirmed path convention and reference existing content. |
+| Garden Keeper delete | Requires Keeper authorization and is limited to the `cover-images` bucket. |
 
-No Storage policy or `storage.objects` change was part of this verification.
+No policy applies these permissions to another bucket. No bucket row, visibility flag, file-size limit, MIME allow-list, content column, or application client was changed.
 
-# 6. Test Evidence
+# 6. Storage Access Rules
+
+Public cover access is derived from canonical content state:
+
+- Published and exactly referenced cover: readable;
+- unreferenced object: not publicly readable;
+- Draft cover: not publicly readable;
+- Review cover: not publicly readable;
+- Archived cover: not publicly readable;
+- object in another bucket: unaffected by these policies.
+
+Write access is deny-by-default:
+
+- anonymous upload, update, and delete are denied;
+- authenticated users absent from the allow-list are denied;
+- only an authenticated user accepted by `private.is_garden_keeper()` can use the Keeper policies;
+- inserts and updates cannot escape the approved content-scoped object path.
+
+# 7. Preview Verification and Test Results
 
 The following versioned files were applied and tested in Preview:
 
 - `supabase/migrations/20260714191020_phase_02d_rls_permissions.sql`
 - `supabase/tests/phase_02d_rls_permissions.sql`
+- `supabase/migrations/20260714194046_phase_02d_storage_policies.sql`
+- `supabase/tests/phase_02d_storage_policies.sql`
 
-The permission test used transaction-scoped fixtures representing Published, Draft, Review, and Archived content together with related public and private records.
+## 7.1 Database permission verification
 
-Verified behavior included:
+| Requirement | Result |
+| --- | --- |
+| RLS enabled on all 13 application tables | **PASS** |
+| Anonymous access limited to Published public content | **PASS** |
+| Draft, Review, and Archived bodies hidden | **PASS** |
+| Private Growth Notes and unpublished relationships hidden | **PASS** |
+| Versions, AI settings, notes, analytics, redirects, and preview tokens protected | **PASS** |
+| Anonymous visitor-note insertion disabled | **PASS** |
+| Unapproved authenticated user denied Keeper reads and writes | **PASS** |
+| Helper rejects an identity absent from the allow-list | **PASS** |
+| Authorization internals inaccessible to API roles | **PASS** |
 
-- catalog inspection confirmed `relrowsecurity` for all 13 required tables;
-- anonymous queries returned only the two Published content fixtures;
-- anonymous queries could not read Draft, Review, Archived, versions, AI settings, visitor notes, analytics, redirects, or preview tokens;
-- public Growth Note, relation, tag, tag-binding, and Home-curation policies excluded records connected to non-Published content;
-- anonymous access to internal actor columns was rejected;
-- anonymous and unapproved authenticated visitor-note inserts were rejected;
-- an unapproved authenticated user could not insert or update content;
-- the secure helper returned false for a user absent from the allow-list;
-- private-schema and allow-list privileges remained unavailable to API roles.
+## 7.2 Storage policy verification
 
-The test file ended with an explicit rollback. All content, relation, tag, copy, configuration, note, analytics, redirect, and preview-token fixtures were removed. No test record remained in Preview.
+| Requirement | Result |
+| --- | --- |
+| `cover-images` bucket remains private | **PASS** |
+| Referenced Published cover publicly readable | **PASS** |
+| Draft and other non-Published covers not publicly readable | **PASS** |
+| Anonymous upload denied | **PASS** |
+| Non-Keeper authenticated upload denied | **PASS** |
+| Allow-listed Keeper private read succeeds | **PASS** |
+| Allow-listed Keeper insert succeeds | **PASS** |
+| Allow-listed Keeper update succeeds | **PASS** |
+| Allow-listed Keeper delete succeeds | **PASS** |
+| No bucket visibility change | **PASS** |
 
-# 7. Deferred Work
+Production was not used for migration execution or testing.
+
+# 8. Rollback Confirmation
+
+Both SQL test suites ran inside explicit transactions and ended with `rollback`.
+
+The database permission fixtures included Published, Draft, Review, and Archived content together with related versions, Growth Notes, relations, tags, copy, AI settings, visitor notes, analytics, redirects, and preview tokens.
+
+The Storage policy fixtures included transaction-only Auth, Garden Keeper allow-list, content, and `storage.objects` rows. The synthetic Keeper existed only long enough to verify the positive authorization path.
+
+All fixtures were removed by rollback. No test content, Auth user, allow-list identity, Storage object, note, analytics row, redirect, token, or configuration value remained in Preview.
+
+# 9. Deferred Work
 
 The following work remains intentionally incomplete:
 
-- Phase 02D-2 Storage policies for Published cover reads and Garden Keeper upload, replace, and delete;
-- anonymous visitor-note insertion and abuse protection in Phase 10;
 - Supabase Auth provider configuration;
 - GitHub OAuth;
 - binding the approved Garden Keeper identity to the immutable GitHub provider account ID;
 - authentication callbacks, session refresh, logout, and unauthorized states;
-- application-side authorization and validation;
 - Garden Keeper `/admin` routes and UI;
-- end-to-end authenticated Garden Keeper testing;
+- application-side authorization and validation;
+- anonymous `visitor_notes` interaction, sanitization, rate limiting, and spam protection;
+- content creation, editing, lifecycle, versioning, preview, curation, upload, replacement, deletion, and cleanup workflows;
+- end-to-end authenticated Garden Keeper application testing;
 - Production migration and verification.
 
-# 8. Phase Status
+# 10. Phase Status
 
-**Phase 02D-1 Database Security Foundation is complete in Preview.** The migration and RLS tests were applied successfully, all fixtures were rolled back, the allow-list remains empty, and Production was not modified.
+**Phase 02D Security & Access is complete in Preview within the confirmed database and Storage scope.** Database RLS and Storage policies were applied successfully, permission tests passed, all fixtures were rolled back, the real Garden Keeper allow-list remains empty, the bucket remains private, and Production was not modified.
 
-Phase 02D as a whole remains incomplete until the separate Storage policy subtask is implemented and verified. Phase 2 full acceptance also remains incomplete.
+Auth, Garden Keeper application work, visitor-note interaction, future content-management workflows, and full Phase 2 acceptance remain incomplete.

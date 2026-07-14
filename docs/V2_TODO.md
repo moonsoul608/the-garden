@@ -1,0 +1,882 @@
+# The Garden — Version 2 TODO
+
+## Scope rule
+
+This checklist implements the frozen Version 2 scope.
+
+Do not add new product features while executing these phases.
+
+Allowed during implementation:
+
+- resolve technical conflicts;
+- improve security;
+- correct accessibility;
+- fix migration defects;
+- clarify an already-approved feature;
+- reduce scope when required for stability.
+
+Not allowed without a new approval:
+
+- new Region;
+- public user accounts;
+- comments or community features;
+- AI auto-publishing;
+- AI semantic search;
+- page builder;
+- new backend service;
+- features listed as non-goals in `V2_MASTER_SPEC.md`.
+
+---
+
+# Phase 0 — Version 2 documentation and audit
+
+- [ ] Read `AGENTS.md`
+- [ ] Read Version 1 `MASTER_SPEC.md`
+- [ ] Read Version 1 `CONTENT.md`
+- [ ] Read Version 1 `TODO.md`
+- [ ] Read `README.md`
+- [ ] Read `docs/V2_MASTER_SPEC.md`
+- [ ] Read `docs/V2_CONTENT.md`
+- [ ] Read `docs/V2_MIGRATION.md`
+- [ ] Audit the actual `main` implementation
+- [ ] Confirm all eight main routes
+- [ ] Confirm all four detail-route families
+- [ ] Confirm all 19 V1 content items
+- [ ] Confirm `/index` rewrite behavior
+- [ ] Confirm `/search` behavior
+- [ ] Confirm `/api/seed-gardener`
+- [ ] Record V1 document/implementation differences
+- [ ] Record current test commands
+- [ ] Record current deployment configuration
+- [ ] Do not modify page behavior before audit completion
+
+Acceptance:
+
+- [ ] V1 baseline report completed
+- [ ] migration inventory completed
+- [ ] no V1 document overwritten
+
+---
+
+# Phase 1 — Preview environment and Supabase foundation
+
+## 1A. Branch and deployment
+
+- [ ] Create or confirm a dedicated V2 development branch
+- [ ] Configure Vercel Preview deployment
+- [ ] Keep `main` as Production
+- [ ] Confirm Preview URL
+- [ ] Confirm Production remains unchanged
+
+## 1B. Separate data environments
+
+- [ ] Create Supabase Preview project
+- [ ] Create Supabase Production project
+- [ ] Configure separate environment variables
+- [ ] Verify Preview cannot write Production
+- [ ] Verify Production does not read Preview
+
+## 1C. Supabase client foundation
+
+- [ ] Add minimum Supabase dependencies
+- [ ] Create server-side Supabase client
+- [ ] Create browser client only where required
+- [ ] Keep service-role credentials server-only
+- [ ] Add environment validation
+- [ ] Add safe missing-configuration errors
+
+Acceptance:
+
+- [ ] Preview deploy succeeds
+- [ ] separate Supabase projects verified
+- [ ] lint passes
+- [ ] typecheck passes
+- [ ] build passes
+
+---
+
+# Phase 2 — Database schema and security
+
+## 2A. Core tables
+
+- [ ] Create `contents`
+- [ ] Create `content_versions`
+- [ ] Create `growth_notes`
+- [ ] Create `content_relations`
+- [ ] Create `tags`
+- [ ] Create `content_tags`
+- [ ] Create `home_curation`
+- [ ] Create `site_copy`
+- [ ] Create `ai_settings`
+- [ ] Create `visitor_notes`
+- [ ] Create analytics storage or aggregate tables
+- [ ] Create redirect/migration table
+- [ ] Create preview-token table or secure equivalent
+
+## 2B. Storage
+
+- [ ] Create cover-image bucket
+- [ ] Limit upload formats
+- [ ] Limit upload size
+- [ ] Define public-read behavior for Published covers
+- [ ] Restrict upload, replace, and delete to Garden Keeper
+
+## 2C. Constraints
+
+- [ ] Region enum/validation
+- [ ] Content Type enum/validation
+- [ ] Growth Stage enum/validation
+- [ ] lifecycle enum/validation
+- [ ] unique Region + slug constraint
+- [ ] relation self-reference prevention
+- [ ] duplicate relation prevention
+- [ ] maximum one cover image per item
+- [ ] required alt text before publication
+
+## 2D. RLS and permissions
+
+- [ ] Public reads only approved Published content
+- [ ] Draft and Review are not publicly queryable
+- [ ] Archived content body is not publicly queryable by collection endpoints
+- [ ] Visitor note insert is allowed safely
+- [ ] Visitor note list/read is admin-only
+- [ ] Admin writes require authenticated Garden Keeper
+- [ ] Analytics read is admin-only
+- [ ] Storage writes are admin-only
+
+Acceptance:
+
+- [ ] database migrations reproducible
+- [ ] RLS tests pass
+- [ ] no secret exposed client-side
+- [ ] Preview database reset procedure documented
+
+---
+
+# Phase 3 — Content service and V1 migration tooling
+
+## 3A. Shared domain types
+
+- [ ] Extend Version 1 content types
+- [ ] Add lifecycle
+- [ ] Add bilingual fields
+- [ ] Add Growth Notes
+- [ ] Add relations
+- [ ] Add cover metadata
+- [ ] Add Featured and manual order
+- [ ] Add created/published/last-tended timestamps
+
+## 3B. Validation
+
+- [ ] Create content validation
+- [ ] Create Markdown import validation
+- [ ] Create publication validation
+- [ ] Create cover validation
+- [ ] Create relation validation
+- [ ] Create Growth Note validation
+
+## 3C. Content service
+
+- [ ] `getPublishedContent`
+- [ ] `getPublishedContentByRoute`
+- [ ] `getAdminContent`
+- [ ] `createDraft`
+- [ ] `updateDraft`
+- [ ] `moveToReview`
+- [ ] `publishContent`
+- [ ] `archiveContent`
+- [ ] `restoreArchivedContent`
+- [ ] `deleteArchivedContent`
+- [ ] `updateGrowthStage`
+- [ ] `manageRelations`
+- [ ] `manageHomeCuration`
+- [ ] `manageFeatured`
+- [ ] `createVersion`
+- [ ] `restoreVersion`
+
+## 3D. V1 migration script
+
+- [ ] Extract Garden 5 items
+- [ ] Extract Forest 5 items
+- [ ] Extract Lake 5 items
+- [ ] Extract Ruins 4 items
+- [ ] Preserve IDs where practical
+- [ ] Preserve slugs
+- [ ] Preserve Region
+- [ ] Preserve Content Type
+- [ ] Preserve summaries
+- [ ] Preserve statuses
+- [ ] Preserve full/short detail level
+- [ ] Preserve detail body
+- [ ] Convert Ruins `grewInto`
+- [ ] Seed fixed categories
+- [ ] Seed Version 1 public copy
+- [ ] Produce migration report
+
+Acceptance:
+
+- [ ] exactly 19 initial items imported
+- [ ] all old public URLs resolve in Preview
+- [ ] no invented content
+- [ ] migration is repeatable
+- [ ] migration does not duplicate records
+
+---
+
+# Phase 4 — GitHub authentication and Garden Keeper shell
+
+## 4A. Authentication
+
+- [ ] Configure Supabase GitHub provider
+- [ ] Create `/admin` login flow
+- [ ] Verify GitHub provider identity
+- [ ] Allow only the approved `moonsoul608` account
+- [ ] Prefer immutable GitHub provider ID for authorization
+- [ ] Add logout
+- [ ] Add unauthorized state
+- [ ] Protect admin Server Actions and Route Handlers
+- [ ] Verify client-side state cannot bypass server checks
+
+## 4B. Garden Keeper layout
+
+- [ ] Responsive admin shell
+- [ ] Dashboard
+- [ ] Content navigation
+- [ ] Greenhouse configuration navigation
+- [ ] Notes navigation
+- [ ] Analytics navigation
+- [ ] Settings navigation
+- [ ] Internal notification summary
+- [ ] Keyboard navigation
+- [ ] visible focus
+- [ ] mobile basic-use layout
+
+Acceptance:
+
+- [ ] non-admin access denied
+- [ ] admin session works in Preview
+- [ ] no public admin data
+- [ ] accessibility smoke check passes
+
+---
+
+# Phase 5 — Core content administration
+
+## 5A. Content list
+
+- [ ] List all lifecycle states
+- [ ] Search content
+- [ ] Filter by Region
+- [ ] Filter by Content Type
+- [ ] Filter by Growth Stage
+- [ ] Filter by lifecycle
+- [ ] Show last tended
+- [ ] Show Featured
+- [ ] No bulk operations
+
+## 5B. Create and edit
+
+- [ ] New Draft
+- [ ] Chinese fields
+- [ ] English fields
+- [ ] language mode
+- [ ] Region
+- [ ] Content Type
+- [ ] Detail Level
+- [ ] fixed primary category selection
+- [ ] free tags
+- [ ] Growth Stage
+- [ ] slug suggestion
+- [ ] slug uniqueness check
+- [ ] stable-slug warning after publication
+
+## 5C. Markdown editor
+
+- [ ] Markdown editing
+- [ ] live preview
+- [ ] mobile Edit/Preview switch
+- [ ] heading helper
+- [ ] bold helper
+- [ ] italic helper
+- [ ] quote helper
+- [ ] list helper
+- [ ] link helper
+- [ ] no arbitrary HTML mode
+- [ ] no page builder
+
+## 5D. Autosave
+
+- [ ] periodic autosave
+- [ ] Saving state
+- [ ] Saved state
+- [ ] Save failed state
+- [ ] retry behavior
+- [ ] navigation warning for unsaved local changes
+- [ ] autosave does not publish
+- [ ] autosave does not create versions
+
+Acceptance:
+
+- [ ] create Draft
+- [ ] edit Draft
+- [ ] autosave Draft
+- [ ] recover from save failure
+- [ ] no public Draft exposure
+
+---
+
+# Phase 6 — Publication lifecycle, versions, preview, and deletion
+
+## 6A. Review and publish
+
+- [ ] Move Draft to Review
+- [ ] Review checklist
+- [ ] Validate required fields
+- [ ] Validate image alt
+- [ ] Validate slug
+- [ ] Validate relations
+- [ ] Publish
+- [ ] Remove from publication safely
+- [ ] Published item appears in correct Region
+- [ ] Published item appears in Index
+- [ ] Published item appears in sitemap
+
+## 6B. Archive and delete
+
+- [ ] Archive Published item
+- [ ] Remove Archived item from discovery
+- [ ] Render resting-state route
+- [ ] Restore Archived item
+- [ ] Show permanent delete only in Archived
+- [ ] Show relation/version/image impact
+- [ ] Require second confirmation
+- [ ] Clean relations safely
+- [ ] Clean unused Storage object
+- [ ] Deleted route returns designed 404/Gone
+
+## 6C. Version history
+
+- [ ] Manual checkpoint
+- [ ] Publish snapshot
+- [ ] Restore snapshot
+- [ ] Preserve current version before restore
+- [ ] Maximum 10 versions
+- [ ] Cover reference included
+- [ ] Version list accessible
+
+## 6D. Secure preview
+
+- [ ] Generate preview token
+- [ ] Copy preview link
+- [ ] Preview uses real detail layout
+- [ ] Show Preview Mode indicator
+- [ ] Revoke token
+- [ ] Regenerate token
+- [ ] `noindex`
+- [ ] Exclude from sitemap
+- [ ] Token gives no edit access
+
+Acceptance:
+
+- [ ] full lifecycle works
+- [ ] version restore works
+- [ ] preview is private
+- [ ] Archived and Deleted behavior matches spec
+
+---
+
+# Phase 7 — Growth, relations, cover images, Featured, and Home curation
+
+## 7A. Growth
+
+- [ ] Change Growth Stage
+- [ ] Require Growth Note
+- [ ] Chinese Growth Note
+- [ ] English Growth Note
+- [ ] public/private toggle
+- [ ] update `lastTendedAt` only for meaningful tending
+- [ ] public Growth Timeline
+
+## 7B. Relations
+
+- [ ] Add `grewFrom`
+- [ ] Add `grewInto`
+- [ ] Add `relatedTo`
+- [ ] Select existing content only
+- [ ] prevent self-relation
+- [ ] prevent duplicate relation
+- [ ] archived-target handling
+- [ ] concise public display
+
+## 7C. Cover image
+
+- [ ] Upload
+- [ ] Replace
+- [ ] Remove
+- [ ] alt validation
+- [ ] card integration
+- [ ] detail integration
+- [ ] fallback text-first layout
+- [ ] Open Graph image integration
+
+## 7D. Featured
+
+- [ ] Toggle Featured
+- [ ] Enforce maximum 3 per Region
+- [ ] Region ordering
+- [ ] Do not auto-feature by views
+
+## 7E. Home curation
+
+- [ ] Currently Growing candidate suggestions
+- [ ] manual confirmation
+- [ ] 3–4 item limit
+- [ ] Recently Planted candidate suggestions
+- [ ] manual confirmation
+- [ ] 2 item limit
+- [ ] prevent duplicate item across both slots
+- [ ] manual order
+- [ ] Home reads canonical data
+
+Acceptance:
+
+- [ ] public Growth Timeline correct
+- [ ] relations correct
+- [ ] cover is optional and accessible
+- [ ] Home updates without code edits
+- [ ] no duplicated Home content data
+
+---
+
+# Phase 8 — Public discovery and navigation upgrade
+
+## 8A. Merge Index and Search
+
+- [ ] Make `/index` canonical
+- [ ] Add keyword search
+- [ ] Search Chinese titles/summaries
+- [ ] Search English titles/summaries
+- [ ] Search tags
+- [ ] Search primary categories
+- [ ] Region filter
+- [ ] Content Type filter
+- [ ] Growth Stage filter
+- [ ] Recently planted filter
+- [ ] Recently tended filter
+- [ ] default recently tended sort
+- [ ] public Published only
+- [ ] retain empty state
+
+## 8B. `/search` compatibility
+
+- [ ] Redirect or rewrite `/search`
+- [ ] Preserve `q`
+- [ ] Preserve supported filters
+- [ ] Focus search input
+- [ ] Remove duplicate implementation
+- [ ] update Garden Guide
+- [ ] update TopBar search link
+
+## 8C. Path Back Navigation
+
+- [ ] Detail-page back control
+- [ ] source-aware return when reliable
+- [ ] Region fallback
+- [ ] Index fallback
+- [ ] no dead back action
+- [ ] mobile visibility
+- [ ] keyboard accessibility
+- [ ] lightweight path context only
+
+## 8D. Archived, empty, and 404 states
+
+- [ ] designed 404
+- [ ] archived resting state
+- [ ] empty search
+- [ ] empty Saved Paths
+- [ ] empty Recently Visited
+- [ ] Greenhouse error
+- [ ] save error
+- [ ] upload error
+- [ ] unauthorized state
+- [ ] clear next actions
+- [ ] approved copy only
+
+Acceptance:
+
+- [ ] `/index` covers discovery and search
+- [ ] `/search` remains valid
+- [ ] visitors can recover their path
+- [ ] all states remain understandable
+
+---
+
+# Phase 9 — Greenhouse V2 integration
+
+## 9A. Preserve V1 behavior
+
+- [ ] Keep `/api/seed-gardener`
+- [ ] Keep server-side key
+- [ ] Keep `deepseek-v4-flash`
+- [ ] Keep schema validation
+- [ ] Keep timeout
+- [ ] Keep safe error mapping
+- [ ] Keep Forest prefill
+
+## 9B. Garden Keeper configuration
+
+- [ ] Edit system prompt
+- [ ] Edit output-style guidance
+- [ ] Edit example input
+- [ ] Edit example output
+- [ ] Keep code-enforced schema
+- [ ] Prevent API key editing
+- [ ] Prevent model editing
+- [ ] Prevent endpoint editing
+- [ ] Prevent timeout editing
+- [ ] Version or audit important prompt changes
+
+## 9C. Draft handoff
+
+- [ ] Explicit save-to-Draft action
+- [ ] No silent Draft creation from anonymous use
+- [ ] Save source idea
+- [ ] Save AI result
+- [ ] lifecycle = Draft
+- [ ] review before publish
+- [ ] editable Region
+- [ ] editable Content Type
+- [ ] editable Growth Stage
+- [ ] no automatic relations
+- [ ] no automatic Home placement
+
+Acceptance:
+
+- [ ] public Greenhouse still works
+- [ ] explicit Draft handoff works
+- [ ] AI never publishes
+- [ ] anonymous use cannot spam Garden Keeper silently
+
+---
+
+# Phase 10 — Visitor features
+
+## 10A. Leave a note
+
+- [ ] Public form
+- [ ] optional name
+- [ ] required message
+- [ ] validation
+- [ ] sanitization
+- [ ] rate limiting
+- [ ] spam protection
+- [ ] success state
+- [ ] error state
+- [ ] private storage
+- [ ] admin list
+- [ ] read/unread
+- [ ] delete
+- [ ] no public comments
+- [ ] no reply system
+
+## 10B. Saved Paths
+
+- [ ] outlined star default
+- [ ] filled yellow star saved
+- [ ] `aria-pressed`
+- [ ] keyboard support
+- [ ] visible focus
+- [ ] save/remove feedback
+- [ ] localStorage only
+- [ ] current-device disclosure
+- [ ] Garden Index section
+- [ ] Garden Guide shortcut
+
+## 10C. Recently Visited
+
+- [ ] localStorage only
+- [ ] 5–10 item limit
+- [ ] update last visited
+- [ ] manual clear
+- [ ] hide unavailable content
+- [ ] Garden Index section
+- [ ] optional Garden Guide shortcut
+- [ ] not a Home section
+
+## 10D. Sharing
+
+- [ ] Web Share API
+- [ ] copy-link fallback
+- [ ] completion feedback
+- [ ] no social counts
+- [ ] no identity tracking
+
+Acceptance:
+
+- [ ] visitor features work without accounts
+- [ ] local data stays local
+- [ ] notes remain private
+
+---
+
+# Phase 11 — Analytics, SEO, import, export, and settings
+
+## 11A. Anonymous analytics
+
+- [ ] page views
+- [ ] Region views
+- [ ] content views
+- [ ] Greenhouse use count
+- [ ] note submission count
+- [ ] share-click count
+- [ ] no stored IP
+- [ ] no visitor profile
+- [ ] no full browsing trail
+- [ ] Garden Keeper analytics view
+
+## 11B. SEO and Open Graph
+
+- [ ] dynamic title
+- [ ] dynamic description
+- [ ] bilingual fallback
+- [ ] content-level Open Graph
+- [ ] cover-image OG
+- [ ] fallback OG image
+- [ ] sitemap Published only
+- [ ] exclude Draft
+- [ ] exclude Review
+- [ ] exclude Archived
+- [ ] exclude Admin
+- [ ] exclude Preview
+- [ ] archived `noindex`
+- [ ] preview `noindex`
+
+## 11C. Markdown import
+
+- [ ] single-file upload
+- [ ] frontmatter parsing
+- [ ] validation
+- [ ] Draft creation
+- [ ] error report
+- [ ] no auto-publish
+- [ ] no auto-relations
+- [ ] no folder sync
+
+## 11D. Export
+
+- [ ] JSON export
+- [ ] Markdown export
+- [ ] Published-only option
+- [ ] include Draft option
+- [ ] include Archived option
+- [ ] optional versions in JSON
+- [ ] cover reference export
+- [ ] no automatic GitHub commit
+
+## 11E. Fixed site copy settings
+
+- [ ] approved Home fields
+- [ ] approved About fields
+- [ ] approved Region descriptions
+- [ ] approved ending copy
+- [ ] approved Footer copy
+- [ ] approved CTA fields
+- [ ] prevent Region-name editing
+- [ ] prevent route editing
+- [ ] prevent layout editing
+- [ ] prevent security-warning editing
+
+Acceptance:
+
+- [ ] analytics respect privacy
+- [ ] SEO preview correct
+- [ ] import creates safe Draft
+- [ ] export is usable
+- [ ] settings cannot alter structure
+
+---
+
+# Phase 12 — Visual, mobile, accessibility, and performance review
+
+## 12A. Visual
+
+- [ ] Preserve V1 regional moods
+- [ ] Improve card hierarchy
+- [ ] Integrate optional cover images
+- [ ] Improve detail hierarchy
+- [ ] Improve Growth Stage display
+- [ ] Improve Growth Timeline
+- [ ] Improve relation display
+- [ ] Add restrained Home status hints
+- [ ] No full visual replacement
+
+## 12B. Mobile
+
+- [ ] Home path list
+- [ ] detail reading order
+- [ ] Garden Index filters
+- [ ] Saved/Recent sections
+- [ ] Greenhouse input/results
+- [ ] admin basic use
+- [ ] touch target sizes
+- [ ] no horizontal overflow
+
+## 12C. Accessibility
+
+- [ ] semantic heading order
+- [ ] skip link
+- [ ] keyboard navigation
+- [ ] visible focus
+- [ ] accessible dialogs
+- [ ] accessible form labels
+- [ ] live regions
+- [ ] star state not color-only
+- [ ] image alt
+- [ ] status icon + text
+- [ ] reduced motion
+- [ ] no essential hover-only information
+
+## 12D. Performance
+
+- [ ] image optimization
+- [ ] sensible caching
+- [ ] no excessive client-side data
+- [ ] no unnecessary animation dependency
+- [ ] no repeated database queries
+- [ ] loading and error boundaries
+- [ ] production bundle review
+
+Acceptance:
+
+- [ ] desktop and mobile QA pass
+- [ ] keyboard QA pass
+- [ ] reduced-motion QA pass
+- [ ] no horizontal overflow
+- [ ] public pages remain content-first
+
+---
+
+# Phase 13 — Production migration and launch
+
+## 13A. Production preparation
+
+- [ ] Freeze Production content edits during final migration window
+- [ ] Back up V1 content data
+- [ ] Back up Supabase Production
+- [ ] Verify Production environment variables
+- [ ] Verify GitHub OAuth callback
+- [ ] Verify Storage policies
+- [ ] Verify RLS
+- [ ] Verify DeepSeek key
+- [ ] Verify redirects
+
+## 13B. Production import
+
+- [ ] Run migration once
+- [ ] Verify 19-item count
+- [ ] Verify all slugs
+- [ ] Verify all routes
+- [ ] Verify all summaries
+- [ ] Verify detail bodies
+- [ ] Verify relations
+- [ ] Verify Home curation
+- [ ] Verify Search/Index
+- [ ] Verify sitemap
+
+## 13C. Launch checks
+
+- [ ] lint
+- [ ] typecheck
+- [ ] production build
+- [ ] existing tests
+- [ ] new content tests
+- [ ] auth tests
+- [ ] permission tests
+- [ ] migration tests
+- [ ] route smoke tests
+- [ ] Greenhouse tests
+- [ ] note tests
+- [ ] accessibility audit
+- [ ] mobile QA
+- [ ] reduced-motion QA
+- [ ] SEO/OG QA
+
+## 13D. Cutover and cleanup
+
+- [ ] Switch public reads to database
+- [ ] Keep temporary static fallback until acceptance
+- [ ] Monitor errors
+- [ ] Confirm routine admin update appears without deployment
+- [ ] Confirm Production notes
+- [ ] Confirm Production analytics
+- [ ] Remove static fallback only after approval
+- [ ] Preserve V1 documents
+- [ ] Update README for V2 operation
+- [ ] Record final migration result in `V2_MIGRATION.md`
+
+Acceptance:
+
+- [ ] V2 Production stable
+- [ ] all existing public links valid
+- [ ] Garden Keeper can publish without coding
+- [ ] no data leak
+- [ ] no V1 feature regression
+- [ ] fallback removal explicitly approved
+
+---
+
+# Final acceptance matrix
+
+## Product
+
+- [ ] The Garden still feels like the same world
+- [ ] no new Region
+- [ ] not converted into a résumé, portfolio, blog, or community
+- [ ] Home remains curated
+- [ ] content remains primary
+
+## Content
+
+- [ ] dynamic creation works
+- [ ] lifecycle works
+- [ ] Growth Stage works
+- [ ] Growth Notes work
+- [ ] relations work
+- [ ] cover image optional
+- [ ] bilingual fields optional
+- [ ] 19 V1 items preserved
+
+## Admin
+
+- [ ] GitHub single-admin auth
+- [ ] Markdown editor
+- [ ] live preview
+- [ ] secure preview
+- [ ] autosave
+- [ ] 10-version history
+- [ ] archive/restore/delete
+- [ ] Home curation
+- [ ] AI settings within limits
+
+## Visitor
+
+- [ ] merged Index/Search
+- [ ] Path Back Navigation
+- [ ] public Growth Timeline
+- [ ] private note form
+- [ ] local Saved Paths
+- [ ] local Recently Visited
+- [ ] lightweight sharing
+- [ ] designed states
+
+## Engineering
+
+- [ ] Preview and Production isolated
+- [ ] Supabase RLS correct
+- [ ] no secret client-side
+- [ ] old URLs preserved
+- [ ] `/search` compatible
+- [ ] Greenhouse API preserved
+- [ ] tests pass
+- [ ] build passes
+- [ ] accessibility passes

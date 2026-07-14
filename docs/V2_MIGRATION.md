@@ -1,0 +1,705 @@
+# The Garden — Version 2 Migration Plan
+
+## 1. Purpose
+
+This document defines how The Garden moves from the stable Version 1 static-content implementation to the Version 2 database-backed Garden Keeper system.
+
+Migration must be gradual.
+
+The public Version 1 site must remain stable until the Version 2 replacement path has passed acceptance.
+
+---
+
+## 2. Migration principles
+
+1. Do not rebuild from zero.
+2. Do not overwrite Version 1 documents.
+3. Preserve all existing public URLs.
+4. Preserve all confirmed public content.
+5. Do not invent missing personal content.
+6. Use Preview/Staging before Production.
+7. Use a separate Preview Supabase project.
+8. Keep a temporary static fallback during cutover.
+9. Make migration repeatable and idempotent.
+10. Remove legacy content files only after explicit acceptance.
+
+---
+
+## 3. Version 1 source inventory
+
+### 3.1 Public routes
+
+- `/`
+- `/garden`
+- `/forest`
+- `/lake`
+- `/ruins`
+- `/greenhouse`
+- `/index`
+- `/search`
+
+### 3.2 Detail routes
+
+- `/garden/[slug]`
+- `/forest/[slug]`
+- `/lake/[slug]`
+- `/ruins/[slug]`
+
+### 3.3 API
+
+- `POST /api/seed-gardener`
+
+### 3.4 Initial content
+
+Garden:
+
+1. `building-the-garden`
+2. `learning-psychological-statistics`
+3. `exploring-ai-tools`
+4. `python-starting-from-the-basics`
+5. `designing-better-slides-and-documents`
+
+Forest:
+
+- preserve all five existing Version 1 slugs and content records.
+
+Lake:
+
+- preserve all five existing Version 1 slugs and content records.
+
+Ruins:
+
+- preserve all four existing Version 1 slugs and content records.
+
+Total:
+
+- 19 content items.
+
+The migration script must read the actual repository data rather than relying only on this summary.
+
+---
+
+## 4. Known Version 1 implementation differences
+
+The migration audit must explicitly record differences between documents and actual code.
+
+Known examples include:
+
+- Version 1 TODO does not reflect completed implementation.
+- Home curation is partly embedded directly in the Home page.
+- `Exploring AI Tools` is implemented as Garden content.
+- “继续吗” Home links currently resolve to the existing Forest memory Question rather than an independent content record.
+- some visitor-facing copy differs from the original Version 1 content document.
+- current content data does not consistently use all planned date fields.
+- Search and Garden Index overlap.
+- some Region hero navigation patterns are inconsistent.
+
+Migration must preserve actual working behavior unless a frozen V2 decision intentionally changes it.
+
+“继续吗” content identity is not redesigned by this migration. Preserve the current working link behavior until a separately approved content decision changes it.
+
+---
+
+## 5. Target architecture
+
+```text
+Public pages / Admin
+          ↓
+     Content service
+          ↓
+ Validation + authorization
+          ↓
+       Supabase
+```
+
+Temporary transition:
+
+```text
+Database content
+      +
+Legacy static content fallback
+          ↓
+     Content service
+          ↓
+       Public pages
+```
+
+Final:
+
+```text
+Supabase
+   ↓
+Content service
+   ↓
+Public pages + Garden Keeper
+```
+
+---
+
+## 6. Environment strategy
+
+### 6.1 Preview
+
+- V2 branch
+- Vercel Preview
+- Supabase Preview
+- test GitHub OAuth callback
+- test Storage bucket
+- test DeepSeek configuration
+
+### 6.2 Production
+
+- `main`
+- Vercel Production
+- Supabase Production
+- production GitHub OAuth callback
+- production Storage bucket
+- production DeepSeek key
+
+Preview and Production credentials must never be mixed.
+
+---
+
+## 7. Migration stages
+
+# Stage 0 — Freeze and inventory
+
+Tasks:
+
+- record current `main` commit;
+- record current deployment URL;
+- record current environment-variable names;
+- record all public routes;
+- record all 19 item IDs and slugs;
+- record current metadata;
+- record current Home curation;
+- record current redirects/rewrites;
+- record current tests;
+- export current static content to a machine-readable snapshot.
+
+Output:
+
+- migration inventory;
+- route manifest;
+- content manifest;
+- baseline screenshots or visual QA notes;
+- known-difference report.
+
+No public code behavior changes in this stage.
+
+---
+
+# Stage 1 — Build Preview data foundation
+
+Tasks:
+
+- create Supabase Preview;
+- apply schema;
+- apply RLS;
+- create cover bucket;
+- configure GitHub OAuth;
+- add environment validation;
+- add content service interfaces;
+- keep public reads on Version 1 static data.
+
+Acceptance:
+
+- Preview infrastructure works;
+- Production unaffected;
+- no public route changed.
+
+---
+
+# Stage 2 — Build idempotent import
+
+The import must:
+
+- use stable unique source keys;
+- upsert rather than blindly insert;
+- report created, updated, skipped, and failed records;
+- avoid duplicate relations;
+- preserve slug;
+- preserve Region;
+- preserve Content Type;
+- preserve Detail Level;
+- preserve Growth Stage;
+- preserve existing summaries and bodies;
+- preserve current Home destination links;
+- transform Ruins `grewInto` into a relation;
+- seed confirmed fixed taxonomy;
+- seed current approved site copy;
+- never invent missing fields.
+
+For missing dates:
+
+- do not invent historical dates;
+- use nullable fields;
+- add a migration note where required;
+- set technical import timestamps separately from content dates.
+
+Acceptance:
+
+- re-running import creates no duplicate content;
+- all 19 items present;
+- all expected routes resolvable.
+
+---
+
+# Stage 3 — Add dual-read content service
+
+Create one public content-service interface.
+
+During transition:
+
+1. read database record when migrated and valid;
+2. use static fallback only when the database record is unavailable;
+3. log fallback use in Preview;
+4. never show duplicate items;
+5. keep the same public shape for page components.
+
+Recommended migration marker:
+
+- `source = database | legacy`
+- internal only, not visitor-facing.
+
+Acceptance:
+
+- Region pages can render mixed sources without duplicates;
+- detail routes resolve correctly;
+- Index and Search remain stable;
+- fallback use is measurable.
+
+---
+
+# Stage 4 — Migrate public reads in Preview
+
+Order:
+
+1. Garden content
+2. Forest content
+3. Lake content
+4. Ruins content
+5. detail pages
+6. Home curation
+7. Garden Index
+8. Search compatibility
+9. metadata and sitemap
+
+For each area:
+
+- compare item count;
+- compare title;
+- compare summary;
+- compare route;
+- compare status;
+- compare CTA destination;
+- compare full/short detail behavior;
+- run mobile and keyboard checks.
+
+Do not migrate all public reads in one unverified change.
+
+---
+
+# Stage 5 — Build Garden Keeper against Preview data
+
+Garden Keeper becomes the only supported routine write path.
+
+Required Preview proof:
+
+- create Draft;
+- autosave;
+- move to Review;
+- publish;
+- edit Published content;
+- add Growth Note;
+- add relation;
+- upload cover;
+- create version;
+- restore version;
+- archive;
+- restore archive;
+- delete an archived test item;
+- generate preview token;
+- revoke preview token;
+- manage Home curation;
+- edit approved site copy;
+- edit approved Greenhouse prompt;
+- review notes;
+- view analytics.
+
+Do not enable Production writes until Preview acceptance.
+
+---
+
+# Stage 6 — Greenhouse Draft handoff
+
+Keep the existing public generation response.
+
+Add explicit Draft handoff.
+
+Rules:
+
+- anonymous Greenhouse use does not silently create admin Drafts;
+- an authorized explicit action creates Draft;
+- source idea and generated structure are preserved;
+- Garden Keeper edits before Review;
+- publication remains manual.
+
+Acceptance:
+
+- existing Greenhouse tests pass;
+- Draft handoff test passes;
+- anonymous spam path is not introduced.
+
+---
+
+# Stage 7 — Production preflight
+
+Before Production import:
+
+- back up repository state;
+- export V1 static data snapshot;
+- back up Supabase Production;
+- verify Production schema version;
+- verify RLS;
+- verify Storage policy;
+- verify OAuth;
+- verify administrator allow-list;
+- verify Vercel environment variables;
+- verify DeepSeek key;
+- verify Preview acceptance report;
+- prepare rollback switch to static reads.
+
+Use a short content-edit freeze during the final import and verification window.
+
+---
+
+# Stage 8 — Production import
+
+Run the same idempotent migration used in Preview.
+
+Required checks immediately after import:
+
+- total = 19;
+- Garden = 5;
+- Forest = 5;
+- Lake = 5;
+- Ruins = 4;
+- every slug matches baseline;
+- every public URL resolves;
+- all full details render;
+- all short details render;
+- Home destinations resolve;
+- relations resolve;
+- no Draft is public;
+- no Archived item appears in discovery.
+
+Do not switch all public reads until these checks pass.
+
+---
+
+# Stage 9 — Production dual-read cutover
+
+Enable database-first reads with static fallback.
+
+Monitor:
+
+- content lookup failures;
+- fallback count;
+- route 404s;
+- duplicate result reports;
+- metadata mismatches;
+- Search/Index mismatches;
+- Greenhouse failures;
+- admin authorization failures.
+
+Keep the fallback until a defined stability period and explicit approval.
+
+---
+
+# Stage 10 — Enable Production Garden Keeper
+
+Enable:
+
+- GitHub login;
+- Draft creation;
+- Review;
+- publishing;
+- archive;
+- version history;
+- cover uploads;
+- Growth Notes;
+- relations;
+- Home curation;
+- site copy settings;
+- Greenhouse settings;
+- visitor notes;
+- analytics.
+
+Run a Production smoke content workflow using a temporary Draft.
+
+Do not publish invented test content publicly.
+
+---
+
+# Stage 11 — Remove duplicate public implementations
+
+After the merged Garden Index is accepted:
+
+- make `/index` canonical;
+- preserve `/search`;
+- preserve query parameters;
+- remove duplicate Search component logic;
+- update TopBar;
+- update Garden Guide;
+- update tests.
+
+After Home curation is accepted:
+
+- remove hard-coded duplicate Home content metadata;
+- keep presentation structure;
+- read canonical content references.
+
+---
+
+# Stage 12 — Legacy fallback retirement
+
+Retire static fallback only when all conditions are met:
+
+- no fallback use in accepted Production period;
+- all 19 records verified;
+- Garden Keeper routine publishing verified;
+- Search/Index verified;
+- Home curation verified;
+- metadata verified;
+- sitemap verified;
+- accessibility verified;
+- rollback backup available;
+- explicit approval given.
+
+Then:
+
+- remove legacy content imports from runtime;
+- preserve a static export or migration fixture for historical recovery;
+- do not delete Version 1 documentation;
+- update README.
+
+---
+
+## 8. Data-mapping rules
+
+### 8.1 Identity
+
+Version 1 `id` and `slug` should remain stable where possible.
+
+If a new UUID is used as database primary key:
+
+- retain the V1 ID in a stable `legacy_id` or import key;
+- relations must use the new stable internal ID;
+- URLs continue to use the original slug.
+
+### 8.2 Region and Content Type
+
+Map directly.
+
+Do not infer a new Region or Content Type during migration.
+
+### 8.3 Growth Stage
+
+Map the existing manual status.
+
+Do not calculate a new stage from age or detail length.
+
+### 8.4 Lifecycle
+
+All current public Version 1 items migrate as:
+
+- `Published`
+
+unless the actual implementation clearly marks an item as non-public.
+
+### 8.5 Dates
+
+Use actual confirmed dates only.
+
+Do not treat:
+
+- Git commit date;
+- file modification date;
+- migration date
+
+as a historical planted or tended date unless explicitly approved.
+
+Technical timestamps may be stored separately.
+
+### 8.6 Bilingual fields
+
+Map current title and summary into the language field matching the actual content.
+
+Do not create machine translations during migration.
+
+### 8.7 Body
+
+Preserve current rendered meaning.
+
+Conversion to Markdown must not:
+
+- omit sections;
+- invent new prose;
+- expose internal comments;
+- render component names.
+
+### 8.8 Relations
+
+Convert explicit existing related paths only when their target can be resolved safely.
+
+Do not infer relations from shared categories.
+
+### 8.9 Home
+
+Convert Home items into curation references.
+
+Do not create duplicate content records for Home cards.
+
+---
+
+## 9. URL migration
+
+### 9.1 Unchanged content
+
+No redirect required.
+
+### 9.2 Region change
+
+If later approved:
+
+- create new Region route;
+- create permanent redirect from old route;
+- store migration record;
+- verify Search, Index, Home, relations, sitemap, and saved local links;
+- do not change without explicit content approval.
+
+### 9.3 Archive
+
+- keep route;
+- show resting-state page;
+- `noindex`;
+- exclude from sitemap and discovery.
+
+### 9.4 Delete
+
+- route becomes 404/Gone;
+- do not redirect unrelated content;
+- do not reuse slug automatically.
+
+---
+
+## 10. Rollback plan
+
+Rollback must remain possible during migration.
+
+### 10.1 Before database-first cutover
+
+Rollback:
+
+- disable database reads;
+- return to static Version 1 content;
+- leave imported data intact for diagnosis.
+
+### 10.2 After dual-read cutover
+
+Rollback:
+
+- switch content-service feature flag to legacy-first or legacy-only;
+- disable Garden Keeper writes if data integrity is uncertain;
+- preserve Production database snapshot;
+- do not delete content during incident response.
+
+### 10.3 After fallback retirement
+
+Rollback source:
+
+- database backup;
+- JSON export;
+- preserved migration fixture;
+- Git repository;
+- Vercel deployment history.
+
+Document the exact feature flag or deployment procedure before Production cutover.
+
+---
+
+## 11. Migration validation
+
+### Content checks
+
+- 19 total items;
+- correct Region counts;
+- correct slugs;
+- correct titles;
+- correct summaries;
+- correct statuses;
+- correct detail levels;
+- correct body sections;
+- correct related destinations.
+
+### Route checks
+
+- all main routes;
+- all detail routes;
+- `/index`;
+- `/search`;
+- `/greenhouse`;
+- `/api/seed-gardener`;
+- archived test route;
+- deleted test route;
+- preview route;
+- admin route.
+
+### Privacy checks
+
+- Draft not public;
+- Review not public;
+- visitor notes private;
+- analytics admin-only;
+- service role not client-side;
+- preview token cannot edit;
+- non-admin denied.
+
+### UX checks
+
+- Home unchanged until approved upgrade;
+- Garden Guide works;
+- Path Back works;
+- mobile layout works;
+- keyboard works;
+- focus visible;
+- reduced motion works;
+- no horizontal overflow.
+
+### SEO checks
+
+- old URLs stable;
+- metadata valid;
+- Open Graph valid;
+- sitemap excludes non-public routes;
+- archived and preview noindex.
+
+---
+
+## 12. Migration completion record
+
+At completion, append:
+
+- Production migration date;
+- source commit;
+- target commit;
+- schema version;
+- imported counts;
+- redirect count;
+- fallback removal date;
+- known limitations;
+- backup locations;
+- final acceptance result.
+
+Do not mark migration complete while the runtime still depends on undocumented fallback behavior.

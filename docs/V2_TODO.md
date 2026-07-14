@@ -99,19 +99,19 @@ Acceptance:
 
 ## 2A. Core tables
 
-- [ ] Create `contents`
-- [ ] Create `content_versions`
-- [ ] Create `growth_notes`
-- [ ] Create `content_relations`
-- [ ] Create `tags`
-- [ ] Create `content_tags`
-- [ ] Create `home_curation`
-- [ ] Create `site_copy`
-- [ ] Create `ai_settings`
-- [ ] Create `visitor_notes`
-- [ ] Create analytics storage or aggregate tables
-- [ ] Create redirect/migration table
-- [ ] Create preview-token table or secure equivalent
+- [x] Create `contents`
+- [x] Create `content_versions`
+- [x] Create `growth_notes`
+- [x] Create `content_relations`
+- [x] Create `tags`
+- [x] Create `content_tags`
+- [x] Create `home_curation`
+- [x] Create `site_copy`
+- [x] Create `ai_settings`
+- [x] Create `visitor_notes`
+- [x] Create analytics storage or aggregate tables
+- [x] Create redirect/migration table
+- [x] Create preview-token table or secure equivalent
 
 ## 2B. Storage
 

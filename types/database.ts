@@ -1,0 +1,265 @@
+import type {
+  ContentLanguage,
+  ContentType,
+  DetailLevel,
+  GrowthStage,
+  HomeCurationSlot,
+  Lifecycle,
+  RegionName,
+  RelationType,
+} from "./content";
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+/** Snake-case rows returned by the Phase 02 Supabase content tables. */
+export type ContentDatabaseRow = {
+  id: string;
+  legacy_id: string | null;
+  slug: string | null;
+  region: RegionName;
+  content_type: ContentType;
+  detail_level: DetailLevel;
+  lifecycle: Lifecycle;
+  growth_stage: GrowthStage;
+  title_zh: string | null;
+  title_en: string | null;
+  summary_zh: string | null;
+  summary_en: string | null;
+  body_zh_markdown: string | null;
+  body_en_markdown: string | null;
+  content_language: ContentLanguage;
+  primary_categories: string[];
+  cover_image_path: string | null;
+  cover_image_alt_zh: string | null;
+  cover_image_alt_en: string | null;
+  featured: boolean;
+  manual_order: number | null;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+  archived_at: string | null;
+  last_tended_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+};
+
+/** Public column projection allowed by the Phase 02D grants. */
+export type PublicContentDatabaseRow = Omit<
+  ContentDatabaseRow,
+  "legacy_id" | "created_by" | "updated_by"
+>;
+
+export type ContentDatabaseInsert = {
+  id?: string;
+  legacy_id?: string | null;
+  slug?: string | null;
+  region: RegionName;
+  content_type: ContentType;
+  detail_level: DetailLevel;
+  lifecycle?: Lifecycle;
+  growth_stage: GrowthStage;
+  title_zh?: string | null;
+  title_en?: string | null;
+  summary_zh?: string | null;
+  summary_en?: string | null;
+  body_zh_markdown?: string | null;
+  body_en_markdown?: string | null;
+  content_language: ContentLanguage;
+  primary_categories?: string[];
+  cover_image_path?: string | null;
+  cover_image_alt_zh?: string | null;
+  cover_image_alt_en?: string | null;
+  featured?: boolean;
+  manual_order?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  published_at?: string | null;
+  archived_at?: string | null;
+  last_tended_at?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
+};
+
+export type ContentDatabaseUpdate = Partial<ContentDatabaseInsert>;
+
+export type GrowthNoteDatabaseRow = {
+  id: string;
+  content_id: string;
+  from_stage: GrowthStage | null;
+  to_stage: GrowthStage;
+  note_zh: string | null;
+  note_en: string | null;
+  occurred_at: string;
+  is_public: boolean;
+  created_at: string;
+};
+
+export type GrowthNoteDatabaseInsert = {
+  id?: string;
+  content_id: string;
+  from_stage?: GrowthStage | null;
+  to_stage: GrowthStage;
+  note_zh?: string | null;
+  note_en?: string | null;
+  occurred_at?: string;
+  is_public?: boolean;
+  created_at?: string;
+};
+
+export type GrowthNoteDatabaseUpdate = Partial<GrowthNoteDatabaseInsert>;
+
+export type ContentRelationDatabaseRow = {
+  id: string;
+  source_content_id: string;
+  target_content_id: string;
+  relation_type: RelationType;
+  note_zh: string | null;
+  note_en: string | null;
+  created_at: string;
+};
+
+export type ContentRelationDatabaseInsert = {
+  id?: string;
+  source_content_id: string;
+  target_content_id: string;
+  relation_type: RelationType;
+  note_zh?: string | null;
+  note_en?: string | null;
+  created_at?: string;
+};
+
+export type ContentRelationDatabaseUpdate =
+  Partial<ContentRelationDatabaseInsert>;
+
+export type HomeCurationDatabaseRow = {
+  content_id: string;
+  slot: HomeCurationSlot;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type HomeCurationDatabaseInsert = Omit<
+  HomeCurationDatabaseRow,
+  "created_at" | "updated_at"
+> & {
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type HomeCurationDatabaseUpdate =
+  Partial<HomeCurationDatabaseInsert>;
+
+export type ContentVersionDatabaseRow = {
+  id: string;
+  content_id: string;
+  snapshot: Json;
+  checkpoint_reason: string;
+  checkpoint_note: string | null;
+  created_at: string;
+  created_by: string | null;
+};
+
+export type ContentVersionDatabaseInsert = {
+  id?: string;
+  content_id: string;
+  snapshot: Json;
+  checkpoint_reason: string;
+  checkpoint_note?: string | null;
+  created_at?: string;
+  created_by?: string | null;
+};
+
+export type ContentVersionDatabaseUpdate =
+  Partial<ContentVersionDatabaseInsert>;
+
+export type TagDatabaseRow = {
+  id: string;
+  normalized_name: string;
+  display_name: string;
+  created_at: string;
+};
+
+export type TagDatabaseInsert = Omit<TagDatabaseRow, "id" | "created_at"> & {
+  id?: string;
+  created_at?: string;
+};
+
+export type TagDatabaseUpdate = Partial<TagDatabaseInsert>;
+
+export type ContentTagDatabaseRow = {
+  content_id: string;
+  tag_id: string;
+};
+
+export type ContentTagDatabaseInsert = ContentTagDatabaseRow;
+export type ContentTagDatabaseUpdate = Partial<ContentTagDatabaseRow>;
+
+type SupabaseTable<Row, Insert, Update> = {
+  Row: Row;
+  Insert: Insert;
+  Update: Update;
+  Relationships: [];
+};
+
+/** Generated-style database slice used by the content service boundary. */
+export type ContentDatabase = {
+  public: {
+    Tables: {
+      contents: SupabaseTable<
+        ContentDatabaseRow,
+        ContentDatabaseInsert,
+        ContentDatabaseUpdate
+      >;
+      content_versions: SupabaseTable<
+        ContentVersionDatabaseRow,
+        ContentVersionDatabaseInsert,
+        ContentVersionDatabaseUpdate
+      >;
+      growth_notes: SupabaseTable<
+        GrowthNoteDatabaseRow,
+        GrowthNoteDatabaseInsert,
+        GrowthNoteDatabaseUpdate
+      >;
+      content_relations: SupabaseTable<
+        ContentRelationDatabaseRow,
+        ContentRelationDatabaseInsert,
+        ContentRelationDatabaseUpdate
+      >;
+      tags: SupabaseTable<
+        TagDatabaseRow,
+        TagDatabaseInsert,
+        TagDatabaseUpdate
+      >;
+      content_tags: SupabaseTable<
+        ContentTagDatabaseRow,
+        ContentTagDatabaseInsert,
+        ContentTagDatabaseUpdate
+      >;
+      home_curation: SupabaseTable<
+        HomeCurationDatabaseRow,
+        HomeCurationDatabaseInsert,
+        HomeCurationDatabaseUpdate
+      >;
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      garden_region: RegionName;
+      content_type: ContentType;
+      detail_level: DetailLevel;
+      content_lifecycle: Lifecycle;
+      growth_stage: GrowthStage;
+      content_language: ContentLanguage;
+      relation_type: RelationType;
+      home_slot: HomeCurationSlot;
+    };
+    CompositeTypes: Record<string, never>;
+  };
+};

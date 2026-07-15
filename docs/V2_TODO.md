@@ -158,28 +158,30 @@ Acceptance:
 
 ## 3A. Shared domain types
 
-- [ ] Extend Version 1 content types
-- [ ] Add lifecycle
-- [ ] Add bilingual fields
-- [ ] Add Growth Notes
-- [ ] Add relations
-- [ ] Add cover metadata
-- [ ] Add Featured and manual order
-- [ ] Add created/published/last-tended timestamps
+- [x] Extend Version 1 content types
+- [x] Add lifecycle
+- [x] Add bilingual fields
+- [x] Add Growth Notes
+- [x] Add relations
+- [x] Add cover metadata
+- [x] Add Featured and manual order
+- [x] Add created/published/last-tended timestamps
 
 ## 3B. Validation
 
-- [ ] Create content validation
+- [x] Create content validation
 - [ ] Create Markdown import validation
-- [ ] Create publication validation
-- [ ] Create cover validation
-- [ ] Create relation validation
-- [ ] Create Growth Note validation
+- [x] Create publication validation
+- [x] Create cover validation
+- [x] Create relation validation
+- [x] Create Growth Note validation
 
 ## 3C. Content service
 
-- [ ] `getPublishedContent`
-- [ ] `getPublishedContentByRoute`
+- [x] Create content service boundary
+- [x] Create legacy static-content adapter
+- [x] `getPublishedContent`
+- [x] `getPublishedContentByRoute`
 - [ ] `getAdminContent`
 - [ ] `createDraft`
 - [ ] `updateDraft`
@@ -197,28 +199,30 @@ Acceptance:
 
 ## 3D. V1 migration script
 
-- [ ] Extract Garden 5 items
-- [ ] Extract Forest 5 items
-- [ ] Extract Lake 5 items
-- [ ] Extract Ruins 4 items
-- [ ] Preserve IDs where practical
-- [ ] Preserve slugs
-- [ ] Preserve Region
-- [ ] Preserve Content Type
-- [ ] Preserve summaries
-- [ ] Preserve statuses
-- [ ] Preserve full/short detail level
-- [ ] Preserve detail body
-- [ ] Convert Ruins `grewInto`
+- [x] Create deterministic migration tooling foundation
+- [x] Extract Garden 5 items
+- [x] Extract Forest 5 items
+- [x] Extract Lake 5 items
+- [x] Extract Ruins 4 items
+- [x] Preserve IDs as `contents.legacy_id`
+- [x] Preserve slugs
+- [x] Preserve Region
+- [x] Preserve Content Type
+- [x] Preserve summaries
+- [x] Preserve confirmed statuses; block missing Lake Growth Stages
+- [x] Preserve full/short detail level
+- [x] Preserve detail body
+- [x] Convert only Ruins `grewInto`
 - [ ] Seed fixed categories
 - [ ] Seed Version 1 public copy
-- [ ] Produce migration report
+- [x] Produce machine-readable migration report
+- [x] Complete deterministic dry-run verification with no database writes
 
 Acceptance:
 
 - [ ] exactly 19 initial items imported
 - [ ] all old public URLs resolve in Preview
-- [ ] no invented content
+- [x] no invented content in the migration bundle
 - [ ] migration is repeatable
 - [ ] migration does not duplicate records
 

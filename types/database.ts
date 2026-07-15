@@ -249,7 +249,12 @@ export type ContentDatabase = {
       >;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      current_user_is_garden_keeper: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+    };
     Enums: {
       garden_region: RegionName;
       content_type: ContentType;

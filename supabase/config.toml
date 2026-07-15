@@ -1,5 +1,29 @@
 project_id = "the-garden"
 
+[auth]
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = [
+  "http://127.0.0.1:3000/auth/callback",
+  "http://localhost:3000/auth/callback",
+]
+
+# Keep signups closed by default. Temporarily enable this only in Preview for
+# the initial Keeper OAuth bootstrap, then disable it again immediately.
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = false
+
+[auth.sms]
+enable_signup = false
+
+[auth.external.github]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
+redirect_uri = ""
+
 [storage.buckets.cover-images]
 public = false
 file_size_limit = "5MiB"

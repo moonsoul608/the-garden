@@ -243,28 +243,28 @@ Acceptance:
 ### 4A-2. Provider deployment and admin route integration
 
 - [ ] Configure Supabase GitHub provider
-- [ ] Create `/admin` login flow
+- [x] Create `/admin` login flow
 - [ ] Verify GitHub provider identity
 - [ ] Allow only the approved `moonsoul608` account
 - [ ] Prefer immutable GitHub provider ID for authorization
 - [ ] Connect logout helper to the future admin flow
-- [ ] Add unauthorized state
+- [x] Add unauthorized state
 - [ ] Protect admin Server Actions and Route Handlers
-- [ ] Verify client-side state cannot bypass server checks
+- [x] Verify client-side state cannot bypass server checks
 
 ## 4B. Garden Keeper layout
 
-- [ ] Responsive admin shell
-- [ ] Dashboard
+- [x] Responsive admin shell
+- [x] Dashboard
 - [ ] Content navigation
 - [ ] Greenhouse configuration navigation
 - [ ] Notes navigation
 - [ ] Analytics navigation
 - [ ] Settings navigation
 - [ ] Internal notification summary
-- [ ] Keyboard navigation
-- [ ] visible focus
-- [ ] mobile basic-use layout
+- [x] Keyboard navigation
+- [x] visible focus
+- [x] mobile basic-use layout
 
 Acceptance:
 

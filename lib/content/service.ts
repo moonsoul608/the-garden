@@ -1,13 +1,7 @@
 import "server-only";
 
 import type {
-  AdminContentRecord,
-  ContentLanguage,
   ContentQuery,
-  ContentType,
-  CoverMetadata,
-  DetailLevel,
-  GrowthStage,
   PublicContentCard,
   PublicContentDetail,
   PublicHomeCurationItem,
@@ -15,7 +9,6 @@ import type {
 } from "@/types";
 import { createClient } from "@/lib/supabase/server";
 
-import type { ContentValidationResult } from "./errors";
 import { ContentRepositoryError, ContentServiceError } from "./errors";
 import {
   createLegacyContentSource,
@@ -46,42 +39,6 @@ export interface PublicContentService {
     slug: string,
   ): Promise<PublicContentDetail | null>;
   getPublishedHomeCuration(): Promise<PublicHomeCurationItem[]>;
-}
-
-export type CreateDraftInput = {
-  slug?: string | null;
-  region: RegionName;
-  contentType: ContentType;
-  detailLevel: DetailLevel;
-  growthStage: GrowthStage;
-  titleZh: string | null;
-  titleEn: string | null;
-  summaryZh?: string | null;
-  summaryEn?: string | null;
-  bodyZhMarkdown?: string | null;
-  bodyEnMarkdown?: string | null;
-  contentLanguage: ContentLanguage;
-  primaryCategories?: string[];
-  tags?: string[];
-  cover?: CoverMetadata | null;
-};
-
-export type UpdateDraftInput = {
-  contentId: string;
-  changes: Partial<CreateDraftInput>;
-};
-
-export type PublicationPreparation = {
-  content: AdminContentRecord;
-  validation: ContentValidationResult;
-  ready: boolean;
-};
-
-/** Phase 03B defines these write contracts but intentionally implements none. */
-export interface AdminContentService {
-  createDraft(input: CreateDraftInput): Promise<AdminContentRecord>;
-  updateDraft(input: UpdateDraftInput): Promise<AdminContentRecord>;
-  preparePublication(contentId: string): Promise<PublicationPreparation>;
 }
 
 export type ContentServiceDependencies = {

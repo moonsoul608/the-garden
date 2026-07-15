@@ -20,7 +20,7 @@ const allowedLifecycleTransitions: Record<Lifecycle, readonly Lifecycle[]> = {
   Draft: ["Review"],
   Review: ["Draft", "Published"],
   Published: ["Draft", "Review", "Archived"],
-  Archived: ["Published"],
+  Archived: ["Draft"],
 };
 
 type CoverCandidate = {
@@ -126,6 +126,25 @@ export function validateRequiredGrowthStage(
       "Growth Stage is required and must be assigned manually.",
       { field: "growthStage", ...context },
       "blocked",
+    ),
+  ]);
+}
+
+export function validateStableSlug(
+  currentSlug: string | null,
+  nextSlug: string | null,
+  hasBeenPublished: boolean,
+  contentId?: string,
+): ContentValidationResult {
+  if (!hasBeenPublished || currentSlug === nextSlug) {
+    return { valid: true, issues: [] };
+  }
+
+  return finish([
+    error(
+      "immutable_slug",
+      "Slug cannot change after first publication.",
+      { field: "slug", contentId },
     ),
   ]);
 }
@@ -270,6 +289,15 @@ export function validateLifecycleRequirements(
     issues.push(
       error("missing_title", "At least one title is required.", {
         field: "title",
+        contentId: content.id,
+      }),
+    );
+  }
+
+  if (hasText(content.slug) && !SLUG_PATTERN.test(content.slug)) {
+    issues.push(
+      error("invalid_slug", "Slug must use lowercase kebab-case.", {
+        field: "slug",
         contentId: content.id,
       }),
     );

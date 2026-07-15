@@ -17,6 +17,7 @@ export type ContentValidationIssueCode =
   | "unsupported_migration_relation"
   | "missing_growth_note"
   | "unchanged_growth_stage"
+  | "immutable_slug"
   | "duplicate_legacy_id"
   | "duplicate_route";
 

@@ -183,8 +183,8 @@ Acceptance:
 - [x] `getPublishedContent`
 - [x] `getPublishedContentByRoute`
 - [ ] `getAdminContent`
-- [ ] `createDraft`
-- [ ] `updateDraft`
+- [x] `createDraft`
+- [x] `updateDraft`
 - [ ] `moveToReview`
 - [ ] `publishContent`
 - [ ] `archiveContent`
@@ -272,6 +272,16 @@ Acceptance:
 - [ ] admin session works in Preview
 - [ ] no public admin data
 - [ ] accessibility smoke check passes
+
+## 4C. Content write foundation
+
+- [x] Audit `contents`, `content_versions`, database types, and write RLS
+- [x] Add a mutable Draft/Review `content_revisions` workspace
+- [x] Keep `content_versions` append-only
+- [x] Add server-only admin service and write-repository boundaries
+- [x] Add typed `createDraft`, `updateDraft`, and `startDraftRevision` contracts
+- [x] Require verified Garden Keeper authorization at every mutation boundary
+- [x] Prepare optimistic revision concurrency without UI or publishing
 
 ---
 

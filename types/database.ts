@@ -88,6 +88,82 @@ export type ContentDatabaseInsert = {
 
 export type ContentDatabaseUpdate = Partial<ContentDatabaseInsert>;
 
+export type ContentRevisionDatabaseRow = {
+  id: string;
+  content_id: string;
+  lifecycle: "Draft" | "Review";
+  slug: string | null;
+  region: RegionName;
+  content_type: ContentType;
+  detail_level: DetailLevel;
+  growth_stage: GrowthStage;
+  title_zh: string | null;
+  title_en: string | null;
+  summary_zh: string | null;
+  summary_en: string | null;
+  body_zh_markdown: string | null;
+  body_en_markdown: string | null;
+  content_language: ContentLanguage;
+  primary_categories: string[];
+  tags: string[];
+  cover_image_path: string | null;
+  cover_image_alt_zh: string | null;
+  cover_image_alt_en: string | null;
+  featured: boolean;
+  manual_order: number | null;
+  base_content_updated_at: string | null;
+  lock_version: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  updated_by: string;
+};
+
+export type ContentRevisionDatabaseInsert = {
+  id?: string;
+  content_id: string;
+  lifecycle?: "Draft" | "Review";
+  slug?: string | null;
+  region: RegionName;
+  content_type: ContentType;
+  detail_level: DetailLevel;
+  growth_stage: GrowthStage;
+  title_zh?: string | null;
+  title_en?: string | null;
+  summary_zh?: string | null;
+  summary_en?: string | null;
+  body_zh_markdown?: string | null;
+  body_en_markdown?: string | null;
+  content_language: ContentLanguage;
+  primary_categories?: string[];
+  tags?: string[];
+  cover_image_path?: string | null;
+  cover_image_alt_zh?: string | null;
+  cover_image_alt_en?: string | null;
+  featured?: boolean;
+  manual_order?: number | null;
+  base_content_updated_at?: string | null;
+  lock_version?: number;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  updated_by?: string;
+};
+
+export type ContentRevisionDatabaseUpdate = Partial<
+  Omit<
+    ContentRevisionDatabaseInsert,
+    | "id"
+    | "content_id"
+    | "base_content_updated_at"
+    | "lock_version"
+    | "created_at"
+    | "created_by"
+    | "updated_at"
+    | "updated_by"
+  >
+>;
+
 export type GrowthNoteDatabaseRow = {
   id: string;
   content_id: string;
@@ -176,9 +252,6 @@ export type ContentVersionDatabaseInsert = {
   created_by?: string | null;
 };
 
-export type ContentVersionDatabaseUpdate =
-  Partial<ContentVersionDatabaseInsert>;
-
 export type TagDatabaseRow = {
   id: string;
   normalized_name: string;
@@ -217,10 +290,15 @@ export type ContentDatabase = {
         ContentDatabaseInsert,
         ContentDatabaseUpdate
       >;
+      content_revisions: SupabaseTable<
+        ContentRevisionDatabaseRow,
+        ContentRevisionDatabaseInsert,
+        ContentRevisionDatabaseUpdate
+      >;
       content_versions: SupabaseTable<
         ContentVersionDatabaseRow,
         ContentVersionDatabaseInsert,
-        ContentVersionDatabaseUpdate
+        never
       >;
       growth_notes: SupabaseTable<
         GrowthNoteDatabaseRow,
@@ -253,6 +331,14 @@ export type ContentDatabase = {
       current_user_is_garden_keeper: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
+      };
+      create_content_draft: {
+        Args: { p_draft: Json };
+        Returns: ContentRevisionDatabaseRow;
+      };
+      start_content_draft_revision: {
+        Args: { p_content_id: string };
+        Returns: ContentRevisionDatabaseRow;
       };
     };
     Enums: {

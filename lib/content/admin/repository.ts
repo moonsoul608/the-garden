@@ -21,6 +21,8 @@ import type {
   DraftContentFields,
   DraftListFilters,
   DraftRevision,
+  PublicationReceipt,
+  PublishReviewInput,
   ReviewSlugConflict,
 } from "./contracts";
 import {
@@ -115,6 +117,7 @@ export interface ContentWriteRepository {
   ): Promise<DraftRevision>;
   getReviewPreparationContext(
     revision: DraftRevision,
+    operation?: "prepareReview" | "publishReview",
   ): Promise<ReviewPreparationContext>;
   submitForReview(
     current: DraftRevision,
@@ -124,6 +127,7 @@ export interface ContentWriteRepository {
     current: DraftRevision,
     expectedLockVersion: number,
   ): Promise<DraftRevision>;
+  publishReview(input: PublishReviewInput): Promise<PublicationReceipt>;
   startDraftRevision(contentId: string): Promise<DraftRevision>;
 }
 
@@ -164,6 +168,42 @@ function mapRevision(row: ContentRevisionDatabaseRow): DraftRevision {
     manualOrder: row.manual_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+function mapPublicationReceipt(value: Json): PublicationReceipt {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ContentMutationError("repository_failure", "publishReview");
+  }
+
+  const {
+    contentId,
+    revisionId,
+    versionId,
+    sourceLockVersion,
+    publishedAt,
+    publishedBy,
+  } = value;
+
+  if (
+    typeof contentId !== "string" ||
+    typeof revisionId !== "string" ||
+    typeof versionId !== "string" ||
+    !Number.isSafeInteger(sourceLockVersion) ||
+    (sourceLockVersion as number) < 1 ||
+    typeof publishedAt !== "string" ||
+    typeof publishedBy !== "string"
+  ) {
+    throw new ContentMutationError("repository_failure", "publishReview");
+  }
+
+  return {
+    contentId,
+    revisionId,
+    versionId,
+    sourceLockVersion: sourceLockVersion as number,
+    publishedAt,
+    publishedBy,
   };
 }
 
@@ -385,6 +425,7 @@ export function createContentWriteRepository(
 
   async function getReviewPreparationContext(
     revision: DraftRevision,
+    operation: "prepareReview" | "publishReview" = "prepareReview",
   ): Promise<ReviewPreparationContext> {
     const publishedResult = await client
       .from("contents")
@@ -392,7 +433,7 @@ export function createContentWriteRepository(
       .eq("id", revision.contentId)
       .maybeSingle();
     if (publishedResult.error) {
-      throwRepositoryError(publishedResult.error, "prepareReview");
+      throwRepositoryError(publishedResult.error, operation);
     }
 
     let slugConflicts: ReviewSlugConflict[] = [];
@@ -404,7 +445,7 @@ export function createContentWriteRepository(
         .eq("slug", revision.slug)
         .neq("id", revision.contentId);
       if (conflictResult.error) {
-        throwRepositoryError(conflictResult.error, "prepareReview");
+        throwRepositoryError(conflictResult.error, operation);
       }
       slugConflicts = (conflictResult.data ?? []).map((conflict) => ({
         contentId: conflict.id,
@@ -417,7 +458,7 @@ export function createContentWriteRepository(
       .select("content_id,from_stage,to_stage,note_zh,note_en,is_public")
       .eq("content_id", revision.contentId);
     if (growthNoteResult.error) {
-      throwRepositoryError(growthNoteResult.error, "prepareReview");
+      throwRepositoryError(growthNoteResult.error, operation);
     }
     const growthNotes = (growthNoteResult.data ?? []).map((row) => {
       const note = row as Pick<
@@ -446,7 +487,7 @@ export function createContentWriteRepository(
       )
       .eq("source_content_id", revision.contentId);
     if (sourceRelationResult.error) {
-      throwRepositoryError(sourceRelationResult.error, "prepareReview");
+      throwRepositoryError(sourceRelationResult.error, operation);
     }
     const targetRelationResult = await client
       .from("content_relations")
@@ -455,7 +496,7 @@ export function createContentWriteRepository(
       )
       .eq("target_content_id", revision.contentId);
     if (targetRelationResult.error) {
-      throwRepositoryError(targetRelationResult.error, "prepareReview");
+      throwRepositoryError(targetRelationResult.error, operation);
     }
 
     const relationRows = [
@@ -492,7 +533,7 @@ export function createContentWriteRepository(
         .select("id")
         .in("id", endpointIds);
       if (endpointResult.error) {
-        throwRepositoryError(endpointResult.error, "prepareReview");
+        throwRepositoryError(endpointResult.error, operation);
       }
       existingContentIds = (endpointResult.data ?? []).map(({ id }) => id);
     }
@@ -512,7 +553,7 @@ export function createContentWriteRepository(
         .select("tag_id")
         .eq("content_id", revision.contentId);
       if (bindingResult.error) {
-        throwRepositoryError(bindingResult.error, "prepareReview");
+        throwRepositoryError(bindingResult.error, operation);
       }
       const tagIds = (bindingResult.data ?? []).map(({ tag_id }) => tag_id);
       if (tagIds.length > 0) {
@@ -521,7 +562,7 @@ export function createContentWriteRepository(
           .select("display_name")
           .in("id", tagIds);
         if (tagResult.error) {
-          throwRepositoryError(tagResult.error, "prepareReview");
+          throwRepositoryError(tagResult.error, operation);
         }
         publishedTags = (tagResult.data ?? [])
           .map(({ display_name }) => display_name)
@@ -590,6 +631,19 @@ export function createContentWriteRepository(
     );
   }
 
+  async function publishReview(
+    input: PublishReviewInput,
+  ): Promise<PublicationReceipt> {
+    const result = await client.rpc("publish_review_revision", {
+      p_content_id: input.contentId,
+      p_revision_id: input.revisionId,
+      p_expected_lock_version: input.expectedLockVersion,
+    });
+
+    if (result.error) throwRepositoryError(result.error, "publishReview");
+    return mapPublicationReceipt(result.data);
+  }
+
   async function startDraftRevision(
     contentId: string,
   ): Promise<DraftRevision> {
@@ -620,6 +674,7 @@ export function createContentWriteRepository(
     getReviewPreparationContext,
     submitForReview,
     returnToDraft,
+    publishReview,
     startDraftRevision,
   };
 }

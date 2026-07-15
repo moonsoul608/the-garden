@@ -6,8 +6,13 @@ export type ContentMutationErrorCode =
   | "revision_conflict"
   | "revision_not_editable"
   | "invalid_revision_state"
+  | "invalid_content_state"
   | "revision_already_exists"
   | "slug_conflict"
+  | "immutable_slug"
+  | "immutable_region"
+  | "publication_validation_failed"
+  | "publishing_disabled"
   | "mutation_denied"
   | "invalid_concurrency_token"
   | "repository_failure";
@@ -22,6 +27,7 @@ export type ContentMutationOperation =
   | "prepareReview"
   | "submitForReview"
   | "returnToDraft"
+  | "publishReview"
   | "startDraftRevision";
 
 const publicMessages: Record<ContentMutationErrorCode, string> = {
@@ -30,8 +36,13 @@ const publicMessages: Record<ContentMutationErrorCode, string> = {
   revision_conflict: "The Draft changed after this edit began.",
   revision_not_editable: "This revision is read-only.",
   invalid_revision_state: "The revision is not in the required workflow state.",
+  invalid_content_state: "The content item is not in a publishable state.",
   revision_already_exists: "This content item already has an active revision.",
   slug_conflict: "That Region and slug are already in use.",
+  immutable_slug: "The published slug cannot be changed.",
+  immutable_region: "The published Region cannot be changed.",
+  publication_validation_failed: "The Review no longer passes publication validation.",
+  publishing_disabled: "Publishing is disabled for the current content source mode.",
   mutation_denied: "The content mutation was denied.",
   invalid_concurrency_token: "The revision concurrency token is invalid.",
   repository_failure: "The content mutation could not be completed.",
@@ -49,6 +60,7 @@ export class ContentMutationError extends Error {
 
 type DatabaseErrorShape = {
   code?: unknown;
+  message?: unknown;
 };
 
 export function mapContentMutationDatabaseError(
@@ -60,6 +72,42 @@ export function mapContentMutationDatabaseError(
       ? (error as DatabaseErrorShape)
       : null;
   const code = typeof databaseError?.code === "string" ? databaseError.code : "";
+  const message =
+    typeof databaseError?.message === "string" ? databaseError.message : "";
+
+  if (operation === "publishReview") {
+    if (code === "P0002" && message === "content_not_found") {
+      return new ContentMutationError("content_not_found", operation);
+    }
+
+    if (code === "P0002" && message === "revision_not_found") {
+      return new ContentMutationError("revision_not_found", operation);
+    }
+
+    if (code === "40001" && message === "revision_conflict") {
+      return new ContentMutationError("revision_conflict", operation);
+    }
+
+    if (code === "22023") {
+      const knownCode =
+        message === "invalid_concurrency_token" ||
+        message === "invalid_revision_state" ||
+        message === "invalid_content_state" ||
+        message === "immutable_slug" ||
+        message === "immutable_region" ||
+        message === "publication_validation_failed"
+          ? message
+          : null;
+
+      if (knownCode) {
+        return new ContentMutationError(knownCode, operation);
+      }
+    }
+
+    if (code === "23505" && message === "slug_conflict") {
+      return new ContentMutationError("slug_conflict", operation);
+    }
+  }
 
   if (code === "42501") {
     return new ContentMutationError("mutation_denied", operation);
@@ -69,7 +117,7 @@ export function mapContentMutationDatabaseError(
     return new ContentMutationError("content_not_found", operation);
   }
 
-  if (code === "23505") {
+  if (code === "23505" && operation !== "publishReview") {
     return new ContentMutationError(
       operation === "startDraftRevision"
         ? "revision_already_exists"

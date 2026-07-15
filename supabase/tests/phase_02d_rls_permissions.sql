@@ -518,7 +518,6 @@ set local role authenticated;
 do $$
 declare
   visible_count integer;
-  affected_count integer;
   denied boolean;
   private_table text;
 begin
@@ -552,12 +551,17 @@ begin
     end if;
   end loop;
 
-  update public.contents
-  set title_en = 'Unauthorized update'
-  where id = '00000000-0000-0000-0000-000000002001';
-  get diagnostics affected_count = row_count;
-  if affected_count <> 0 then
-    raise exception 'Phase 02D test failed: unapproved authenticated user updated Published content';
+  denied := false;
+  begin
+    update public.contents
+    set title_en = 'Unauthorized update'
+    where id = '00000000-0000-0000-0000-000000002001';
+  exception
+    when insufficient_privilege then
+      denied := true;
+  end;
+  if not denied then
+    raise exception 'Phase 02D test failed: unapproved authenticated user retained direct content UPDATE';
   end if;
 
   denied := false;

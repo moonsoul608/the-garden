@@ -23,6 +23,7 @@ export type ContentValidationIssueCode =
   | "missing_growth_note"
   | "unchanged_growth_stage"
   | "immutable_slug"
+  | "immutable_region"
   | "duplicate_legacy_id"
   | "duplicate_route";
 

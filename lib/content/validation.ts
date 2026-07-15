@@ -201,6 +201,25 @@ export function validateStableSlug(
   ]);
 }
 
+export function validateStableRegion(
+  currentRegion: RegionName,
+  nextRegion: RegionName,
+  hasBeenPublished: boolean,
+  contentId?: string,
+): ContentValidationResult {
+  if (!hasBeenPublished || currentRegion === nextRegion) {
+    return { valid: true, issues: [] };
+  }
+
+  return finish([
+    error(
+      "immutable_region",
+      "Region cannot change after first publication until redirects are supported.",
+      { field: "region", contentId },
+    ),
+  ]);
+}
+
 export function validateSlugAvailability(
   hasConflict: boolean,
   contentId?: string,

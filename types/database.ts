@@ -355,6 +355,14 @@ export type ContentDatabase = {
         Args: { p_content_id: string };
         Returns: ContentRevisionDatabaseRow;
       };
+      publish_review_revision: {
+        Args: {
+          p_content_id: string;
+          p_revision_id: string;
+          p_expected_lock_version: number;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       garden_region: RegionName;

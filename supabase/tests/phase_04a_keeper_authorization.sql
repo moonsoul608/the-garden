@@ -275,22 +275,26 @@ set local role authenticated;
 
 do $$
 declare
-  affected_count integer;
   denied boolean := false;
 begin
   if public.current_user_is_garden_keeper() then
     raise exception 'Phase 04A-2 test failed: non-Keeper authenticated user was authorized';
   end if;
 
-  update public.contents
-  set title_en = 'Unauthorized non-Keeper update'
-  where id = '00000000-0000-4000-8000-000000004c01';
-  get diagnostics affected_count = row_count;
+  begin
+    update public.contents
+    set title_en = 'Unauthorized non-Keeper update'
+    where id = '00000000-0000-4000-8000-000000004c01';
+  exception
+    when insufficient_privilege then
+      denied := true;
+  end;
 
-  if affected_count <> 0 then
-    raise exception 'Phase 04A-2 test failed: non-Keeper bypassed content RLS';
+  if not denied then
+    raise exception 'Phase 04A-2 test failed: non-Keeper retained direct content UPDATE';
   end if;
 
+  denied := false;
   begin
     execute 'select count(*) from private.garden_keeper_identities';
   exception
@@ -367,18 +371,34 @@ set local role authenticated;
 do $$
 declare
   affected_count integer;
+  denied boolean := false;
+  original_title text;
 begin
   if not public.current_user_is_garden_keeper() then
     raise exception 'Phase 04A-2 test failed: approved Keeper was denied';
   end if;
 
-  update public.contents
-  set title_en = 'Authorized Keeper update'
+  select title_en
+  into original_title
+  from public.contents
   where id = '00000000-0000-4000-8000-000000004c01';
-  get diagnostics affected_count = row_count;
 
-  if affected_count <> 1 then
-    raise exception 'Phase 04A-2 test failed: Keeper content RLS update affected % rows', affected_count;
+  begin
+    update public.contents
+    set title_en = 'Direct Keeper update must fail after Phase 04D'
+    where id = '00000000-0000-4000-8000-000000004c01';
+  exception
+    when insufficient_privilege then
+      denied := true;
+  end;
+
+  if not denied then
+    raise exception 'Phase 04A-2 test failed: Keeper retained direct content UPDATE after Phase 04D';
+  end if;
+
+  if (select title_en from public.contents where id = '00000000-0000-4000-8000-000000004c01')
+     is distinct from original_title then
+    raise exception 'Phase 04A-2 test failed: denied direct Keeper UPDATE changed the projection';
   end if;
 
   insert into storage.objects (id, bucket_id, name, metadata)

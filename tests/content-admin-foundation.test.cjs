@@ -29,6 +29,10 @@ const reviewWorkflowMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260715233000_phase_04c_review_workflow.sql",
 );
+const atomicPublishingMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260715234500_phase_04d_atomic_publishing.sql",
+);
 const originalLoad = Module._load;
 const originalResolveFilename = Module._resolveFilename;
 
@@ -158,6 +162,18 @@ function reviewContext(overrides = {}) {
   };
 }
 
+function publicationReceipt(overrides = {}) {
+  return {
+    contentId: "content-id",
+    revisionId: "revision-id",
+    versionId: "version-id",
+    sourceLockVersion: 4,
+    publishedAt: "2026-07-15T12:00:00.000Z",
+    publishedBy: keeper.id,
+    ...overrides,
+  };
+}
+
 function repositoryStub(overrides = {}) {
   return {
     createDraft: async () => {
@@ -176,6 +192,9 @@ function repositoryStub(overrides = {}) {
     },
     returnToDraft: async () => {
       throw new Error("Unexpected returnToDraft call");
+    },
+    publishReview: async () => {
+      throw new Error("Unexpected publishReview call");
     },
     startDraftRevision: async () => {
       throw new Error("Unexpected startDraftRevision call");
@@ -203,6 +222,12 @@ function mutationAttempts(service) {
       }),
     () =>
       service.returnToDraft({
+        contentId: "content-id",
+        revisionId: "revision-id",
+        expectedLockVersion: 1,
+      }),
+    () =>
+      service.publishReview({
         contentId: "content-id",
         revisionId: "revision-id",
         expectedLockVersion: 1,
@@ -647,6 +672,196 @@ test("returns revision_conflict for a stale Review submission lock", async () =>
   );
 });
 
+test("allows a Keeper to publish a valid Review through the atomic command", async () => {
+  const current = reviewReadyRevision({
+    lifecycle: "Review",
+    lockVersion: 4,
+    reviewSubmittedAt: "2026-07-15T11:00:00.000Z",
+  });
+  const input = {
+    contentId: current.contentId,
+    revisionId: current.revisionId,
+    expectedLockVersion: 4,
+  };
+  const expected = publicationReceipt();
+  let received;
+  let validationContextCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    repository: repositoryStub({
+      getDraftRevision: async (contentId, revisionId) => {
+        assert.equal(contentId, current.contentId);
+        assert.equal(revisionId, current.revisionId);
+        return current;
+      },
+      getReviewPreparationContext: async (revision) => {
+        validationContextCalls += 1;
+        assert.equal(revision, current);
+        return reviewContext();
+      },
+      publishReview: async (publishInput) => {
+        received = publishInput;
+        return expected;
+      },
+    }),
+  });
+
+  const result = await service.publishReview(input);
+
+  assert.deepEqual(result, expected);
+  assert.deepEqual(received, input);
+  assert.equal(validationContextCalls, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), expected);
+});
+
+test("denies a non-Keeper publish before repository access", async () => {
+  let repositoryCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => {
+      throw new GardenKeeperRequiredError();
+    },
+    sourceMode: "database",
+    repository: repositoryStub({
+      getDraftRevision: async () => {
+        repositoryCalls += 1;
+      },
+      publishReview: async () => {
+        repositoryCalls += 1;
+      },
+    }),
+  });
+
+  await assert.rejects(
+    service.publishReview({
+      contentId: "content-id",
+      revisionId: "revision-id",
+      expectedLockVersion: 4,
+    }),
+    GardenKeeperRequiredError,
+  );
+  assert.equal(repositoryCalls, 0);
+});
+
+test("rejects a Draft publish before the atomic repository command", async () => {
+  const current = reviewReadyRevision({ lifecycle: "Draft", lockVersion: 4 });
+  let publishCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      publishReview: async () => {
+        publishCalls += 1;
+      },
+    }),
+  });
+
+  await assert.rejects(
+    service.publishReview({
+      contentId: current.contentId,
+      revisionId: current.revisionId,
+      expectedLockVersion: 4,
+    }),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "invalid_revision_state");
+      assert.equal(error.operation, "publishReview");
+      return true;
+    },
+  );
+  assert.equal(publishCalls, 0);
+});
+
+test("disables publishing while the content source is legacy", async () => {
+  let repositoryCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "legacy",
+    repository: repositoryStub({
+      getDraftRevision: async () => {
+        repositoryCalls += 1;
+      },
+      publishReview: async () => {
+        repositoryCalls += 1;
+      },
+    }),
+  });
+
+  await assert.rejects(
+    service.publishReview({
+      contentId: "content-id",
+      revisionId: "revision-id",
+      expectedLockVersion: 4,
+    }),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "publishing_disabled");
+      assert.equal(error.operation, "publishReview");
+      return true;
+    },
+  );
+  assert.equal(repositoryCalls, 0);
+});
+
+test("lets an idempotent publish retry reach the RPC after Review consumption", async () => {
+  const input = {
+    contentId: "content-id",
+    revisionId: "revision-id",
+    expectedLockVersion: 4,
+  };
+  const expected = publicationReceipt();
+  let received;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    repository: repositoryStub({
+      getDraftRevision: async () => null,
+      publishReview: async (publishInput) => {
+        received = publishInput;
+        return expected;
+      },
+    }),
+  });
+
+  assert.deepEqual(await service.publishReview(input), expected);
+  assert.deepEqual(received, input);
+});
+
+test("rejects a stale publish lock before validation or repository access", async () => {
+  const current = reviewReadyRevision({ lifecycle: "Review", lockVersion: 5 });
+  const input = {
+    contentId: current.contentId,
+    revisionId: current.revisionId,
+    expectedLockVersion: 4,
+  };
+  let validationCalls = 0;
+  let publishCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      getReviewPreparationContext: async () => {
+        validationCalls += 1;
+        return reviewContext();
+      },
+      publishReview: async () => {
+        publishCalls += 1;
+      },
+    }),
+  });
+
+  await assert.rejects(service.publishReview(input), (error) => {
+    assert.ok(error instanceof ContentMutationError);
+    assert.equal(error.code, "revision_conflict");
+    assert.equal(error.operation, "publishReview");
+    return true;
+  });
+  assert.equal(validationCalls, 0);
+  assert.equal(publishCalls, 0);
+});
+
 test("Review transitions leave the Published projection unchanged", async () => {
   const publishedProjection = Object.freeze(
     reviewReadyRevision({
@@ -798,6 +1013,46 @@ test("protects Draft queries and passes structured filters", async () => {
   assert.equal(repositoryCalls, 0);
 });
 
+test("Atomic publishing migration uses one locked, narrow publish function", () => {
+  const migration = fs.readFileSync(atomicPublishingMigrationPath, "utf8");
+  const functionStart = migration.search(
+    /create(?: or replace)? function public\.publish_review_revision/i,
+  );
+  const functionEnd = migration.indexOf(
+    "comment on function public.publish_review_revision",
+    functionStart,
+  );
+
+  assert.notEqual(functionStart, -1);
+  assert.ok(functionEnd > functionStart);
+  const publishFunction = migration.slice(functionStart, functionEnd);
+
+  assert.match(publishFunction, /security definer/i);
+  assert.match(publishFunction, /private\.is_garden_keeper\(\)/i);
+  assert.match(publishFunction, /for update/i);
+  assert.match(publishFunction, /update\s+public\.contents/i);
+  assert.match(publishFunction, /insert into\s+public\.content_versions/i);
+  assert.match(publishFunction, /delete from\s+public\.content_revisions/i);
+  assert.ok(
+    publishFunction.search(/insert into\s+public\.content_versions/i) <
+      publishFunction.search(/delete from\s+public\.content_revisions/i),
+  );
+  assert.match(publishFunction, /source_revision_id/i);
+  assert.match(publishFunction, /source_lock_version/i);
+  assert.match(
+    migration,
+    /revoke\s+update(?:\s*,\s*delete)?\s+on(?:\s+table)?\s+public\.contents\s+from\s+authenticated/i,
+  );
+  assert.match(
+    migration,
+    /revoke\s+insert\s+on(?:\s+table)?\s+public\.content_versions\s+from\s+authenticated/i,
+  );
+  assert.match(
+    migration,
+    /grant\s+execute\s+on\s+function\s+public\.publish_review_revision[\s\S]*?to\s+authenticated/i,
+  );
+});
+
 test("Draft clone migration preserves source history and never writes Published data", () => {
   const migration = fs.readFileSync(draftManagementMigrationPath, "utf8");
   const functionStart = migration.indexOf(
@@ -828,6 +1083,84 @@ test("Review migration records workflow actors and enforces immutability only in
   assert.match(migration, /new\.lock_version = old\.lock_version \+ 1/);
   assert.doesNotMatch(migration, /update\s+public\.contents/i);
   assert.doesNotMatch(migration, /insert into\s+public\.content_versions/i);
+});
+
+test("publish repository calls the narrow RPC and returns a serializable receipt", async () => {
+  const input = {
+    contentId: "content-id",
+    revisionId: "revision-id",
+    expectedLockVersion: 4,
+  };
+  const expected = publicationReceipt();
+  const client = {
+    rpc: async (name, args) => {
+      assert.equal(name, "publish_review_revision");
+      assert.deepEqual(args, {
+        p_content_id: input.contentId,
+        p_revision_id: input.revisionId,
+        p_expected_lock_version: input.expectedLockVersion,
+      });
+      return { data: expected, error: null };
+    },
+  };
+  const repository = createContentWriteRepository(client);
+
+  const result = await repository.publishReview(input);
+
+  assert.deepEqual(result, expected);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), expected);
+});
+
+test("maps publish serialization conflicts to a typed revision conflict", async () => {
+  const client = {
+    rpc: async () => ({
+      data: null,
+      error: { code: "40001", message: "revision_conflict" },
+    }),
+  };
+  const repository = createContentWriteRepository(client);
+
+  await assert.rejects(
+    repository.publishReview({
+      contentId: "content-id",
+      revisionId: "revision-id",
+      expectedLockVersion: 4,
+    }),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "revision_conflict");
+      assert.equal(error.operation, "publishReview");
+      return true;
+    },
+  );
+});
+
+test("maps denied publish RPC errors without exposing database details", async () => {
+  const client = {
+    rpc: async () => ({
+      data: null,
+      error: {
+        code: "42501",
+        message: "private authorization policy and table detail",
+      },
+    }),
+  };
+  const repository = createContentWriteRepository(client);
+
+  await assert.rejects(
+    repository.publishReview({
+      contentId: "content-id",
+      revisionId: "revision-id",
+      expectedLockVersion: 4,
+    }),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "mutation_denied");
+      assert.equal(error.operation, "publishReview");
+      assert.doesNotMatch(error.message, /private|policy|table detail/i);
+      return true;
+    },
+  );
 });
 
 test("maps repository database errors to safe typed mutation errors", async () => {

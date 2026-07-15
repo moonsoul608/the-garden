@@ -3,6 +3,10 @@ import "server-only";
 import type { AuthenticatedUser } from "@/lib/auth";
 import { requireGardenKeeper } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import {
+  getContentSourceMode,
+  type ContentSourceMode,
+} from "@/lib/content/service";
 import type { ContentValidationResult } from "@/lib/content/errors";
 import { assertContentValid } from "@/lib/content/errors";
 import {
@@ -13,6 +17,7 @@ import {
   validateDraftLifecycleMutation,
   validateReviewTaxonomy,
   validateSlugAvailability,
+  validateStableRegion,
   validateStableSlug,
   validateTags,
 } from "@/lib/content/validation";
@@ -24,6 +29,8 @@ import type {
   DraftListFilters,
   DraftRevision,
   PrepareReviewInput,
+  PublicationReceipt,
+  PublishReviewInput,
   ReviewCoverStatus,
   ReviewDifferenceSummary,
   ReviewReadinessReport,
@@ -45,6 +52,7 @@ export type AdminContentServiceDependencies = {
   authorize?: AuthorizeAdminRequest;
   repository?: ContentWriteRepository;
   repositoryFactory?: () => Promise<ContentWriteRepository>;
+  sourceMode?: ContentSourceMode;
 };
 
 function normalizeOptionalText(value: string | null | undefined): string | null {
@@ -179,7 +187,11 @@ const MISSING_REQUIREMENT_CODES = new Set([
 
 function assertConcurrencyToken(
   expectedLockVersion: number,
-  operation: "updateDraft" | "submitForReview" | "returnToDraft",
+  operation:
+    | "updateDraft"
+    | "submitForReview"
+    | "returnToDraft"
+    | "publishReview",
 ): void {
   if (
     !Number.isSafeInteger(expectedLockVersion) ||
@@ -303,6 +315,56 @@ function buildReviewReadinessReport(
       context.publishedProjection,
     ),
   };
+}
+
+function validatePublicationCandidate(
+  current: DraftRevision,
+  context: ReviewPreparationContext,
+): ContentValidationResult {
+  const normalizedCandidate = normalizeCreateDraft(current);
+  const validationCandidate = toValidationCandidate(
+    normalizedCandidate,
+    current.contentId,
+  );
+  const publishedProjection = context.publishedProjection;
+
+  return mergeValidationResults(
+    validateLifecycleTransition(current.lifecycle, "Published"),
+    validateLifecycleRequirements(validationCandidate, "Published"),
+    validateReviewTaxonomy({
+      id: current.contentId,
+      region: normalizedCandidate.region,
+      contentType: normalizedCandidate.contentType,
+      primaryCategories: normalizedCandidate.primaryCategories,
+    }),
+    validateTags(normalizedCandidate.tags, current.contentId),
+    validateSlugAvailability(
+      context.slugConflicts.length > 0,
+      current.contentId,
+    ),
+    validateStableSlug(
+      publishedProjection?.slug ?? null,
+      normalizedCandidate.slug,
+      publishedProjection !== null,
+      current.contentId,
+    ),
+    validateStableRegion(
+      publishedProjection?.region ?? normalizedCandidate.region,
+      normalizedCandidate.region,
+      publishedProjection !== null,
+      current.contentId,
+    ),
+    validateGrowthStageConsistency(
+      publishedProjection?.growthStage ?? null,
+      normalizedCandidate.growthStage,
+      context.growthNotes,
+      current.contentId,
+    ),
+    validateContentRelations(
+      context.relations,
+      new Set(context.existingContentIds),
+    ),
+  );
 }
 
 async function createDefaultRepository(): Promise<ContentWriteRepository> {
@@ -492,6 +554,54 @@ export function createAdminContentService(
     );
   }
 
+  async function publishReview(
+    input: PublishReviewInput,
+  ): Promise<PublicationReceipt> {
+    await authorize();
+
+    let sourceMode: ContentSourceMode;
+    try {
+      sourceMode = dependencies.sourceMode ?? getContentSourceMode();
+    } catch {
+      throw new ContentMutationError("publishing_disabled", "publishReview");
+    }
+    if (sourceMode === "legacy") {
+      throw new ContentMutationError("publishing_disabled", "publishReview");
+    }
+
+    assertConcurrencyToken(input.expectedLockVersion, "publishReview");
+
+    const repository = await getRepository();
+    const revision = await repository.getDraftRevision(
+      input.contentId,
+      input.revisionId,
+    );
+
+    if (revision) {
+      if (revision.lifecycle !== "Review") {
+        throw new ContentMutationError(
+          "invalid_revision_state",
+          "publishReview",
+        );
+      }
+
+      if (revision.lockVersion !== input.expectedLockVersion) {
+        throw new ContentMutationError("revision_conflict", "publishReview");
+      }
+
+      const context = await repository.getReviewPreparationContext(
+        revision,
+        "publishReview",
+      );
+      assertContentValid(validatePublicationCandidate(revision, context));
+    }
+
+    // A consumed Review is intentionally allowed through. The atomic RPC is
+    // the only authority that can distinguish an idempotent retry from a
+    // missing or conflicting publication request.
+    return repository.publishReview(input);
+  }
+
   async function startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision> {
@@ -517,6 +627,7 @@ export function createAdminContentService(
     prepareReview,
     submitForReview,
     returnToDraft,
+    publishReview,
     startDraftRevision,
   };
 }

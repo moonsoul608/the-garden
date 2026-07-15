@@ -73,6 +73,22 @@ export type ReviewTransitionInput = {
   expectedLockVersion: number;
 };
 
+export type PublishReviewInput = {
+  contentId: string;
+  revisionId: string;
+  expectedLockVersion: number;
+};
+
+/** Primitive-only receipt safe to cross a future Server Action boundary. */
+export type PublicationReceipt = Readonly<{
+  contentId: string;
+  revisionId: string;
+  versionId: string;
+  sourceLockVersion: number;
+  publishedAt: string;
+  publishedBy: string;
+}>;
+
 export type PrepareReviewInput = Pick<
   ReviewTransitionInput,
   "contentId" | "revisionId"
@@ -140,6 +156,7 @@ export interface AdminContentService {
   prepareReview(input: PrepareReviewInput): Promise<ReviewReadinessReport>;
   submitForReview(input: ReviewTransitionInput): Promise<DraftRevision>;
   returnToDraft(input: ReviewTransitionInput): Promise<DraftRevision>;
+  publishReview(input: PublishReviewInput): Promise<PublicationReceipt>;
   startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision>;

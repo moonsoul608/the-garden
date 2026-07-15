@@ -186,7 +186,7 @@ Acceptance:
 - [x] `createDraft`
 - [x] `updateDraft`
 - [ ] `moveToReview`
-- [ ] `publishContent`
+- [x] `publishContent`
 - [ ] `archiveContent`
 - [ ] `restoreArchivedContent`
 - [ ] `deleteArchivedContent`
@@ -304,6 +304,19 @@ Acceptance:
 - [x] Record server-derived submission and return actors/timestamps
 - [x] Preserve optimistic locking and keep Published projections/version history unchanged
 - [x] Verify Review authorization, validation, immutability, transitions, and conflicts
+
+## 4D-1. Atomic publishing
+
+- [x] Add the narrow Keeper-only `publish_review_revision` RPC
+- [x] Lock and validate the content projection and Review revision atomically
+- [x] Preserve stable slugs, Regions, original publication time, and immutable cover references
+- [x] Synchronize normalized public tags inside the publication transaction
+- [x] Create one immutable version snapshot and consume Review only after it succeeds
+- [x] Return a durable receipt so identical retries are idempotent and mismatches conflict
+- [x] Add the typed Admin Content Service and Publish Repository boundary
+- [x] Remove direct authenticated Published-projection and version-write bypasses
+- [x] Add application tests and a rollback-only SQL integration test
+- [ ] Apply the migration and execute the SQL integration test in Preview
 
 ---
 

@@ -232,12 +232,22 @@ Acceptance:
 
 ## 4A. Authentication
 
+### 4A-1. Auth Foundation
+
+- [x] Add Auth foundation code structure
+- [x] Add PKCE callback with authorization-code exchange
+- [x] Add cookie-backed session handling and refresh synchronization
+- [x] Add server-only current-user, logout, and safe redirect helpers
+- [x] Add boolean-only Garden Keeper authorization foundation
+
+### 4A-2. Provider deployment and admin route integration
+
 - [ ] Configure Supabase GitHub provider
 - [ ] Create `/admin` login flow
 - [ ] Verify GitHub provider identity
 - [ ] Allow only the approved `moonsoul608` account
 - [ ] Prefer immutable GitHub provider ID for authorization
-- [ ] Add logout
+- [ ] Connect logout helper to the future admin flow
 - [ ] Add unauthorized state
 - [ ] Protect admin Server Actions and Route Handlers
 - [ ] Verify client-side state cannot bypass server checks

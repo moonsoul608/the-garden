@@ -295,6 +295,16 @@ Acceptance:
 - [x] Reject direct Draft-to-Published or Draft-to-Archived mutation
 - [x] Verify Draft management authorization, lifecycle, and concurrency tests
 
+## 4C-3. Review workflow
+
+- [x] Add Keeper-only `prepareReview`, `submitForReview`, and `returnToDraft`
+- [x] Re-run shared server validation before Draft-to-Review submission
+- [x] Report normalized data, missing requirements, slug and cover status, Growth Note consistency, relation issues, and Published differences
+- [x] Make Review revisions read-only in both the service and database audit trigger
+- [x] Record server-derived submission and return actors/timestamps
+- [x] Preserve optimistic locking and keep Published projections/version history unchanged
+- [x] Verify Review authorization, validation, immutability, transitions, and conflicts
+
 ---
 
 # Phase 5 — Core content administration

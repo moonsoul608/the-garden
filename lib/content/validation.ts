@@ -2,9 +2,11 @@ import type {
   ContentLanguage,
   ContentRecord,
   ContentRelation,
+  ContentType,
   GrowthNote,
   GrowthStage,
   Lifecycle,
+  RegionName,
   RelationType,
   V1MigrationBundle,
 } from "@/types";
@@ -15,6 +17,39 @@ import type {
 } from "./errors";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const fixedTaxonomy: Record<
+  RegionName,
+  { contentType: ContentType; categories: ReadonlySet<string> }
+> = {
+  Garden: {
+    contentType: "Seed",
+    categories: new Set(["Psychology", "AI", "Coding", "Design & Making"]),
+  },
+  Forest: {
+    contentType: "Question",
+    categories: new Set([
+      "Mind & Behavior",
+      "Humans & AI",
+      "Design & Experience",
+      "Stories & Memory",
+    ]),
+  },
+  Lake: {
+    contentType: "Reflection",
+    categories: new Set([
+      "Music",
+      "Games",
+      "Films",
+      "Books & Words",
+      "Internet",
+    ]),
+  },
+  Ruins: {
+    contentType: "Trace",
+    categories: new Set(["Drafts", "Attempts", "Mistakes"]),
+  },
+};
 
 const allowedLifecycleTransitions: Record<Lifecycle, readonly Lifecycle[]> = {
   Draft: ["Review"],
@@ -66,6 +101,13 @@ export type RelationCandidate = Pick<
 export type RelationValidationContext = {
   existingRelations?: readonly RelationCandidate[];
   existingContentIds?: ReadonlySet<string>;
+};
+
+export type ReviewTaxonomyCandidate = {
+  id: string;
+  region: RegionName;
+  contentType: ContentType;
+  primaryCategories: readonly string[];
 };
 
 function hasText(value: string | null | undefined): value is string {
@@ -157,6 +199,88 @@ export function validateStableSlug(
       { field: "slug", contentId },
     ),
   ]);
+}
+
+export function validateSlugAvailability(
+  hasConflict: boolean,
+  contentId?: string,
+): ContentValidationResult {
+  if (!hasConflict) {
+    return { valid: true, issues: [] };
+  }
+
+  return finish([
+    error(
+      "slug_conflict",
+      "The proposed Region and slug are already in use.",
+      { field: "slug", contentId },
+    ),
+  ]);
+}
+
+export function validateReviewTaxonomy(
+  content: ReviewTaxonomyCandidate,
+): ContentValidationResult {
+  const taxonomy = fixedTaxonomy[content.region];
+  const issues: ContentValidationIssue[] = [];
+
+  if (content.contentType !== taxonomy.contentType) {
+    issues.push(
+      error(
+        "invalid_region_content_type",
+        `${content.region} content must use the ${taxonomy.contentType} content type.`,
+        { field: "contentType", contentId: content.id },
+      ),
+    );
+  }
+
+  for (const category of content.primaryCategories) {
+    if (!taxonomy.categories.has(category)) {
+      issues.push(
+        error(
+          "invalid_primary_category",
+          `${category} is not an approved primary category for ${content.region}.`,
+          { field: "primaryCategories", contentId: content.id },
+        ),
+      );
+    }
+  }
+
+  return finish(issues);
+}
+
+export function validateTags(
+  tags: readonly string[],
+  contentId?: string,
+): ContentValidationResult {
+  const issues: ContentValidationIssue[] = [];
+  const seen = new Set<string>();
+
+  for (const tag of tags) {
+    const trimmed = tag.trim();
+    if (!trimmed) {
+      issues.push(
+        error("invalid_tag", "A tag cannot be blank.", {
+          field: "tags",
+          contentId,
+        }),
+      );
+      continue;
+    }
+
+    const normalized = trimmed.toLocaleLowerCase();
+    if (seen.has(normalized)) {
+      issues.push(
+        error("duplicate_tag", "Duplicate tag variants are not allowed.", {
+          field: "tags",
+          contentId,
+        }),
+      );
+    }
+    seen.add(normalized);
+  }
+
+  return finish(issues);
 }
 
 export function validateCoverRequirements(
@@ -397,6 +521,22 @@ export function validateContentRelation(
   return finish(issues);
 }
 
+export function validateContentRelations(
+  relations: readonly RelationCandidate[],
+  existingContentIds: ReadonlySet<string>,
+): ContentValidationResult {
+  return mergeResults(
+    ...relations.map((relation, index) =>
+      validateContentRelation(relation, {
+        existingContentIds,
+        existingRelations: relations.filter(
+          (_candidate, candidateIndex) => candidateIndex !== index,
+        ),
+      }),
+    ),
+  );
+}
+
 export function validateGrowthNote(
   note: GrowthNoteCandidate,
 ): ContentValidationResult {
@@ -434,6 +574,36 @@ export function validateGrowthNote(
   }
 
   return finish(issues);
+}
+
+export function validateGrowthStageConsistency(
+  currentStage: GrowthStage | null,
+  candidateStage: GrowthStage,
+  growthNotes: readonly GrowthNoteCandidate[],
+  contentId: string,
+): ContentValidationResult {
+  if (currentStage === null || currentStage === candidateStage) {
+    return { valid: true, issues: [] };
+  }
+
+  const matchingNote = growthNotes.find(
+    (note) =>
+      note.contentId === contentId &&
+      note.fromStage === currentStage &&
+      note.toStage === candidateStage,
+  );
+
+  if (matchingNote) {
+    return validateGrowthNote(matchingNote);
+  }
+
+  return finish([
+    error(
+      "missing_growth_note",
+      "A Growth Stage change requires a matching Growth Note before Review.",
+      { field: "growthNote", contentId },
+    ),
+  ]);
 }
 
 export function validateV1MigrationBundle(

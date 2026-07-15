@@ -6,10 +6,15 @@ import { createClient } from "@/lib/supabase/server";
 import type { ContentValidationResult } from "@/lib/content/errors";
 import { assertContentValid } from "@/lib/content/errors";
 import {
+  validateContentRelations,
+  validateGrowthStageConsistency,
   validateLifecycleRequirements,
   validateLifecycleTransition,
   validateDraftLifecycleMutation,
+  validateReviewTaxonomy,
+  validateSlugAvailability,
   validateStableSlug,
+  validateTags,
 } from "@/lib/content/validation";
 
 import type {
@@ -18,12 +23,18 @@ import type {
   DraftContentFields,
   DraftListFilters,
   DraftRevision,
+  PrepareReviewInput,
+  ReviewCoverStatus,
+  ReviewDifferenceSummary,
+  ReviewReadinessReport,
+  ReviewTransitionInput,
   StartDraftRevisionInput,
   UpdateDraftInput,
 } from "./contracts";
 import { ContentMutationError } from "./errors";
 import {
   createContentWriteRepository,
+  type ReviewPreparationContext,
   type ContentWriteRepository,
   type ContentWriteRepositoryClient,
 } from "./repository";
@@ -132,6 +143,168 @@ function mergeValidationResults(
     : { valid: false, issues };
 }
 
+const DRAFT_FIELD_KEYS = [
+  "slug",
+  "region",
+  "contentType",
+  "detailLevel",
+  "growthStage",
+  "titleZh",
+  "titleEn",
+  "summaryZh",
+  "summaryEn",
+  "bodyZhMarkdown",
+  "bodyEnMarkdown",
+  "contentLanguage",
+  "primaryCategories",
+  "tags",
+  "cover",
+  "featured",
+  "manualOrder",
+] as const satisfies readonly (keyof DraftContentFields)[];
+
+const MISSING_REQUIREMENT_CODES = new Set([
+  "missing_title",
+  "missing_summary",
+  "missing_body",
+  "missing_slug",
+  "missing_primary_category",
+  "missing_growth_stage",
+  "missing_cover_path",
+  "orphaned_cover_alt",
+  "missing_cover_alt",
+  "missing_growth_note",
+  "unresolved_relation",
+]);
+
+function assertConcurrencyToken(
+  expectedLockVersion: number,
+  operation: "updateDraft" | "submitForReview" | "returnToDraft",
+): void {
+  if (
+    !Number.isSafeInteger(expectedLockVersion) ||
+    expectedLockVersion < 1
+  ) {
+    throw new ContentMutationError("invalid_concurrency_token", operation);
+  }
+}
+
+function summarizeCover(
+  fields: DraftContentFields,
+  issues: ContentValidationResult["issues"],
+): ReviewCoverStatus {
+  if (!fields.cover) {
+    return { state: "absent", path: null };
+  }
+
+  if (
+    issues.some(
+      (issue) =>
+        issue.code === "missing_cover_path" ||
+        issue.code === "orphaned_cover_alt",
+    )
+  ) {
+    return { state: "missing_path", path: fields.cover.path || null };
+  }
+
+  if (issues.some((issue) => issue.code === "missing_cover_alt")) {
+    return { state: "missing_alt", path: fields.cover.path };
+  }
+
+  return { state: "ready", path: fields.cover.path };
+}
+
+function summarizeDifference(
+  candidate: DraftContentFields,
+  published: DraftContentFields | null,
+): ReviewDifferenceSummary {
+  if (!published) {
+    return { kind: "new", changedFields: [] };
+  }
+
+  const changedFields = DRAFT_FIELD_KEYS.filter(
+    (field) =>
+      JSON.stringify(candidate[field]) !== JSON.stringify(published[field]),
+  );
+
+  return {
+    kind: changedFields.length === 0 ? "unchanged" : "changed",
+    changedFields,
+  };
+}
+
+function buildReviewReadinessReport(
+  current: DraftRevision,
+  context: ReviewPreparationContext,
+): ReviewReadinessReport {
+  const normalizedCandidate = normalizeCreateDraft(current);
+  const validationCandidate = toValidationCandidate(
+    normalizedCandidate,
+    current.contentId,
+  );
+  const relationValidation = validateContentRelations(
+    context.relations,
+    new Set(context.existingContentIds),
+  );
+  const publishedStage = context.publishedProjection?.growthStage ?? null;
+  const growthStageValidation = validateGrowthStageConsistency(
+    publishedStage,
+    normalizedCandidate.growthStage,
+    context.growthNotes,
+    current.contentId,
+  );
+  const validation = mergeValidationResults(
+    validateLifecycleTransition(current.lifecycle, "Review"),
+    validateLifecycleRequirements(validationCandidate, "Review"),
+    validateReviewTaxonomy({
+      id: current.contentId,
+      region: normalizedCandidate.region,
+      contentType: normalizedCandidate.contentType,
+      primaryCategories: normalizedCandidate.primaryCategories,
+    }),
+    validateTags(normalizedCandidate.tags, current.contentId),
+    validateSlugAvailability(
+      context.slugConflicts.length > 0,
+      current.contentId,
+    ),
+    growthStageValidation,
+    relationValidation,
+  );
+  const matchingGrowthNote = context.growthNotes.some(
+    (note) =>
+      note.contentId === current.contentId &&
+      note.fromStage === publishedStage &&
+      note.toStage === normalizedCandidate.growthStage,
+  );
+
+  return {
+    ready: validation.valid,
+    normalizedCandidate,
+    validationIssues: validation.issues,
+    missingRequirements: validation.issues.filter((issue) =>
+      MISSING_REQUIREMENT_CODES.has(issue.code),
+    ),
+    slugConflicts: context.slugConflicts,
+    coverStatus: summarizeCover(normalizedCandidate, validation.issues),
+    growthStageConsistency: {
+      publishedStage,
+      candidateStage: normalizedCandidate.growthStage,
+      changed:
+        publishedStage !== null &&
+        publishedStage !== normalizedCandidate.growthStage,
+      hasMatchingGrowthNote:
+        publishedStage === null ||
+        publishedStage === normalizedCandidate.growthStage ||
+        matchingGrowthNote,
+    },
+    relationIssues: relationValidation.issues,
+    differenceFromPublished: summarizeDifference(
+      normalizedCandidate,
+      context.publishedProjection,
+    ),
+  };
+}
+
 async function createDefaultRepository(): Promise<ContentWriteRepository> {
   const client = await createClient();
   return createContentWriteRepository(
@@ -190,23 +363,21 @@ export function createAdminContentService(
       assertContentValid(validateDraftLifecycleMutation());
     }
 
-    if (
-      !Number.isSafeInteger(input.expectedLockVersion) ||
-      input.expectedLockVersion < 1
-    ) {
-      throw new ContentMutationError(
-        "invalid_concurrency_token",
-        "updateDraft",
-      );
-    }
+    assertConcurrencyToken(input.expectedLockVersion, "updateDraft");
 
     const repository = await getRepository();
     const current = await repository.getDraftRevision(
       input.contentId,
       input.revisionId,
     );
-    if (!current || current.lifecycle !== "Draft") {
+    if (!current) {
       throw new ContentMutationError("revision_not_found", "updateDraft");
+    }
+    if (current.lifecycle !== "Draft") {
+      throw new ContentMutationError(
+        "revision_not_editable",
+        "updateDraft",
+      );
     }
 
     const fields = applyNormalizedChanges(current, input.changes);
@@ -228,6 +399,95 @@ export function createAdminContentService(
     return repository.updateDraft(
       current,
       fields,
+      input.expectedLockVersion,
+    );
+  }
+
+  async function getActiveRevision(
+    input: PrepareReviewInput,
+    operation: "prepareReview" | "submitForReview" | "returnToDraft",
+  ): Promise<{ repository: ContentWriteRepository; revision: DraftRevision }> {
+    const repository = await getRepository();
+    const revision = await repository.getDraftRevision(
+      input.contentId,
+      input.revisionId,
+    );
+    if (!revision) {
+      throw new ContentMutationError("revision_not_found", operation);
+    }
+    return { repository, revision };
+  }
+
+  async function prepareReview(
+    input: PrepareReviewInput,
+  ): Promise<ReviewReadinessReport> {
+    await authorize();
+    const { repository, revision } = await getActiveRevision(
+      input,
+      "prepareReview",
+    );
+    if (revision.lifecycle !== "Draft") {
+      throw new ContentMutationError(
+        "invalid_revision_state",
+        "prepareReview",
+      );
+    }
+
+    const context = await repository.getReviewPreparationContext(revision);
+    return buildReviewReadinessReport(revision, context);
+  }
+
+  async function submitForReview(
+    input: ReviewTransitionInput,
+  ): Promise<DraftRevision> {
+    await authorize();
+    assertConcurrencyToken(input.expectedLockVersion, "submitForReview");
+    const { repository, revision } = await getActiveRevision(
+      input,
+      "submitForReview",
+    );
+    if (revision.lifecycle !== "Draft") {
+      throw new ContentMutationError(
+        "invalid_revision_state",
+        "submitForReview",
+      );
+    }
+
+    const report = buildReviewReadinessReport(
+      revision,
+      await repository.getReviewPreparationContext(revision),
+    );
+    assertContentValid(
+      report.ready
+        ? { valid: true, issues: [] }
+        : { valid: false, issues: report.validationIssues },
+    );
+
+    return repository.submitForReview(
+      revision,
+      input.expectedLockVersion,
+    );
+  }
+
+  async function returnToDraft(
+    input: ReviewTransitionInput,
+  ): Promise<DraftRevision> {
+    await authorize();
+    assertConcurrencyToken(input.expectedLockVersion, "returnToDraft");
+    const { repository, revision } = await getActiveRevision(
+      input,
+      "returnToDraft",
+    );
+    if (revision.lifecycle !== "Review") {
+      throw new ContentMutationError(
+        "invalid_revision_state",
+        "returnToDraft",
+      );
+    }
+
+    assertContentValid(validateLifecycleTransition("Review", "Draft"));
+    return repository.returnToDraft(
+      revision,
       input.expectedLockVersion,
     );
   }
@@ -254,6 +514,9 @@ export function createAdminContentService(
     getDraftById,
     listDrafts,
     updateDraft,
+    prepareReview,
+    submitForReview,
+    returnToDraft,
     startDraftRevision,
   };
 }

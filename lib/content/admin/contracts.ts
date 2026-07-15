@@ -6,8 +6,10 @@ import type {
   CoverMetadata,
   DetailLevel,
   GrowthStage,
+  Lifecycle,
   RegionName,
 } from "@/types";
+import type { ContentValidationIssue } from "@/lib/content/errors";
 
 export type DraftContentFields = {
   slug: string | null;
@@ -65,6 +67,17 @@ export type StartDraftRevisionInput = {
   contentId: string;
 };
 
+export type ReviewTransitionInput = {
+  contentId: string;
+  revisionId: string;
+  expectedLockVersion: number;
+};
+
+export type PrepareReviewInput = Pick<
+  ReviewTransitionInput,
+  "contentId" | "revisionId"
+>;
+
 export type DraftListFilters = {
   region?: RegionName;
   contentType?: ContentType;
@@ -79,8 +92,44 @@ export type DraftRevision = DraftContentFields & {
   lockVersion: number;
   sourceVersionId: string | null;
   baseContentUpdatedAt: string | null;
+  reviewSubmittedAt: string | null;
+  returnedToDraftAt: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ReviewSlugConflict = {
+  contentId: string;
+  lifecycle: Lifecycle;
+};
+
+export type ReviewCoverStatus = {
+  state: "absent" | "ready" | "missing_path" | "missing_alt";
+  path: string | null;
+};
+
+export type ReviewGrowthStageConsistency = {
+  publishedStage: GrowthStage | null;
+  candidateStage: GrowthStage;
+  changed: boolean;
+  hasMatchingGrowthNote: boolean;
+};
+
+export type ReviewDifferenceSummary = {
+  kind: "new" | "unchanged" | "changed";
+  changedFields: (keyof DraftContentFields)[];
+};
+
+export type ReviewReadinessReport = {
+  ready: boolean;
+  normalizedCandidate: DraftContentFields;
+  validationIssues: ContentValidationIssue[];
+  missingRequirements: ContentValidationIssue[];
+  slugConflicts: ReviewSlugConflict[];
+  coverStatus: ReviewCoverStatus;
+  growthStageConsistency: ReviewGrowthStageConsistency;
+  relationIssues: ContentValidationIssue[];
+  differenceFromPublished: ReviewDifferenceSummary;
 };
 
 export interface AdminContentService {
@@ -88,6 +137,9 @@ export interface AdminContentService {
   getDraftById(revisionId: string): Promise<DraftRevision | null>;
   listDrafts(filters?: DraftListFilters): Promise<DraftRevision[]>;
   updateDraft(input: UpdateDraftInput): Promise<DraftRevision>;
+  prepareReview(input: PrepareReviewInput): Promise<ReviewReadinessReport>;
+  submitForReview(input: ReviewTransitionInput): Promise<DraftRevision>;
+  returnToDraft(input: ReviewTransitionInput): Promise<DraftRevision>;
   startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision>;

@@ -113,6 +113,10 @@ export type ContentRevisionDatabaseRow = {
   manual_order: number | null;
   source_version_id: string | null;
   base_content_updated_at: string | null;
+  review_submitted_at: string | null;
+  review_submitted_by: string | null;
+  returned_to_draft_at: string | null;
+  returned_to_draft_by: string | null;
   lock_version: number;
   created_at: string;
   updated_at: string;
@@ -145,6 +149,10 @@ export type ContentRevisionDatabaseInsert = {
   manual_order?: number | null;
   source_version_id?: string | null;
   base_content_updated_at?: string | null;
+  review_submitted_at?: string | null;
+  review_submitted_by?: string | null;
+  returned_to_draft_at?: string | null;
+  returned_to_draft_by?: string | null;
   lock_version?: number;
   created_at?: string;
   updated_at?: string;
@@ -159,6 +167,10 @@ export type ContentRevisionDatabaseUpdate = Partial<
     | "content_id"
     | "source_version_id"
     | "base_content_updated_at"
+    | "review_submitted_at"
+    | "review_submitted_by"
+    | "returned_to_draft_at"
+    | "returned_to_draft_by"
     | "lock_version"
     | "created_at"
     | "created_by"

@@ -5,15 +5,23 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Lifecycle } from "@/types";
 import type {
   ContentDatabase,
+  ContentDatabaseRow,
+  ContentRelationDatabaseRow,
   ContentRevisionDatabaseRow,
   ContentRevisionDatabaseUpdate,
+  GrowthNoteDatabaseRow,
   Json,
 } from "@/types/database";
+import type {
+  GrowthNoteCandidate,
+  RelationCandidate,
+} from "@/lib/content/validation";
 
 import type {
   DraftContentFields,
   DraftListFilters,
   DraftRevision,
+  ReviewSlugConflict,
 } from "./contracts";
 import {
   ContentMutationError,
@@ -46,14 +54,47 @@ const REVISION_COLUMNS = [
   "manual_order",
   "source_version_id",
   "base_content_updated_at",
+  "review_submitted_at",
+  "returned_to_draft_at",
   "lock_version",
   "created_at",
   "updated_at",
 ].join(",");
 
+const CONTENT_PROJECTION_COLUMNS = [
+  "id",
+  "slug",
+  "region",
+  "content_type",
+  "detail_level",
+  "lifecycle",
+  "growth_stage",
+  "title_zh",
+  "title_en",
+  "summary_zh",
+  "summary_en",
+  "body_zh_markdown",
+  "body_en_markdown",
+  "content_language",
+  "primary_categories",
+  "cover_image_path",
+  "cover_image_alt_zh",
+  "cover_image_alt_en",
+  "featured",
+  "manual_order",
+].join(",");
+
 export type ContentWorkflowState = {
   contentId: string;
   lifecycle: Lifecycle;
+};
+
+export type ReviewPreparationContext = {
+  publishedProjection: DraftContentFields | null;
+  slugConflicts: ReviewSlugConflict[];
+  growthNotes: GrowthNoteCandidate[];
+  relations: RelationCandidate[];
+  existingContentIds: string[];
 };
 
 export interface ContentWriteRepository {
@@ -72,6 +113,17 @@ export interface ContentWriteRepository {
     fields: DraftContentFields,
     expectedLockVersion: number,
   ): Promise<DraftRevision>;
+  getReviewPreparationContext(
+    revision: DraftRevision,
+  ): Promise<ReviewPreparationContext>;
+  submitForReview(
+    current: DraftRevision,
+    expectedLockVersion: number,
+  ): Promise<DraftRevision>;
+  returnToDraft(
+    current: DraftRevision,
+    expectedLockVersion: number,
+  ): Promise<DraftRevision>;
   startDraftRevision(contentId: string): Promise<DraftRevision>;
 }
 
@@ -85,6 +137,8 @@ function mapRevision(row: ContentRevisionDatabaseRow): DraftRevision {
     lockVersion: row.lock_version,
     sourceVersionId: row.source_version_id,
     baseContentUpdatedAt: row.base_content_updated_at,
+    reviewSubmittedAt: row.review_submitted_at,
+    returnedToDraftAt: row.returned_to_draft_at,
     slug: row.slug,
     region: row.region,
     contentType: row.content_type,
@@ -110,6 +164,37 @@ function mapRevision(row: ContentRevisionDatabaseRow): DraftRevision {
     manualOrder: row.manual_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+function mapPublishedProjection(
+  row: ContentDatabaseRow,
+  tags: string[],
+): DraftContentFields {
+  return {
+    slug: row.slug,
+    region: row.region,
+    contentType: row.content_type,
+    detailLevel: row.detail_level,
+    growthStage: row.growth_stage,
+    titleZh: row.title_zh,
+    titleEn: row.title_en,
+    summaryZh: row.summary_zh,
+    summaryEn: row.summary_en,
+    bodyZhMarkdown: row.body_zh_markdown,
+    bodyEnMarkdown: row.body_en_markdown,
+    contentLanguage: row.content_language,
+    primaryCategories: [...row.primary_categories],
+    tags,
+    cover: row.cover_image_path
+      ? {
+          path: row.cover_image_path,
+          altZh: row.cover_image_alt_zh,
+          altEn: row.cover_image_alt_en,
+        }
+      : null,
+    featured: row.featured,
+    manualOrder: row.manual_order,
   };
 }
 
@@ -298,6 +383,213 @@ export function createContentWriteRepository(
     );
   }
 
+  async function getReviewPreparationContext(
+    revision: DraftRevision,
+  ): Promise<ReviewPreparationContext> {
+    const publishedResult = await client
+      .from("contents")
+      .select(CONTENT_PROJECTION_COLUMNS)
+      .eq("id", revision.contentId)
+      .maybeSingle();
+    if (publishedResult.error) {
+      throwRepositoryError(publishedResult.error, "prepareReview");
+    }
+
+    let slugConflicts: ReviewSlugConflict[] = [];
+    if (revision.slug) {
+      const conflictResult = await client
+        .from("contents")
+        .select("id,lifecycle")
+        .eq("region", revision.region)
+        .eq("slug", revision.slug)
+        .neq("id", revision.contentId);
+      if (conflictResult.error) {
+        throwRepositoryError(conflictResult.error, "prepareReview");
+      }
+      slugConflicts = (conflictResult.data ?? []).map((conflict) => ({
+        contentId: conflict.id,
+        lifecycle: conflict.lifecycle,
+      }));
+    }
+
+    const growthNoteResult = await client
+      .from("growth_notes")
+      .select("content_id,from_stage,to_stage,note_zh,note_en,is_public")
+      .eq("content_id", revision.contentId);
+    if (growthNoteResult.error) {
+      throwRepositoryError(growthNoteResult.error, "prepareReview");
+    }
+    const growthNotes = (growthNoteResult.data ?? []).map((row) => {
+      const note = row as Pick<
+        GrowthNoteDatabaseRow,
+        | "content_id"
+        | "from_stage"
+        | "to_stage"
+        | "note_zh"
+        | "note_en"
+        | "is_public"
+      >;
+      return {
+        contentId: note.content_id,
+        fromStage: note.from_stage,
+        toStage: note.to_stage,
+        noteZh: note.note_zh,
+        noteEn: note.note_en,
+        isPublic: note.is_public,
+      };
+    });
+
+    const sourceRelationResult = await client
+      .from("content_relations")
+      .select(
+        "source_content_id,target_content_id,relation_type,note_zh,note_en",
+      )
+      .eq("source_content_id", revision.contentId);
+    if (sourceRelationResult.error) {
+      throwRepositoryError(sourceRelationResult.error, "prepareReview");
+    }
+    const targetRelationResult = await client
+      .from("content_relations")
+      .select(
+        "source_content_id,target_content_id,relation_type,note_zh,note_en",
+      )
+      .eq("target_content_id", revision.contentId);
+    if (targetRelationResult.error) {
+      throwRepositoryError(targetRelationResult.error, "prepareReview");
+    }
+
+    const relationRows = [
+      ...(sourceRelationResult.data ?? []),
+      ...(targetRelationResult.data ?? []),
+    ] as Pick<
+      ContentRelationDatabaseRow,
+      | "source_content_id"
+      | "target_content_id"
+      | "relation_type"
+      | "note_zh"
+      | "note_en"
+    >[];
+    const relations = relationRows.map((relation) => ({
+      sourceContentId: relation.source_content_id,
+      targetContentId: relation.target_content_id,
+      relationType: relation.relation_type,
+      noteZh: relation.note_zh,
+      noteEn: relation.note_en,
+    }));
+    const endpointIds = [
+      ...new Set(
+        relationRows.flatMap((relation) => [
+          relation.source_content_id,
+          relation.target_content_id,
+        ]),
+      ),
+    ];
+
+    let existingContentIds: string[] = [];
+    if (endpointIds.length > 0) {
+      const endpointResult = await client
+        .from("contents")
+        .select("id")
+        .in("id", endpointIds);
+      if (endpointResult.error) {
+        throwRepositoryError(endpointResult.error, "prepareReview");
+      }
+      existingContentIds = (endpointResult.data ?? []).map(({ id }) => id);
+    }
+
+    const projectionRow = publishedResult.data
+      ? (publishedResult.data as unknown as ContentDatabaseRow)
+      : null;
+    const hasPublishedProjection =
+      projectionRow !== null &&
+      revision.baseContentUpdatedAt !== null &&
+      (projectionRow.lifecycle === "Published" ||
+        projectionRow.lifecycle === "Archived");
+    let publishedTags: string[] = [];
+    if (hasPublishedProjection) {
+      const bindingResult = await client
+        .from("content_tags")
+        .select("tag_id")
+        .eq("content_id", revision.contentId);
+      if (bindingResult.error) {
+        throwRepositoryError(bindingResult.error, "prepareReview");
+      }
+      const tagIds = (bindingResult.data ?? []).map(({ tag_id }) => tag_id);
+      if (tagIds.length > 0) {
+        const tagResult = await client
+          .from("tags")
+          .select("display_name")
+          .in("id", tagIds);
+        if (tagResult.error) {
+          throwRepositoryError(tagResult.error, "prepareReview");
+        }
+        publishedTags = (tagResult.data ?? [])
+          .map(({ display_name }) => display_name)
+          .sort((left, right) => left.localeCompare(right));
+      }
+    }
+
+    return {
+      publishedProjection: hasPublishedProjection
+        ? mapPublishedProjection(projectionRow, publishedTags)
+        : null,
+      slugConflicts,
+      growthNotes,
+      relations,
+      existingContentIds,
+    };
+  }
+
+  async function transitionRevision(
+    current: DraftRevision,
+    expectedLockVersion: number,
+    lifecycle: "Draft" | "Review",
+    operation: "submitForReview" | "returnToDraft",
+  ): Promise<DraftRevision> {
+    const result = await client
+      .from("content_revisions")
+      .update({ lifecycle })
+      .eq("content_id", current.contentId)
+      .eq("id", current.revisionId)
+      .eq("lifecycle", current.lifecycle)
+      .eq("lock_version", expectedLockVersion)
+      .select(REVISION_COLUMNS)
+      .maybeSingle();
+
+    if (result.error) throwRepositoryError(result.error, operation);
+    if (!result.data) {
+      throw new ContentMutationError("revision_conflict", operation);
+    }
+
+    return mapRevision(
+      result.data as unknown as ContentRevisionDatabaseRow,
+    );
+  }
+
+  async function submitForReview(
+    current: DraftRevision,
+    expectedLockVersion: number,
+  ): Promise<DraftRevision> {
+    return transitionRevision(
+      current,
+      expectedLockVersion,
+      "Review",
+      "submitForReview",
+    );
+  }
+
+  async function returnToDraft(
+    current: DraftRevision,
+    expectedLockVersion: number,
+  ): Promise<DraftRevision> {
+    return transitionRevision(
+      current,
+      expectedLockVersion,
+      "Draft",
+      "returnToDraft",
+    );
+  }
+
   async function startDraftRevision(
     contentId: string,
   ): Promise<DraftRevision> {
@@ -325,6 +617,9 @@ export function createContentWriteRepository(
     getContentWorkflowState,
     getDraftRevision,
     updateDraft,
+    getReviewPreparationContext,
+    submitForReview,
+    returnToDraft,
     startDraftRevision,
   };
 }

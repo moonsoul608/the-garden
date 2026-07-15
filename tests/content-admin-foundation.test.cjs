@@ -25,6 +25,10 @@ const draftManagementMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260715223000_phase_04c_draft_management.sql",
 );
+const reviewWorkflowMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260715233000_phase_04c_review_workflow.sql",
+);
 const originalLoad = Module._load;
 const originalResolveFilename = Module._resolveFilename;
 
@@ -109,6 +113,8 @@ function draftRevision(overrides = {}) {
     lockVersion: 1,
     sourceVersionId: null,
     baseContentUpdatedAt: null,
+    reviewSubmittedAt: null,
+    returnedToDraftAt: null,
     slug: "first-draft",
     region: "Garden",
     contentType: "Seed",
@@ -132,6 +138,26 @@ function draftRevision(overrides = {}) {
   };
 }
 
+function reviewReadyRevision(overrides = {}) {
+  return draftRevision({
+    summaryEn: "A complete summary.",
+    bodyEnMarkdown: "A complete body.",
+    primaryCategories: ["Coding"],
+    ...overrides,
+  });
+}
+
+function reviewContext(overrides = {}) {
+  return {
+    publishedProjection: null,
+    slugConflicts: [],
+    growthNotes: [],
+    relations: [],
+    existingContentIds: [],
+    ...overrides,
+  };
+}
+
 function repositoryStub(overrides = {}) {
   return {
     createDraft: async () => {
@@ -143,6 +169,13 @@ function repositoryStub(overrides = {}) {
     getDraftRevision: async () => null,
     updateDraft: async () => {
       throw new Error("Unexpected updateDraft call");
+    },
+    getReviewPreparationContext: async () => reviewContext(),
+    submitForReview: async () => {
+      throw new Error("Unexpected submitForReview call");
+    },
+    returnToDraft: async () => {
+      throw new Error("Unexpected returnToDraft call");
     },
     startDraftRevision: async () => {
       throw new Error("Unexpected startDraftRevision call");
@@ -162,6 +195,18 @@ function mutationAttempts(service) {
         changes: { titleEn: "Changed" },
       }),
     () => service.startDraftRevision({ contentId: "content-id" }),
+    () =>
+      service.submitForReview({
+        contentId: "content-id",
+        revisionId: "revision-id",
+        expectedLockVersion: 1,
+      }),
+    () =>
+      service.returnToDraft({
+        contentId: "content-id",
+        revisionId: "revision-id",
+        expectedLockVersion: 1,
+      }),
   ];
 }
 
@@ -352,6 +397,288 @@ test("returns revision_conflict for a stale Draft lock version", async () => {
   );
 });
 
+test("allows a Keeper to submit a valid Draft for Review", async () => {
+  const current = reviewReadyRevision({ lockVersion: 3 });
+  const reviewed = reviewReadyRevision({
+    lifecycle: "Review",
+    lockVersion: 4,
+    reviewSubmittedAt: "2026-07-15T11:00:00.000Z",
+  });
+  let transition;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      getReviewPreparationContext: async () => reviewContext(),
+      submitForReview: async (revision, expectedLockVersion) => {
+        transition = { revision, expectedLockVersion };
+        return reviewed;
+      },
+    }),
+  });
+
+  assert.equal(
+    await service.submitForReview({
+      contentId: current.contentId,
+      revisionId: current.revisionId,
+      expectedLockVersion: 3,
+    }),
+    reviewed,
+  );
+  assert.equal(transition.revision, current);
+  assert.equal(transition.expectedLockVersion, 3);
+  assert.equal(reviewed.lifecycle, "Review");
+  assert.equal(reviewed.lockVersion, 4);
+});
+
+test("rejects an invalid Draft before Review transition", async () => {
+  const current = draftRevision();
+  let transitionCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      getReviewPreparationContext: async () => reviewContext(),
+      submitForReview: async () => {
+        transitionCalls += 1;
+      },
+    }),
+  });
+
+  await assert.rejects(
+    service.submitForReview({
+      contentId: current.contentId,
+      revisionId: current.revisionId,
+      expectedLockVersion: 1,
+    }),
+    (error) => {
+      assert.ok(error instanceof ContentValidationError);
+      assert.deepEqual(
+        error.issues.map((issue) => issue.code),
+        ["missing_summary", "missing_body", "missing_primary_category"],
+      );
+      return true;
+    },
+  );
+  assert.equal(transitionCalls, 0);
+});
+
+test("prepareReview returns normalized readiness and Published differences", async () => {
+  const published = reviewReadyRevision({
+    titleEn: "Published title",
+    tags: ["Notes"],
+  });
+  const current = reviewReadyRevision({
+    titleEn: "  Revised title  ",
+    tags: ["AI", "Notes"],
+  });
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      getReviewPreparationContext: async () =>
+        reviewContext({ publishedProjection: published }),
+    }),
+  });
+
+  const report = await service.prepareReview({
+    contentId: current.contentId,
+    revisionId: current.revisionId,
+  });
+
+  assert.equal(report.ready, true);
+  assert.equal(report.normalizedCandidate.titleEn, "Revised title");
+  assert.deepEqual(report.validationIssues, []);
+  assert.equal(report.coverStatus.state, "absent");
+  assert.equal(report.growthStageConsistency.changed, false);
+  assert.equal(report.differenceFromPublished.kind, "changed");
+  assert.deepEqual(report.differenceFromPublished.changedFields, [
+    "titleEn",
+    "tags",
+  ]);
+});
+
+test("prepareReview reports slug, cover, Growth Note, and relation issues", async () => {
+  const current = reviewReadyRevision({
+    growthStage: "Sprout",
+    cover: { path: "covers/first-draft.webp", altZh: null, altEn: null },
+  });
+  const published = reviewReadyRevision({ growthStage: "Seed" });
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      getReviewPreparationContext: async () =>
+        reviewContext({
+          publishedProjection: published,
+          slugConflicts: [
+            { contentId: "conflicting-content", lifecycle: "Archived" },
+          ],
+          relations: [
+            {
+              sourceContentId: current.contentId,
+              targetContentId: "missing-target",
+              relationType: "relatedTo",
+              noteZh: null,
+              noteEn: null,
+            },
+          ],
+          existingContentIds: [current.contentId],
+        }),
+    }),
+  });
+
+  const report = await service.prepareReview({
+    contentId: current.contentId,
+    revisionId: current.revisionId,
+  });
+
+  assert.equal(report.ready, false);
+  assert.deepEqual(
+    report.validationIssues.map((issue) => issue.code),
+    [
+      "missing_cover_alt",
+      "slug_conflict",
+      "missing_growth_note",
+      "unresolved_relation",
+    ],
+  );
+  assert.deepEqual(
+    report.missingRequirements.map((issue) => issue.code),
+    ["missing_cover_alt", "missing_growth_note", "unresolved_relation"],
+  );
+  assert.equal(report.slugConflicts.length, 1);
+  assert.equal(report.coverStatus.state, "missing_alt");
+  assert.equal(report.growthStageConsistency.changed, true);
+  assert.equal(report.growthStageConsistency.hasMatchingGrowthNote, false);
+  assert.equal(report.relationIssues[0].code, "unresolved_relation");
+});
+
+test("Review revisions are read-only through updateDraft", async () => {
+  const current = reviewReadyRevision({ lifecycle: "Review" });
+  let updateCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      updateDraft: async () => {
+        updateCalls += 1;
+      },
+    }),
+  });
+
+  await assert.rejects(
+    service.updateDraft({
+      contentId: current.contentId,
+      revisionId: current.revisionId,
+      expectedLockVersion: 1,
+      changes: { titleEn: "Edited in Review" },
+    }),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "revision_not_editable");
+      assert.equal(error.operation, "updateDraft");
+      return true;
+    },
+  );
+  assert.equal(updateCalls, 0);
+});
+
+test("allows a Review revision to return to Draft", async () => {
+  const current = reviewReadyRevision({ lifecycle: "Review", lockVersion: 7 });
+  const returned = reviewReadyRevision({
+    lifecycle: "Draft",
+    lockVersion: 8,
+    returnedToDraftAt: "2026-07-15T11:30:00.000Z",
+  });
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      returnToDraft: async (revision, expectedLockVersion) => {
+        assert.equal(revision, current);
+        assert.equal(expectedLockVersion, 7);
+        return returned;
+      },
+    }),
+  });
+
+  assert.equal(
+    await service.returnToDraft({
+      contentId: current.contentId,
+      revisionId: current.revisionId,
+      expectedLockVersion: 7,
+    }),
+    returned,
+  );
+  assert.equal(returned.lifecycle, "Draft");
+  assert.equal(returned.lockVersion, 8);
+});
+
+test("returns revision_conflict for a stale Review submission lock", async () => {
+  const current = reviewReadyRevision({ lockVersion: 5 });
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      getReviewPreparationContext: async () => reviewContext(),
+      submitForReview: async (_revision, expectedLockVersion) => {
+        assert.equal(expectedLockVersion, 4);
+        throw new ContentMutationError(
+          "revision_conflict",
+          "submitForReview",
+        );
+      },
+    }),
+  });
+
+  await assert.rejects(
+    service.submitForReview({
+      contentId: current.contentId,
+      revisionId: current.revisionId,
+      expectedLockVersion: 4,
+    }),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "revision_conflict");
+      assert.equal(error.operation, "submitForReview");
+      return true;
+    },
+  );
+});
+
+test("Review transitions leave the Published projection unchanged", async () => {
+  const publishedProjection = Object.freeze(
+    reviewReadyRevision({
+      lifecycle: "Draft",
+      titleEn: "Published title",
+    }),
+  );
+  const before = structuredClone(publishedProjection);
+  const current = reviewReadyRevision({ titleEn: "Review candidate" });
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      getReviewPreparationContext: async () =>
+        reviewContext({ publishedProjection }),
+      submitForReview: async () =>
+        reviewReadyRevision({
+          lifecycle: "Review",
+          titleEn: current.titleEn,
+          lockVersion: 2,
+        }),
+    }),
+  });
+
+  await service.submitForReview({
+    contentId: current.contentId,
+    revisionId: current.revisionId,
+    expectedLockVersion: 1,
+  });
+  assert.deepEqual(publishedProjection, before);
+});
+
 test("starts a Draft revision from Published content without mutating its projection", async () => {
   const publishedProjection = Object.freeze({
     contentId: "published-content",
@@ -488,6 +815,19 @@ test("Draft clone migration preserves source history and never writes Published 
   assert.doesNotMatch(cloneFunction, /update\s+public\.contents/i);
   assert.doesNotMatch(cloneFunction, /insert into\s+public\.content_versions/i);
   assert.doesNotMatch(cloneFunction, /delete\s+from\s+public\.contents/i);
+});
+
+test("Review migration records workflow actors and enforces immutability only in revisions", () => {
+  const migration = fs.readFileSync(reviewWorkflowMigrationPath, "utf8");
+
+  assert.match(migration, /review_submitted_at/);
+  assert.match(migration, /review_submitted_by/);
+  assert.match(migration, /returned_to_draft_at/);
+  assert.match(migration, /returned_to_draft_by/);
+  assert.match(migration, /review_revision_read_only/);
+  assert.match(migration, /new\.lock_version = old\.lock_version \+ 1/);
+  assert.doesNotMatch(migration, /update\s+public\.contents/i);
+  assert.doesNotMatch(migration, /insert into\s+public\.content_versions/i);
 });
 
 test("maps repository database errors to safe typed mutation errors", async () => {

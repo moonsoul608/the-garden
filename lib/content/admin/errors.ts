@@ -4,6 +4,8 @@ export type ContentMutationErrorCode =
   | "content_not_found"
   | "revision_not_found"
   | "revision_conflict"
+  | "revision_not_editable"
+  | "invalid_revision_state"
   | "revision_already_exists"
   | "slug_conflict"
   | "mutation_denied"
@@ -17,16 +19,21 @@ export type ContentMutationOperation =
   | "readContentWorkflow"
   | "readDraftRevision"
   | "updateDraft"
+  | "prepareReview"
+  | "submitForReview"
+  | "returnToDraft"
   | "startDraftRevision";
 
 const publicMessages: Record<ContentMutationErrorCode, string> = {
   content_not_found: "The content item could not be found.",
   revision_not_found: "The Draft revision could not be found.",
   revision_conflict: "The Draft changed after this edit began.",
+  revision_not_editable: "This revision is read-only.",
+  invalid_revision_state: "The revision is not in the required workflow state.",
   revision_already_exists: "This content item already has an active revision.",
   slug_conflict: "That Region and slug are already in use.",
   mutation_denied: "The content mutation was denied.",
-  invalid_concurrency_token: "The Draft concurrency token is invalid.",
+  invalid_concurrency_token: "The revision concurrency token is invalid.",
   repository_failure: "The content mutation could not be completed.",
 };
 

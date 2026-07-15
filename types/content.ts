@@ -216,6 +216,33 @@ export type V1MigrationHomeCurationItem = {
   order: number;
 };
 
+export type V1MigrationTag = {
+  normalizedName: string;
+  displayName: string;
+};
+
+export type V1MigrationContentTag = {
+  contentLegacyId: string;
+  tagNormalizedName: string;
+};
+
+export type V1MigrationSiteCopyItem = {
+  copyKey: string;
+  locale: "zh" | "en";
+  copyGroup: string;
+  copyValue: string;
+};
+
+export type V1MigrationCompatibilityWarning = {
+  code:
+    | "home_curation_deferred"
+    | "site_copy_deferred"
+    | "display_overrides_deferred"
+    | "related_paths_not_migrated";
+  legacyId: string | null;
+  message: string;
+};
+
 /** `homeCuration` remains empty until its deferred conflicts are resolved. */
 export type V1MigrationBundle = {
   schemaVersion: 1;
@@ -223,7 +250,11 @@ export type V1MigrationBundle = {
   status: "ready" | "blocked";
   contents: V1MigrationContentRecord[];
   relations: V1MigrationRelation[];
+  tags: V1MigrationTag[];
+  contentTags: V1MigrationContentTag[];
   homeCuration: V1MigrationHomeCurationItem[];
+  siteCopy: V1MigrationSiteCopyItem[];
+  compatibilityWarnings: V1MigrationCompatibilityWarning[];
   issues: V1MigrationIssue[];
 };
 

@@ -8,6 +8,133 @@ Migration must be gradual.
 
 The public Version 1 site must remain stable until the Version 2 replacement path has passed acceptance.
 
+### Phase 03C tooling foundation
+
+Phase 03C provides deterministic migration tooling only. It does not import content and contains no database client or write path.
+
+Requirements:
+
+- Node.js 22.6 or newer, with native TypeScript type stripping;
+- run commands from the repository root;
+- treat generated JSON as sensitive migration input and review it before any future Preview execution.
+
+Commands:
+
+```bash
+npm run content:v1:extract
+npm run content:v1:transform
+npm run content:v1:verify
+npm run content:v1:dry-run
+```
+
+Each command emits UTF-8 JSON to standard output. Use `--output=<path>` to write clean machine-readable JSON without the `npm run` banner:
+
+```bash
+npm run content:v1:extract -- --output=tmp/v1-extract.json
+npm run content:v1:transform -- --output=tmp/v1-bundle.json
+npm run content:v1:verify -- --output=tmp/v1-verification.json
+npm run content:v1:dry-run -- --output=tmp/v1-dry-run.json
+```
+
+The default apply command is always a dry-run. `--preview` only records the intended future environment; it does not enable writes:
+
+```bash
+npm run content:v1:dry-run -- --preview --output=tmp/v1-preview-dry-run.json
+```
+
+To test idempotency classification without connecting to a database, provide a reviewed JSON snapshot whose root contains a `contents` array. Rows may use migration camel-case fields or database snake-case fields:
+
+```bash
+npm run content:v1:dry-run -- --existing=tmp/existing-preview.json --output=tmp/v1-comparison.json
+```
+
+The comparison key is `contents.legacy_id`. Matching records are classified as `unchanged`; differing records as `updated`; absent records as `created`. These are planned dry-run outcomes, not completed writes.
+
+### Extract manifest format
+
+`extract.ts` imports the existing TypeScript modules at runtime. It does not read or parse TypeScript source text.
+
+```json
+{
+  "schemaVersion": 1,
+  "source": "v1-static-typescript",
+  "garden": [],
+  "forest": [],
+  "lake": [],
+  "ruins": [],
+  "details": {}
+}
+```
+
+Arrays retain source order. No timestamp, filesystem metadata, or random identifier is added, so the same source modules produce byte-stable formatted JSON.
+
+### Migration bundle format
+
+```json
+{
+  "schemaVersion": 1,
+  "source": "v1-static-typescript",
+  "status": "blocked",
+  "contents": [],
+  "relations": [],
+  "tags": [],
+  "contentTags": [],
+  "homeCuration": [],
+  "siteCopy": [],
+  "compatibilityWarnings": [],
+  "issues": []
+}
+```
+
+The current V1 bundle contains all 19 source records but is `blocked` because all five Lake records have no confirmed Growth Stage. Those records remain visible in the manifest with `growthStage: null`; they are excluded from the dry-run importable set. Growth Stages are never guessed.
+
+Current intentional empty collections:
+
+- `tags` and `contentTags`, because V1 defines no tags;
+- `homeCuration`, because curation conflicts are deferred;
+- `siteCopy`, because this phase extracts content modules only and display overrides are deferred.
+
+Only the four explicit Ruins `grewInto` values become relations. `details.relatedPaths` remain presentation navigation.
+
+### Verification and report format
+
+Verification checks exactly 19 records; Region counts of Garden 5, Forest 5, Lake 5, and Ruins 4; unique `legacy_id`; unique Region/slug; relation resolution; and exclusion of blocked content. Known blocked records do not make structural verification fail. Unexpected counts, duplicates, or unresolved relations do.
+
+The dry-run report is JSON and always includes:
+
+```json
+{
+  "mode": "dry-run",
+  "environment": "none",
+  "idempotencyKey": "contents.legacy_id",
+  "created": [],
+  "updated": [],
+  "unchanged": [],
+  "blocked": [],
+  "failed": [],
+  "warnings": [],
+  "summary": {}
+}
+```
+
+`blocked` contains content that must not be written. `failed` contains structural, snapshot, or safeguard failures. `warnings` reports every deferred compatibility decision.
+
+### Tooling safeguards
+
+- Default and `--preview` modes are dry-run only.
+- `--execute` is rejected because Preview writes are not implemented in this phase.
+- `--execute` without `--preview` is also rejected.
+- `--production` is always rejected.
+- The tooling imports no Supabase package, reads no credentials, and performs no network requests.
+- Dates remain null unless a source date is confirmed.
+- Slugs and `legacy_id` values are preserved exactly.
+- Missing tags, covers, dates, copy, and Growth Stages are not synthesized.
+- Re-running against the same reviewed snapshot is deterministic and uses `contents.legacy_id` for idempotency classification.
+
+### Phase 03C rollback
+
+Phase 03C has no data rollback because it performs no database writes. Rollback consists of reverting the tooling and discarding generated JSON reports. Content source modules, application routes, database schema, and Supabase policies remain unchanged. Future Preview execution must add a pre-run Preview backup/export and a post-run restore procedure before any write path is enabled.
+
 ---
 
 ## 2. Migration principles
@@ -551,9 +678,11 @@ Conversion to Markdown must not:
 
 ### 8.8 Relations
 
-Convert explicit existing related paths only when their target can be resolved safely.
+Convert only explicit Ruins `grewInto` values when their target can be resolved safely.
 
 Do not infer relations from shared categories.
+
+Version 1 detail `relatedPaths` remain presentation navigation and are not migrated as relations.
 
 ### 8.9 Home
 

@@ -2,6 +2,7 @@
   "name": "the-garden",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,6 +11,10 @@
     "test:seed-gardener": "node --test tests/seed-gardener.test.cjs",
     "test:phase5": "node tests/phase5-browser-audit.cjs",
     "test:smoke:garden-index": "node tests/garden-index-route-smoke.cjs",
+    "content:v1:extract": "node --experimental-strip-types scripts/content-v1/extract.ts",
+    "content:v1:transform": "node --experimental-strip-types scripts/content-v1/transform.ts",
+    "content:v1:verify": "node --experimental-strip-types scripts/content-v1/verify.ts",
+    "content:v1:dry-run": "node --experimental-strip-types scripts/content-v1/apply.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

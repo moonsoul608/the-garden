@@ -24,6 +24,8 @@ import {
 
 import type {
   AdminContentService,
+  ArchiveContentInput,
+  ArchiveReceipt,
   CreateDraftInput,
   DraftContentFields,
   DraftListFilters,
@@ -40,6 +42,11 @@ import type {
 } from "./contracts";
 import { ContentMutationError } from "./errors";
 import {
+  createArchiveRepository,
+  type ArchiveRepository,
+  type ArchiveRepositoryClient,
+} from "./archive-repository";
+import {
   createContentWriteRepository,
   type ReviewPreparationContext,
   type ContentWriteRepository,
@@ -52,8 +59,13 @@ export type AdminContentServiceDependencies = {
   authorize?: AuthorizeAdminRequest;
   repository?: ContentWriteRepository;
   repositoryFactory?: () => Promise<ContentWriteRepository>;
+  archiveRepository?: ArchiveRepository;
+  archiveRepositoryFactory?: () => Promise<ArchiveRepository>;
   sourceMode?: ContentSourceMode;
 };
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function normalizeOptionalText(value: string | null | undefined): string | null {
   const normalized = value?.trim();
@@ -374,6 +386,13 @@ async function createDefaultRepository(): Promise<ContentWriteRepository> {
   );
 }
 
+async function createDefaultArchiveRepository(): Promise<ArchiveRepository> {
+  const client = await createClient();
+  return createArchiveRepository(
+    client as unknown as ArchiveRepositoryClient,
+  );
+}
+
 export function createAdminContentService(
   dependencies: AdminContentServiceDependencies = {},
 ): AdminContentService {
@@ -382,11 +401,22 @@ export function createAdminContentService(
     dependencies.repository
       ? Promise.resolve(dependencies.repository)
       : null;
+  let archiveRepositoryPromise: Promise<ArchiveRepository> | null =
+    dependencies.archiveRepository
+      ? Promise.resolve(dependencies.archiveRepository)
+      : null;
 
   function getRepository(): Promise<ContentWriteRepository> {
     repositoryPromise ??=
       dependencies.repositoryFactory?.() ?? createDefaultRepository();
     return repositoryPromise;
+  }
+
+  function getArchiveRepository(): Promise<ArchiveRepository> {
+    archiveRepositoryPromise ??=
+      dependencies.archiveRepositoryFactory?.() ??
+      createDefaultArchiveRepository();
+    return archiveRepositoryPromise;
   }
 
   async function createDraft(input: CreateDraftInput): Promise<DraftRevision> {
@@ -602,6 +632,48 @@ export function createAdminContentService(
     return repository.publishReview(input);
   }
 
+  async function archiveContent(
+    input: ArchiveContentInput,
+  ): Promise<ArchiveReceipt> {
+    await authorize();
+
+    if (!UUID_PATTERN.test(input.contentId)) {
+      throw new ContentMutationError(
+        "invalid_content_identity",
+        "archiveContent",
+      );
+    }
+
+    if (!UUID_PATTERN.test(input.operationId)) {
+      throw new ContentMutationError(
+        "invalid_operation_id",
+        "archiveContent",
+      );
+    }
+
+    if (
+      !input.expectedUpdatedAt ||
+      !Number.isFinite(Date.parse(input.expectedUpdatedAt))
+    ) {
+      throw new ContentMutationError(
+        "invalid_concurrency_token",
+        "archiveContent",
+      );
+    }
+
+    let sourceMode: ContentSourceMode;
+    try {
+      sourceMode = dependencies.sourceMode ?? getContentSourceMode();
+    } catch {
+      throw new ContentMutationError("archiving_disabled", "archiveContent");
+    }
+    if (sourceMode === "legacy") {
+      throw new ContentMutationError("archiving_disabled", "archiveContent");
+    }
+
+    return (await getArchiveRepository()).archivePublishedContent(input);
+  }
+
   async function startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision> {
@@ -628,6 +700,7 @@ export function createAdminContentService(
     submitForReview,
     returnToDraft,
     publishReview,
+    archiveContent,
     startDraftRevision,
   };
 }

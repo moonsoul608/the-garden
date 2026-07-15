@@ -16,6 +16,10 @@ const repositoryPath = path.join(
   projectRoot,
   "lib/content/admin/repository.ts",
 );
+const archiveRepositoryPath = path.join(
+  projectRoot,
+  "lib/content/admin/archive-repository.ts",
+);
 const contentErrorsPath = path.join(projectRoot, "lib/content/errors.ts");
 const mutationErrorsPath = path.join(
   projectRoot,
@@ -32,6 +36,10 @@ const reviewWorkflowMigrationPath = path.join(
 const atomicPublishingMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260715234500_phase_04d_atomic_publishing.sql",
+);
+const archiveFoundationMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260715235900_phase_04d_archive_foundation.sql",
 );
 const originalLoad = Module._load;
 const originalResolveFilename = Module._resolveFilename;
@@ -92,6 +100,7 @@ const { ContentValidationError } = require(contentErrorsPath);
 const { ContentMutationError } = require(mutationErrorsPath);
 const { createAdminContentService } = require(servicePath);
 const { createContentWriteRepository } = require(repositoryPath);
+const { createArchiveRepository } = require(archiveRepositoryPath);
 
 const keeper = { id: "00000000-0000-4000-8000-000000004c01" };
 
@@ -174,6 +183,26 @@ function publicationReceipt(overrides = {}) {
   };
 }
 
+function archiveInput(overrides = {}) {
+  return {
+    contentId: "00000000-0000-4000-8000-000000004b01",
+    expectedUpdatedAt: "2026-07-15T12:00:00.000Z",
+    operationId: "00000000-0000-4000-8000-000000004c01",
+    ...overrides,
+  };
+}
+
+function archiveReceipt(overrides = {}) {
+  return {
+    contentId: "00000000-0000-4000-8000-000000004b01",
+    operationId: "00000000-0000-4000-8000-000000004c01",
+    versionId: "00000000-0000-4000-8000-000000004d01",
+    archivedAt: "2026-07-15T12:01:00.000Z",
+    archivedBy: keeper.id,
+    ...overrides,
+  };
+}
+
 function repositoryStub(overrides = {}) {
   return {
     createDraft: async () => {
@@ -232,6 +261,7 @@ function mutationAttempts(service) {
         revisionId: "revision-id",
         expectedLockVersion: 1,
       }),
+    () => service.archiveContent(archiveInput()),
   ];
 }
 
@@ -1202,5 +1232,209 @@ test("maps repository database errors to safe typed mutation errors", async () =
       assert.doesNotMatch(error.message, /private|constraint|duplicate key/i);
       return true;
     },
+  );
+});
+
+test("Keeper archives Published content through the narrow archive repository", async () => {
+  const input = archiveInput();
+  const expected = archiveReceipt();
+  const received = [];
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    repository: repositoryStub(),
+    archiveRepository: {
+      archivePublishedContent: async (archiveRequest) => {
+        received.push(archiveRequest);
+        return expected;
+      },
+    },
+  });
+
+  assert.deepEqual(await service.archiveContent(input), expected);
+  assert.deepEqual(await service.archiveContent(input), expected);
+  assert.deepEqual(received, [input, input]);
+});
+
+test("archive service rejects invalid identities and concurrency tokens before RPC access", async () => {
+  let repositoryCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    repository: repositoryStub(),
+    archiveRepository: {
+      archivePublishedContent: async () => {
+        repositoryCalls += 1;
+      },
+    },
+  });
+
+  const cases = [
+    [
+      archiveInput({ contentId: "" }),
+      "invalid_content_identity",
+    ],
+    [
+      archiveInput({ operationId: "not-an-operation-id" }),
+      "invalid_operation_id",
+    ],
+    [
+      archiveInput({ expectedUpdatedAt: "not-a-timestamp" }),
+      "invalid_concurrency_token",
+    ],
+  ];
+
+  for (const [input, expectedCode] of cases) {
+    await assert.rejects(service.archiveContent(input), (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, expectedCode);
+      assert.equal(error.operation, "archiveContent");
+      return true;
+    });
+  }
+
+  assert.equal(repositoryCalls, 0);
+});
+
+test("archive service is disabled while the content source is legacy", async () => {
+  let repositoryCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "legacy",
+    repository: repositoryStub(),
+    archiveRepository: {
+      archivePublishedContent: async () => {
+        repositoryCalls += 1;
+      },
+    },
+  });
+
+  await assert.rejects(service.archiveContent(archiveInput()), (error) => {
+    assert.ok(error instanceof ContentMutationError);
+    assert.equal(error.code, "archiving_disabled");
+    assert.equal(error.operation, "archiveContent");
+    return true;
+  });
+  assert.equal(repositoryCalls, 0);
+});
+
+test("archive repository calls the RPC and returns a serializable receipt", async () => {
+  const input = archiveInput();
+  const expected = archiveReceipt();
+  const client = {
+    rpc: async (name, args) => {
+      assert.equal(name, "archive_published_content");
+      assert.deepEqual(args, {
+        p_content_id: input.contentId,
+        p_expected_updated_at: input.expectedUpdatedAt,
+        p_operation_id: input.operationId,
+      });
+      return { data: expected, error: null };
+    },
+  };
+  const repository = createArchiveRepository(client);
+
+  const result = await repository.archivePublishedContent(input);
+
+  assert.deepEqual(result, expected);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), expected);
+});
+
+test("archive repository maps lifecycle, workspace, retry-key, and stale-write errors", async () => {
+  const cases = [
+    [
+      { code: "P0002", message: "content_not_found" },
+      "content_not_found",
+    ],
+    [
+      { code: "22023", message: "archive_lifecycle_conflict" },
+      "archive_lifecycle_conflict",
+    ],
+    [
+      { code: "55000", message: "active_editorial_workspace" },
+      "active_editorial_workspace",
+    ],
+    [
+      { code: "40001", message: "archive_conflict" },
+      "archive_conflict",
+    ],
+    [
+      { code: "40001", message: "archive_operation_conflict" },
+      "archive_operation_conflict",
+    ],
+  ];
+
+  for (const [databaseError, expectedCode] of cases) {
+    const repository = createArchiveRepository({
+      rpc: async () => ({ data: null, error: databaseError }),
+    });
+
+    await assert.rejects(
+      repository.archivePublishedContent(archiveInput()),
+      (error) => {
+        assert.ok(error instanceof ContentMutationError);
+        assert.equal(error.code, expectedCode);
+        assert.equal(error.operation, "archiveContent");
+        assert.doesNotMatch(error.message, /public\.|content_versions|sql/i);
+        return true;
+      },
+    );
+  }
+});
+
+test("Archive migration exposes one atomic Keeper-only workflow", () => {
+  const migration = fs.readFileSync(archiveFoundationMigrationPath, "utf8");
+  const functionStart = migration.search(
+    /create function public\.archive_published_content/i,
+  );
+  const functionEnd = migration.indexOf(
+    "comment on function public.archive_published_content",
+    functionStart,
+  );
+
+  assert.notEqual(functionStart, -1);
+  assert.ok(functionEnd > functionStart);
+  const archiveFunction = migration.slice(functionStart, functionEnd);
+  const projectionUpdate = archiveFunction.match(
+    /update public\.contents as projection[\s\S]*?where projection\.id = p_content_id;/i,
+  )?.[0];
+
+  assert.match(archiveFunction, /security definer/i);
+  assert.match(archiveFunction, /private\.is_garden_keeper\(\)/i);
+  assert.match(archiveFunction, /for update/i);
+  assert.match(archiveFunction, /content\.lifecycle <> 'Published'/i);
+  assert.match(archiveFunction, /active_editorial_workspace/i);
+  assert.match(archiveFunction, /insert into public\.content_versions/i);
+  assert.match(archiveFunction, /checkpoint_reason[\s\S]*?'Archived'/i);
+  assert.match(archiveFunction, /archive_operation_id/i);
+  assert.match(archiveFunction, /delete from public\.home_curation/i);
+  assert.ok(
+    archiveFunction.search(/insert into public\.content_versions/i) <
+      archiveFunction.search(/update public\.contents as projection/i),
+  );
+  assert.ok(projectionUpdate);
+  assert.match(projectionUpdate, /lifecycle = 'Archived'/i);
+  assert.match(projectionUpdate, /archived_at = archive_time/i);
+  assert.match(projectionUpdate, /archived_by = actor_id/i);
+  assert.doesNotMatch(
+    projectionUpdate,
+    /body_|slug\s*=|region\s*=|published_at\s*=/i,
+  );
+  assert.doesNotMatch(
+    archiveFunction,
+    /delete from public\.(?:growth_notes|content_relations|content_tags)/i,
+  );
+  assert.doesNotMatch(archiveFunction, /(?:delete|update)\s+storage\./i);
+  assert.match(
+    migration,
+    /create unique index content_versions_archive_receipt_idx/i,
+  );
+  assert.match(
+    migration,
+    /revoke update\s*,\s*delete on table public\.contents from authenticated/i,
+  );
+  assert.match(
+    migration,
+    /grant execute on function public\.archive_published_content[\s\S]*?to authenticated/i,
   );
 });

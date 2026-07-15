@@ -318,6 +318,20 @@ Acceptance:
 - [x] Add application tests and a rollback-only SQL integration test
 - [ ] Apply the migration and execute the SQL integration test in Preview
 
+## 4D-2A. Archive foundation
+
+- [x] Audit archive fields, immutable checkpoints, active revisions, Home curation, and direct write permissions
+- [x] Add the narrow Keeper-only `archive_published_content` RPC
+- [x] Lock and validate the Published projection and reject active Draft/Review workspaces atomically
+- [x] Create one immutable pre-archive checkpoint with projection, tags, relations, Growth Notes, cover, actor, and timestamp
+- [x] Preserve stable identity, route, publication time, body, relations, Growth Notes, and Storage references
+- [x] Remove Home curation inside the archive transaction
+- [x] Return a durable operation receipt so identical retries are idempotent
+- [x] Add typed Admin Content Service and Archive Repository boundaries
+- [x] Keep direct authenticated Archived lifecycle and version-write bypasses closed
+- [x] Add application tests and a rollback-only SQL integration test
+- [ ] Apply the migration and execute the SQL integration test in Preview
+
 ---
 
 # Phase 5 — Core content administration

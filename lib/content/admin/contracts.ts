@@ -79,6 +79,21 @@ export type PublishReviewInput = {
   expectedLockVersion: number;
 };
 
+export type ArchiveContentInput = {
+  contentId: string;
+  expectedUpdatedAt: string;
+  operationId: string;
+};
+
+/** Durable archive receipt recovered unchanged when operationId is retried. */
+export type ArchiveReceipt = Readonly<{
+  contentId: string;
+  operationId: string;
+  versionId: string;
+  archivedAt: string;
+  archivedBy: string;
+}>;
+
 /** Primitive-only receipt safe to cross a future Server Action boundary. */
 export type PublicationReceipt = Readonly<{
   contentId: string;
@@ -157,6 +172,7 @@ export interface AdminContentService {
   submitForReview(input: ReviewTransitionInput): Promise<DraftRevision>;
   returnToDraft(input: ReviewTransitionInput): Promise<DraftRevision>;
   publishReview(input: PublishReviewInput): Promise<PublicationReceipt>;
+  archiveContent(input: ArchiveContentInput): Promise<ArchiveReceipt>;
   startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision>;

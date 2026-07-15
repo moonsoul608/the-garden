@@ -44,6 +44,7 @@ export type ContentDatabaseRow = {
   updated_at: string;
   published_at: string | null;
   archived_at: string | null;
+  archived_by: string | null;
   last_tended_at: string | null;
   created_by: string | null;
   updated_by: string | null;
@@ -52,7 +53,7 @@ export type ContentDatabaseRow = {
 /** Public column projection allowed by the Phase 02D grants. */
 export type PublicContentDatabaseRow = Omit<
   ContentDatabaseRow,
-  "legacy_id" | "created_by" | "updated_by"
+  "legacy_id" | "created_by" | "updated_by" | "archived_by"
 >;
 
 export type ContentDatabaseInsert = {
@@ -81,6 +82,7 @@ export type ContentDatabaseInsert = {
   updated_at?: string;
   published_at?: string | null;
   archived_at?: string | null;
+  archived_by?: string | null;
   last_tended_at?: string | null;
   created_by?: string | null;
   updated_by?: string | null;
@@ -255,6 +257,9 @@ export type ContentVersionDatabaseRow = {
   checkpoint_note: string | null;
   created_at: string;
   created_by: string | null;
+  source_revision_id: string | null;
+  source_lock_version: number | null;
+  archive_operation_id: string | null;
 };
 
 export type ContentVersionDatabaseInsert = {
@@ -265,6 +270,9 @@ export type ContentVersionDatabaseInsert = {
   checkpoint_note?: string | null;
   created_at?: string;
   created_by?: string | null;
+  source_revision_id?: string | null;
+  source_lock_version?: number | null;
+  archive_operation_id?: string | null;
 };
 
 export type TagDatabaseRow = {
@@ -360,6 +368,14 @@ export type ContentDatabase = {
           p_content_id: string;
           p_revision_id: string;
           p_expected_lock_version: number;
+        };
+        Returns: Json;
+      };
+      archive_published_content: {
+        Args: {
+          p_content_id: string;
+          p_expected_updated_at: string;
+          p_operation_id: string;
         };
         Returns: Json;
       };

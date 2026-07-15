@@ -12,6 +12,8 @@ export type ContentMutationErrorCode =
 
 export type ContentMutationOperation =
   | "createDraft"
+  | "getDraftById"
+  | "listDrafts"
   | "readContentWorkflow"
   | "readDraftRevision"
   | "updateDraft"

@@ -273,7 +273,7 @@ Acceptance:
 - [ ] no public admin data
 - [ ] accessibility smoke check passes
 
-## 4C. Content write foundation
+## 4C-1. Content write foundation
 
 - [x] Audit `contents`, `content_versions`, database types, and write RLS
 - [x] Add a mutable Draft/Review `content_revisions` workspace
@@ -282,6 +282,18 @@ Acceptance:
 - [x] Add typed `createDraft`, `updateDraft`, and `startDraftRevision` contracts
 - [x] Require verified Garden Keeper authorization at every mutation boundary
 - [x] Prepare optimistic revision concurrency without UI or publishing
+
+## 4C-2. Draft management
+
+- [x] Complete Keeper-only `createDraft`, `updateDraft`, and `startDraftRevision`
+- [x] Keep actor, timestamps, lifecycle, and lock metadata server-managed
+- [x] Reject stale Draft updates with typed `revision_conflict` errors
+- [x] Keep Published and Archived projections unchanged while starting a Draft
+- [x] Preserve the immutable source-version reference for cloned Drafts
+- [x] Add Keeper-only `getDraftById` and filter-ready `listDrafts` queries
+- [x] Reuse Draft-level title, slug, Growth Stage, and cover validation
+- [x] Reject direct Draft-to-Published or Draft-to-Archived mutation
+- [x] Verify Draft management authorization, lifecycle, and concurrency tests
 
 ---
 

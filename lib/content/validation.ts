@@ -112,6 +112,16 @@ export function validateLifecycleTransition(
   ]);
 }
 
+export function validateDraftLifecycleMutation(): ContentValidationResult {
+  return finish([
+    error(
+      "invalid_lifecycle_transition",
+      "Draft lifecycle is server-managed and cannot be changed by a Draft update.",
+      { field: "lifecycle" },
+    ),
+  ]);
+}
+
 export function validateRequiredGrowthStage(
   growthStage: GrowthStage | null | undefined,
   context: { contentId?: string; legacyId?: string } = {},

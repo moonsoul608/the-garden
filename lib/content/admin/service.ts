@@ -8,6 +8,7 @@ import { assertContentValid } from "@/lib/content/errors";
 import {
   validateLifecycleRequirements,
   validateLifecycleTransition,
+  validateDraftLifecycleMutation,
   validateStableSlug,
 } from "@/lib/content/validation";
 
@@ -15,6 +16,7 @@ import type {
   AdminContentService,
   CreateDraftInput,
   DraftContentFields,
+  DraftListFilters,
   DraftRevision,
   StartDraftRevisionInput,
   UpdateDraftInput,
@@ -26,10 +28,10 @@ import {
   type ContentWriteRepositoryClient,
 } from "./repository";
 
-type AuthorizeMutation = () => Promise<AuthenticatedUser>;
+type AuthorizeAdminRequest = () => Promise<AuthenticatedUser>;
 
 export type AdminContentServiceDependencies = {
-  authorize?: AuthorizeMutation;
+  authorize?: AuthorizeAdminRequest;
   repository?: ContentWriteRepository;
   repositoryFactory?: () => Promise<ContentWriteRepository>;
 };
@@ -165,8 +167,28 @@ export function createAdminContentService(
     return (await getRepository()).createDraft(fields);
   }
 
+  async function getDraftById(
+    revisionId: string,
+  ): Promise<DraftRevision | null> {
+    await authorize();
+    return (await getRepository()).getDraftById(revisionId);
+  }
+
+  async function listDrafts(
+    filters: DraftListFilters = {},
+  ): Promise<DraftRevision[]> {
+    await authorize();
+    return (await getRepository()).listDrafts(filters);
+  }
+
   async function updateDraft(input: UpdateDraftInput): Promise<DraftRevision> {
     await authorize();
+
+    if (
+      Object.prototype.hasOwnProperty.call(input.changes, "lifecycle")
+    ) {
+      assertContentValid(validateDraftLifecycleMutation());
+    }
 
     if (
       !Number.isSafeInteger(input.expectedLockVersion) ||
@@ -227,5 +249,11 @@ export function createAdminContentService(
     return repository.startDraftRevision(content.contentId);
   }
 
-  return { createDraft, updateDraft, startDraftRevision };
+  return {
+    createDraft,
+    getDraftById,
+    listDrafts,
+    updateDraft,
+    startDraftRevision,
+  };
 }

@@ -65,12 +65,19 @@ export type StartDraftRevisionInput = {
   contentId: string;
 };
 
+export type DraftListFilters = {
+  region?: RegionName;
+  contentType?: ContentType;
+  growthStage?: GrowthStage;
+};
+
 /** Domain-safe revision model; database rows and actor columns stay private. */
 export type DraftRevision = DraftContentFields & {
   contentId: string;
   revisionId: string;
   lifecycle: "Draft" | "Review";
   lockVersion: number;
+  sourceVersionId: string | null;
   baseContentUpdatedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -78,6 +85,8 @@ export type DraftRevision = DraftContentFields & {
 
 export interface AdminContentService {
   createDraft(input: CreateDraftInput): Promise<DraftRevision>;
+  getDraftById(revisionId: string): Promise<DraftRevision | null>;
+  listDrafts(filters?: DraftListFilters): Promise<DraftRevision[]>;
   updateDraft(input: UpdateDraftInput): Promise<DraftRevision>;
   startDraftRevision(
     input: StartDraftRevisionInput,

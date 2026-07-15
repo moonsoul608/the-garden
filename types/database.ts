@@ -111,6 +111,7 @@ export type ContentRevisionDatabaseRow = {
   cover_image_alt_en: string | null;
   featured: boolean;
   manual_order: number | null;
+  source_version_id: string | null;
   base_content_updated_at: string | null;
   lock_version: number;
   created_at: string;
@@ -142,6 +143,7 @@ export type ContentRevisionDatabaseInsert = {
   cover_image_alt_en?: string | null;
   featured?: boolean;
   manual_order?: number | null;
+  source_version_id?: string | null;
   base_content_updated_at?: string | null;
   lock_version?: number;
   created_at?: string;
@@ -155,6 +157,7 @@ export type ContentRevisionDatabaseUpdate = Partial<
     ContentRevisionDatabaseInsert,
     | "id"
     | "content_id"
+    | "source_version_id"
     | "base_content_updated_at"
     | "lock_version"
     | "created_at"

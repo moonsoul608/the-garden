@@ -10,7 +10,11 @@ import type {
   Json,
 } from "@/types/database";
 
-import type { DraftContentFields, DraftRevision } from "./contracts";
+import type {
+  DraftContentFields,
+  DraftListFilters,
+  DraftRevision,
+} from "./contracts";
 import {
   ContentMutationError,
   mapContentMutationDatabaseError,
@@ -40,6 +44,7 @@ const REVISION_COLUMNS = [
   "cover_image_alt_en",
   "featured",
   "manual_order",
+  "source_version_id",
   "base_content_updated_at",
   "lock_version",
   "created_at",
@@ -53,6 +58,8 @@ export type ContentWorkflowState = {
 
 export interface ContentWriteRepository {
   createDraft(fields: DraftContentFields): Promise<DraftRevision>;
+  getDraftById(revisionId: string): Promise<DraftRevision | null>;
+  listDrafts(filters?: DraftListFilters): Promise<DraftRevision[]>;
   getContentWorkflowState(
     contentId: string,
   ): Promise<ContentWorkflowState | null>;
@@ -76,6 +83,7 @@ function mapRevision(row: ContentRevisionDatabaseRow): DraftRevision {
     revisionId: row.id,
     lifecycle: row.lifecycle,
     lockVersion: row.lock_version,
+    sourceVersionId: row.source_version_id,
     baseContentUpdatedAt: row.base_content_updated_at,
     slug: row.slug,
     region: row.region,
@@ -202,6 +210,49 @@ export function createContentWriteRepository(
       : null;
   }
 
+  async function getDraftById(
+    revisionId: string,
+  ): Promise<DraftRevision | null> {
+    const result = await client
+      .from("content_revisions")
+      .select(REVISION_COLUMNS)
+      .eq("id", revisionId)
+      .eq("lifecycle", "Draft")
+      .maybeSingle();
+
+    if (result.error) {
+      throwRepositoryError(result.error, "getDraftById");
+    }
+
+    return result.data
+      ? mapRevision(result.data as unknown as ContentRevisionDatabaseRow)
+      : null;
+  }
+
+  async function listDrafts(
+    filters: DraftListFilters = {},
+  ): Promise<DraftRevision[]> {
+    let query = client
+      .from("content_revisions")
+      .select(REVISION_COLUMNS)
+      .eq("lifecycle", "Draft");
+
+    if (filters.region) query = query.eq("region", filters.region);
+    if (filters.contentType) {
+      query = query.eq("content_type", filters.contentType);
+    }
+    if (filters.growthStage) {
+      query = query.eq("growth_stage", filters.growthStage);
+    }
+
+    const result = await query.order("updated_at", { ascending: false });
+    if (result.error) throwRepositoryError(result.error, "listDrafts");
+
+    return (result.data ?? []).map((row) =>
+      mapRevision(row as unknown as ContentRevisionDatabaseRow),
+    );
+  }
+
   async function getDraftRevision(
     contentId: string,
     revisionId: string,
@@ -269,6 +320,8 @@ export function createContentWriteRepository(
 
   return {
     createDraft,
+    getDraftById,
+    listDrafts,
     getContentWorkflowState,
     getDraftRevision,
     updateDraft,

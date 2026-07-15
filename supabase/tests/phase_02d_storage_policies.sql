@@ -70,6 +70,27 @@ values (
   now()
 );
 
+insert into auth.identities (
+  id,
+  provider_id,
+  user_id,
+  identity_data,
+  provider,
+  last_sign_in_at,
+  created_at,
+  updated_at
+)
+values (
+  '00000000-0000-4000-8000-000000002e01',
+  'phase-02d-storage-provider-id',
+  '00000000-0000-4000-8000-000000002d01',
+  '{"sub":"phase-02d-storage-provider-id","user_name":"phase-02d-storage-test"}'::jsonb,
+  'github',
+  now(),
+  now(),
+  now()
+);
+
 insert into private.garden_keeper_identities (
   user_id,
   provider,

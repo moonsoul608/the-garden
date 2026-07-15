@@ -347,7 +347,7 @@ begin
   end if;
 
   if helper_config is null
-     or not ('search_path=pg_catalog, private' = any(helper_config)) then
+     or not ('search_path=pg_catalog, private, auth' = any(helper_config)) then
     raise exception 'Phase 02D test failed: Keeper helper search_path is not fixed securely';
   end if;
 

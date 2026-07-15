@@ -9,15 +9,6 @@ export type AuthenticatedUser = Readonly<{
   id: string;
 }>;
 
-export class AuthenticationRequiredError extends Error {
-  readonly code = "authentication_required";
-
-  constructor() {
-    super("Authentication is required.");
-    this.name = "AuthenticationRequiredError";
-  }
-}
-
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
@@ -33,14 +24,4 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   }
 
   return { id: subject };
-}
-
-export async function requireAuthenticatedUser(): Promise<AuthenticatedUser> {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    throw new AuthenticationRequiredError();
-  }
-
-  return user;
 }

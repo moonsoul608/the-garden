@@ -20,6 +20,10 @@ const archiveRepositoryPath = path.join(
   projectRoot,
   "lib/content/admin/archive-repository.ts",
 );
+const restoreRepositoryPath = path.join(
+  projectRoot,
+  "lib/content/admin/restore-repository.ts",
+);
 const contentErrorsPath = path.join(projectRoot, "lib/content/errors.ts");
 const mutationErrorsPath = path.join(
   projectRoot,
@@ -40,6 +44,10 @@ const atomicPublishingMigrationPath = path.join(
 const archiveFoundationMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260715235900_phase_04d_archive_foundation.sql",
+);
+const restoreFoundationMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260716010000_phase_04d_restore_foundation.sql",
 );
 const originalLoad = Module._load;
 const originalResolveFilename = Module._resolveFilename;
@@ -101,6 +109,7 @@ const { ContentMutationError } = require(mutationErrorsPath);
 const { createAdminContentService } = require(servicePath);
 const { createContentWriteRepository } = require(repositoryPath);
 const { createArchiveRepository } = require(archiveRepositoryPath);
+const { createRestoreRepository } = require(restoreRepositoryPath);
 
 const keeper = { id: "00000000-0000-4000-8000-000000004c01" };
 
@@ -203,6 +212,30 @@ function archiveReceipt(overrides = {}) {
   };
 }
 
+function restoreInput(overrides = {}) {
+  return {
+    contentId: "00000000-0000-4000-8000-000000004b01",
+    sourceVersionId: "00000000-0000-4000-8000-000000004d01",
+    expectedArchivedToken: "2026-07-15T12:01:00.000Z",
+    operationId: "00000000-0000-4000-8000-000000004e01",
+    ...overrides,
+  };
+}
+
+function restoreReceipt(overrides = {}) {
+  return {
+    contentId: "00000000-0000-4000-8000-000000004b01",
+    sourceVersionId: "00000000-0000-4000-8000-000000004d01",
+    revisionId: "00000000-0000-4000-8000-000000004f01",
+    operationId: "00000000-0000-4000-8000-000000004e01",
+    preRestoreVersionId: "00000000-0000-4000-8000-000000004d02",
+    lockVersion: 1,
+    restoredAt: "2026-07-15T12:02:00.000Z",
+    restoredBy: keeper.id,
+    ...overrides,
+  };
+}
+
 function repositoryStub(overrides = {}) {
   return {
     createDraft: async () => {
@@ -262,6 +295,7 @@ function mutationAttempts(service) {
         expectedLockVersion: 1,
       }),
     () => service.archiveContent(archiveInput()),
+    () => service.restoreVersionToDraft(restoreInput()),
   ];
 }
 
@@ -287,6 +321,11 @@ test("denies an unauthenticated mutation before repository access", async () => 
         repositoryCalls += 1;
       },
     }),
+    restoreRepository: {
+      restoreVersionToDraft: async () => {
+        repositoryCalls += 1;
+      },
+    },
   });
 
   for (const attempt of mutationAttempts(service)) {
@@ -312,6 +351,11 @@ test("denies a non-Keeper mutation before repository access", async () => {
         repositoryCalls += 1;
       },
     }),
+    restoreRepository: {
+      restoreVersionToDraft: async () => {
+        repositoryCalls += 1;
+      },
+    },
   });
 
   for (const attempt of mutationAttempts(service)) {
@@ -1437,4 +1481,337 @@ test("Archive migration exposes one atomic Keeper-only workflow", () => {
     migration,
     /grant execute on function public\.archive_published_content[\s\S]*?to authenticated/i,
   );
+});
+
+test("Keeper restores an immutable version through the narrow restore repository", async () => {
+  const input = restoreInput();
+  const expected = restoreReceipt();
+  const received = [];
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    repository: repositoryStub(),
+    restoreRepository: {
+      restoreVersionToDraft: async (restoreRequest) => {
+        received.push(restoreRequest);
+        return expected;
+      },
+    },
+  });
+
+  assert.deepEqual(await service.restoreVersionToDraft(input), expected);
+  assert.deepEqual(await service.restoreVersionToDraft(input), expected);
+  assert.deepEqual(received, [input, input]);
+});
+
+test("restore service rejects invalid identities and concurrency tokens before RPC access", async () => {
+  let repositoryCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    repository: repositoryStub(),
+    restoreRepository: {
+      restoreVersionToDraft: async () => {
+        repositoryCalls += 1;
+      },
+    },
+  });
+  const cases = [
+    [restoreInput({ contentId: "" }), "invalid_content_identity"],
+    [
+      restoreInput({ sourceVersionId: "not-a-version-id" }),
+      "restore_version_invalid",
+    ],
+    [
+      restoreInput({ operationId: "not-an-operation-id" }),
+      "invalid_operation_id",
+    ],
+    [
+      restoreInput({ expectedArchivedToken: "not-a-timestamp" }),
+      "invalid_concurrency_token",
+    ],
+  ];
+
+  for (const [input, expectedCode] of cases) {
+    await assert.rejects(service.restoreVersionToDraft(input), (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, expectedCode);
+      assert.equal(error.operation, "restoreVersionToDraft");
+      return true;
+    });
+  }
+
+  assert.equal(repositoryCalls, 0);
+});
+
+test("restore service is disabled while the content source is legacy", async () => {
+  let repositoryCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "legacy",
+    repository: repositoryStub(),
+    restoreRepository: {
+      restoreVersionToDraft: async () => {
+        repositoryCalls += 1;
+      },
+    },
+  });
+
+  await assert.rejects(
+    service.restoreVersionToDraft(restoreInput()),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "restoring_disabled");
+      assert.equal(error.operation, "restoreVersionToDraft");
+      return true;
+    },
+  );
+  assert.equal(repositoryCalls, 0);
+});
+
+test("restore repository calls the RPC and returns a serializable receipt", async () => {
+  const input = restoreInput();
+  const expected = restoreReceipt();
+  const client = {
+    rpc: async (name, args) => {
+      assert.equal(name, "restore_version_to_draft");
+      assert.deepEqual(args, {
+        p_content_id: input.contentId,
+        p_source_version_id: input.sourceVersionId,
+        p_expected_archived_token: input.expectedArchivedToken,
+        p_operation_id: input.operationId,
+      });
+      return { data: expected, error: null };
+    },
+  };
+  const repository = createRestoreRepository(client);
+
+  const result = await repository.restoreVersionToDraft(input);
+
+  assert.deepEqual(result, expected);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), expected);
+});
+
+test("restore repository rejects a malformed receipt safely", async () => {
+  const repository = createRestoreRepository({
+    rpc: async () => ({
+      data: restoreReceipt({ lockVersion: 0 }),
+      error: null,
+    }),
+  });
+
+  await assert.rejects(
+    repository.restoreVersionToDraft(restoreInput()),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "repository_failure");
+      assert.equal(error.operation, "restoreVersionToDraft");
+      return true;
+    },
+  );
+});
+
+test("restore repository maps workflow and retry conflicts to typed errors", async () => {
+  const cases = [
+    [{ code: "P0002", message: "content_not_found" }, "content_not_found"],
+    [
+      { code: "22023", message: "restore_version_invalid" },
+      "restore_version_invalid",
+    ],
+    [
+      { code: "22023", message: "restore_lifecycle_conflict" },
+      "restore_lifecycle_conflict",
+    ],
+    [
+      { code: "22023", message: "restore_snapshot_invalid" },
+      "restore_snapshot_invalid",
+    ],
+    [
+      { code: "22023", message: "invalid_concurrency_token" },
+      "invalid_concurrency_token",
+    ],
+    [
+      { code: "22023", message: "invalid_operation_id" },
+      "invalid_operation_id",
+    ],
+    [
+      { code: "55000", message: "active_editorial_workspace" },
+      "active_editorial_workspace",
+    ],
+    [
+      { code: "55000", message: "active_restore_conflict" },
+      "active_restore_conflict",
+    ],
+    [{ code: "40001", message: "restore_conflict" }, "restore_conflict"],
+    [
+      { code: "40001", message: "restore_operation_conflict" },
+      "restore_operation_conflict",
+    ],
+    [{ code: "42501", message: "private policy detail" }, "mutation_denied"],
+  ];
+
+  for (const [databaseError, expectedCode] of cases) {
+    const repository = createRestoreRepository({
+      rpc: async () => ({ data: null, error: databaseError }),
+    });
+
+    await assert.rejects(
+      repository.restoreVersionToDraft(restoreInput()),
+      (error) => {
+        assert.ok(error instanceof ContentMutationError);
+        assert.equal(error.code, expectedCode);
+        assert.equal(error.operation, "restoreVersionToDraft");
+        assert.doesNotMatch(
+          error.message,
+          /private|policy|public\.|content_versions|sql/i,
+        );
+        return true;
+      },
+    );
+  }
+});
+
+test("restore repository sanitizes unknown database errors", async () => {
+  const repository = createRestoreRepository({
+    rpc: async () => ({
+      data: null,
+      error: {
+        code: "XX000",
+        message: "private public.content_versions SQL failure",
+      },
+    }),
+  });
+
+  await assert.rejects(
+    repository.restoreVersionToDraft(restoreInput()),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "repository_failure");
+      assert.equal(error.operation, "restoreVersionToDraft");
+      assert.doesNotMatch(
+        error.message,
+        /private|public\.|content_versions|sql/i,
+      );
+      return true;
+    },
+  );
+});
+
+test("Archived content cannot use the generic Draft clone path", async () => {
+  let startCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getContentWorkflowState: async () => ({
+        contentId: restoreInput().contentId,
+        lifecycle: "Archived",
+      }),
+      startDraftRevision: async () => {
+        startCalls += 1;
+      },
+    }),
+  });
+
+  await assert.rejects(
+    service.startDraftRevision({ contentId: restoreInput().contentId }),
+    (error) => {
+      assert.ok(error instanceof ContentValidationError);
+      assert.equal(error.issues[0].code, "invalid_lifecycle_transition");
+      return true;
+    },
+  );
+  assert.equal(startCalls, 0);
+});
+
+test("Restore migration exposes one atomic Keeper-only workflow", () => {
+  const migration = fs.readFileSync(restoreFoundationMigrationPath, "utf8");
+  const functionStart = migration.search(
+    /create function public\.restore_version_to_draft/i,
+  );
+  const functionEnd = migration.indexOf(
+    "comment on function public.restore_version_to_draft",
+    functionStart,
+  );
+
+  assert.notEqual(functionStart, -1);
+  assert.ok(functionEnd > functionStart);
+  const restoreFunction = migration.slice(functionStart, functionEnd);
+  const checkpointInsert = restoreFunction.search(
+    /insert into public\.content_versions/i,
+  );
+  const draftInsert = restoreFunction.search(
+    /insert into public\.content_revisions/i,
+  );
+  const insertPolicyStart = migration.search(
+    /create policy content_revisions_restore_insert_guard/i,
+  );
+  const insertPolicyEnd = migration.search(
+    /create function private\.restore_snapshot_is_valid/i,
+  );
+  const insertPolicy = migration.slice(insertPolicyStart, insertPolicyEnd);
+  const cloneFunctionStart = migration.search(
+    /create or replace function public\.start_content_draft_revision/i,
+  );
+  const cloneFunctionEnd = migration.indexOf(
+    "comment on function public.start_content_draft_revision",
+    cloneFunctionStart,
+  );
+  const cloneFunction = migration.slice(cloneFunctionStart, cloneFunctionEnd);
+
+  assert.match(restoreFunction, /security definer/i);
+  assert.match(restoreFunction, /private\.is_garden_keeper\(\)/i);
+  assert.match(
+    restoreFunction,
+    /from public\.contents[\s\S]*?for update/i,
+  );
+  assert.match(
+    restoreFunction,
+    /from public\.content_revisions[\s\S]*?for update/i,
+  );
+  assert.match(restoreFunction, /lifecycle\s*<>\s*'Archived'/i);
+  assert.match(
+    restoreFunction,
+    /source_version\.content_id\s*<>\s*p_content_id/i,
+  );
+  assert.match(restoreFunction, /restore_snapshot_invalid/i);
+  assert.match(restoreFunction, /checkpoint_reason[\s\S]*?'PreRestore'/i);
+  assert.match(restoreFunction, /restore_operation_id/i);
+  assert.match(restoreFunction, /source_version_id/i);
+  assert.match(restoreFunction, /restored_by/i);
+  assert.match(restoreFunction, /restored_at/i);
+  assert.ok(checkpointInsert >= 0);
+  assert.ok(draftInsert > checkpointInsert);
+  assert.doesNotMatch(restoreFunction, /update\s+public\.contents/i);
+  assert.doesNotMatch(
+    restoreFunction,
+    /(?:update|delete)\s+(?:from\s+)?public\.content_versions/i,
+  );
+  assert.doesNotMatch(
+    restoreFunction,
+    /(?:insert\s+into|update|delete\s+from)\s+public\.(?:content_relations|growth_notes|home_curation|content_tags|tags)/i,
+  );
+  assert.doesNotMatch(restoreFunction, /storage\./i);
+  assert.doesNotMatch(migration, /disable row level security/i);
+  assert.match(
+    migration,
+    /create unique index content_versions_restore_receipt_idx/i,
+  );
+  assert.match(
+    migration,
+    /grant execute on function public\.restore_version_to_draft[\s\S]*?to authenticated/i,
+  );
+  assert.notEqual(insertPolicyStart, -1);
+  assert.ok(insertPolicyEnd > insertPolicyStart);
+  assert.match(insertPolicy, /as restrictive/i);
+  assert.match(insertPolicy, /for insert/i);
+  assert.match(insertPolicy, /restore_operation_id\s+is\s+null/i);
+  assert.match(
+    insertPolicy,
+    /parent_content\.lifecycle\s+in\s*\(\s*'Draft'\s*,\s*'Published'\s*\)/i,
+  );
+  assert.doesNotMatch(insertPolicy, /'Archived'/i);
+  assert.notEqual(cloneFunctionStart, -1);
+  assert.ok(cloneFunctionEnd > cloneFunctionStart);
+  assert.match(cloneFunction, /lifecycle\s*<>\s*'Published'/i);
+  assert.doesNotMatch(cloneFunction, /'Archived'/i);
 });

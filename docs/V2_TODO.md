@@ -332,6 +332,20 @@ Acceptance:
 - [x] Add application tests and a rollback-only SQL integration test
 - [ ] Apply the migration and execute the SQL integration test in Preview
 
+## 4D-2B. Restore foundation
+
+- [x] Audit immutable version snapshots, Archived concurrency, revision provenance, and restore bypasses
+- [x] Add the narrow Keeper-only `restore_version_to_draft` RPC
+- [x] Lock and validate the Archived identity, selected restorable version, concurrency token, and active workspace atomically
+- [x] Create an immutable `PreRestore` checkpoint that doubles as the durable idempotency receipt
+- [x] Restore only approved editorial fields into a new Draft while preserving the Archived projection and stable identity
+- [x] Record source version, operation ID, restore actor, restore timestamp, and initial revision lock server-side
+- [x] Keep relations, Growth Notes, Home curation, publication/archive metadata, and Storage references outside automatic restore
+- [x] Add typed Admin Content Service and Restore Repository boundaries
+- [x] Close generic Archived-clone and direct revision-insert bypasses without weakening RLS or Storage policies
+- [x] Add application tests and a rollback-only SQL integration test
+- [ ] Apply the migration and execute the SQL integration test in Preview
+
 ---
 
 # Phase 5 — Core content administration

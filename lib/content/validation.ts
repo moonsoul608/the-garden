@@ -55,7 +55,7 @@ const allowedLifecycleTransitions: Record<Lifecycle, readonly Lifecycle[]> = {
   Draft: ["Review"],
   Review: ["Draft", "Published"],
   Published: ["Draft", "Review", "Archived"],
-  Archived: ["Draft"],
+  Archived: [],
 };
 
 type CoverCandidate = {

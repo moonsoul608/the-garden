@@ -15,10 +15,17 @@ export type ContentMutationErrorCode =
   | "publication_validation_failed"
   | "publishing_disabled"
   | "archiving_disabled"
+  | "restoring_disabled"
   | "archive_lifecycle_conflict"
   | "active_editorial_workspace"
   | "archive_conflict"
   | "archive_operation_conflict"
+  | "restore_lifecycle_conflict"
+  | "restore_version_invalid"
+  | "restore_snapshot_invalid"
+  | "restore_conflict"
+  | "restore_operation_conflict"
+  | "active_restore_conflict"
   | "invalid_operation_id"
   | "mutation_denied"
   | "invalid_concurrency_token"
@@ -36,6 +43,7 @@ export type ContentMutationOperation =
   | "returnToDraft"
   | "publishReview"
   | "archiveContent"
+  | "restoreVersionToDraft"
   | "startDraftRevision";
 
 const publicMessages: Record<ContentMutationErrorCode, string> = {
@@ -53,11 +61,18 @@ const publicMessages: Record<ContentMutationErrorCode, string> = {
   publication_validation_failed: "The Review no longer passes publication validation.",
   publishing_disabled: "Publishing is disabled for the current content source mode.",
   archiving_disabled: "Archiving is disabled for the current content source mode.",
+  restoring_disabled: "Restoring is disabled for the current content source mode.",
   archive_lifecycle_conflict: "Only Published content can be archived.",
   active_editorial_workspace: "This content item has an active editorial workspace.",
   archive_conflict: "The Published content changed before it could be archived.",
   archive_operation_conflict: "The archive operation identifier is already in use.",
-  invalid_operation_id: "The archive operation identifier is invalid.",
+  restore_lifecycle_conflict: "Only Archived content can be restored.",
+  restore_version_invalid: "The selected content version cannot be restored.",
+  restore_snapshot_invalid: "The selected restore snapshot is invalid.",
+  restore_conflict: "The Archived content changed before it could be restored.",
+  restore_operation_conflict: "The restore operation identifier is already in use.",
+  active_restore_conflict: "This content item already has an active restoration.",
+  invalid_operation_id: "The operation identifier is invalid.",
   mutation_denied: "The content mutation was denied.",
   invalid_concurrency_token: "The concurrency token is invalid.",
   repository_failure: "The content mutation could not be completed.",
@@ -156,6 +171,56 @@ export function mapContentMutationDatabaseError(
 
     if (code === "55000" && message === "active_editorial_workspace") {
       return new ContentMutationError("active_editorial_workspace", operation);
+    }
+  }
+
+  if (operation === "restoreVersionToDraft") {
+    if (code === "P0002" && message === "content_not_found") {
+      return new ContentMutationError("content_not_found", operation);
+    }
+
+    if (code === "P0002" && message === "restore_version_invalid") {
+      return new ContentMutationError("restore_version_invalid", operation);
+    }
+
+    if (code === "40001") {
+      const knownCode =
+        message === "restore_conflict" ||
+        message === "restore_operation_conflict" ||
+        message === "active_restore_conflict"
+          ? message
+          : null;
+
+      if (knownCode) {
+        return new ContentMutationError(knownCode, operation);
+      }
+    }
+
+    if (code === "22023") {
+      const knownCode =
+        message === "invalid_concurrency_token" ||
+        message === "invalid_operation_id" ||
+        message === "restore_lifecycle_conflict" ||
+        message === "restore_version_invalid" ||
+        message === "restore_snapshot_invalid"
+          ? message
+          : null;
+
+      if (knownCode) {
+        return new ContentMutationError(knownCode, operation);
+      }
+    }
+
+    if (code === "55000") {
+      const knownCode =
+        message === "active_editorial_workspace" ||
+        message === "active_restore_conflict"
+          ? message
+          : null;
+
+      if (knownCode) {
+        return new ContentMutationError(knownCode, operation);
+      }
     }
   }
 

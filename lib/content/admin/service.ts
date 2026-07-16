@@ -33,6 +33,8 @@ import type {
   PrepareReviewInput,
   PublicationReceipt,
   PublishReviewInput,
+  RestoreReceipt,
+  RestoreVersionInput,
   ReviewCoverStatus,
   ReviewDifferenceSummary,
   ReviewReadinessReport,
@@ -52,6 +54,11 @@ import {
   type ContentWriteRepository,
   type ContentWriteRepositoryClient,
 } from "./repository";
+import {
+  createRestoreRepository,
+  type RestoreRepository,
+  type RestoreRepositoryClient,
+} from "./restore-repository";
 
 type AuthorizeAdminRequest = () => Promise<AuthenticatedUser>;
 
@@ -61,6 +68,8 @@ export type AdminContentServiceDependencies = {
   repositoryFactory?: () => Promise<ContentWriteRepository>;
   archiveRepository?: ArchiveRepository;
   archiveRepositoryFactory?: () => Promise<ArchiveRepository>;
+  restoreRepository?: RestoreRepository;
+  restoreRepositoryFactory?: () => Promise<RestoreRepository>;
   sourceMode?: ContentSourceMode;
 };
 
@@ -393,6 +402,13 @@ async function createDefaultArchiveRepository(): Promise<ArchiveRepository> {
   );
 }
 
+async function createDefaultRestoreRepository(): Promise<RestoreRepository> {
+  const client = await createClient();
+  return createRestoreRepository(
+    client as unknown as RestoreRepositoryClient,
+  );
+}
+
 export function createAdminContentService(
   dependencies: AdminContentServiceDependencies = {},
 ): AdminContentService {
@@ -404,6 +420,10 @@ export function createAdminContentService(
   let archiveRepositoryPromise: Promise<ArchiveRepository> | null =
     dependencies.archiveRepository
       ? Promise.resolve(dependencies.archiveRepository)
+      : null;
+  let restoreRepositoryPromise: Promise<RestoreRepository> | null =
+    dependencies.restoreRepository
+      ? Promise.resolve(dependencies.restoreRepository)
       : null;
 
   function getRepository(): Promise<ContentWriteRepository> {
@@ -417,6 +437,13 @@ export function createAdminContentService(
       dependencies.archiveRepositoryFactory?.() ??
       createDefaultArchiveRepository();
     return archiveRepositoryPromise;
+  }
+
+  function getRestoreRepository(): Promise<RestoreRepository> {
+    restoreRepositoryPromise ??=
+      dependencies.restoreRepositoryFactory?.() ??
+      createDefaultRestoreRepository();
+    return restoreRepositoryPromise;
   }
 
   async function createDraft(input: CreateDraftInput): Promise<DraftRevision> {
@@ -674,6 +701,61 @@ export function createAdminContentService(
     return (await getArchiveRepository()).archivePublishedContent(input);
   }
 
+  async function restoreVersionToDraft(
+    input: RestoreVersionInput,
+  ): Promise<RestoreReceipt> {
+    await authorize();
+
+    if (!UUID_PATTERN.test(input.contentId)) {
+      throw new ContentMutationError(
+        "invalid_content_identity",
+        "restoreVersionToDraft",
+      );
+    }
+
+    if (!UUID_PATTERN.test(input.sourceVersionId)) {
+      throw new ContentMutationError(
+        "restore_version_invalid",
+        "restoreVersionToDraft",
+      );
+    }
+
+    if (!UUID_PATTERN.test(input.operationId)) {
+      throw new ContentMutationError(
+        "invalid_operation_id",
+        "restoreVersionToDraft",
+      );
+    }
+
+    if (
+      !input.expectedArchivedToken ||
+      !Number.isFinite(Date.parse(input.expectedArchivedToken))
+    ) {
+      throw new ContentMutationError(
+        "invalid_concurrency_token",
+        "restoreVersionToDraft",
+      );
+    }
+
+    let sourceMode: ContentSourceMode;
+    try {
+      sourceMode = dependencies.sourceMode ?? getContentSourceMode();
+    } catch {
+      throw new ContentMutationError(
+        "restoring_disabled",
+        "restoreVersionToDraft",
+      );
+    }
+    if (sourceMode === "legacy") {
+      throw new ContentMutationError(
+        "restoring_disabled",
+        "restoreVersionToDraft",
+      );
+    }
+
+    return (await getRestoreRepository()).restoreVersionToDraft(input);
+  }
+
   async function startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision> {
@@ -701,6 +783,7 @@ export function createAdminContentService(
     returnToDraft,
     publishReview,
     archiveContent,
+    restoreVersionToDraft,
     startDraftRevision,
   };
 }

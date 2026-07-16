@@ -85,6 +85,13 @@ export type ArchiveContentInput = {
   operationId: string;
 };
 
+export type RestoreVersionInput = {
+  contentId: string;
+  sourceVersionId: string;
+  expectedArchivedToken: string;
+  operationId: string;
+};
+
 /** Durable archive receipt recovered unchanged when operationId is retried. */
 export type ArchiveReceipt = Readonly<{
   contentId: string;
@@ -92,6 +99,18 @@ export type ArchiveReceipt = Readonly<{
   versionId: string;
   archivedAt: string;
   archivedBy: string;
+}>;
+
+/** Durable restore receipt recovered unchanged when operationId is retried. */
+export type RestoreReceipt = Readonly<{
+  contentId: string;
+  sourceVersionId: string;
+  revisionId: string;
+  operationId: string;
+  preRestoreVersionId: string;
+  lockVersion: number;
+  restoredAt: string;
+  restoredBy: string;
 }>;
 
 /** Primitive-only receipt safe to cross a future Server Action boundary. */
@@ -173,6 +192,7 @@ export interface AdminContentService {
   returnToDraft(input: ReviewTransitionInput): Promise<DraftRevision>;
   publishReview(input: PublishReviewInput): Promise<PublicationReceipt>;
   archiveContent(input: ArchiveContentInput): Promise<ArchiveReceipt>;
+  restoreVersionToDraft(input: RestoreVersionInput): Promise<RestoreReceipt>;
   startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision>;

@@ -114,6 +114,9 @@ export type ContentRevisionDatabaseRow = {
   featured: boolean;
   manual_order: number | null;
   source_version_id: string | null;
+  restore_operation_id: string | null;
+  restored_by: string | null;
+  restored_at: string | null;
   base_content_updated_at: string | null;
   review_submitted_at: string | null;
   review_submitted_by: string | null;
@@ -150,6 +153,9 @@ export type ContentRevisionDatabaseInsert = {
   featured?: boolean;
   manual_order?: number | null;
   source_version_id?: string | null;
+  restore_operation_id?: string | null;
+  restored_by?: string | null;
+  restored_at?: string | null;
   base_content_updated_at?: string | null;
   review_submitted_at?: string | null;
   review_submitted_by?: string | null;
@@ -168,6 +174,9 @@ export type ContentRevisionDatabaseUpdate = Partial<
     | "id"
     | "content_id"
     | "source_version_id"
+    | "restore_operation_id"
+    | "restored_by"
+    | "restored_at"
     | "base_content_updated_at"
     | "review_submitted_at"
     | "review_submitted_by"
@@ -260,6 +269,10 @@ export type ContentVersionDatabaseRow = {
   source_revision_id: string | null;
   source_lock_version: number | null;
   archive_operation_id: string | null;
+  restore_operation_id: string | null;
+  restore_source_version_id: string | null;
+  restore_revision_id: string | null;
+  restore_archived_token: string | null;
 };
 
 export type ContentVersionDatabaseInsert = {
@@ -273,6 +286,10 @@ export type ContentVersionDatabaseInsert = {
   source_revision_id?: string | null;
   source_lock_version?: number | null;
   archive_operation_id?: string | null;
+  restore_operation_id?: string | null;
+  restore_source_version_id?: string | null;
+  restore_revision_id?: string | null;
+  restore_archived_token?: string | null;
 };
 
 export type TagDatabaseRow = {
@@ -375,6 +392,15 @@ export type ContentDatabase = {
         Args: {
           p_content_id: string;
           p_expected_updated_at: string;
+          p_operation_id: string;
+        };
+        Returns: Json;
+      };
+      restore_version_to_draft: {
+        Args: {
+          p_content_id: string;
+          p_source_version_id: string;
+          p_expected_archived_token: string;
           p_operation_id: string;
         };
         Returns: Json;

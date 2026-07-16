@@ -262,7 +262,8 @@ $$;
 reset role;
 
 -- The transaction-only allow-list row activates the positive Garden Keeper
--- path. The test covers private reads plus insert, update, and delete.
+-- path. Later purge safety keeps private reads plus insert/update, while
+-- direct browser deletion is deliberately blocked outside a server executor.
 select set_config(
   'request.jwt.claims',
   '{"sub":"00000000-0000-4000-8000-000000002d01","role":"authenticated"}',
@@ -289,6 +290,7 @@ do $$
 declare
   visible_count integer;
   affected_count integer;
+  delete_denied boolean := false;
 begin
   select count(*)
   into visible_count
@@ -318,11 +320,15 @@ begin
     raise exception 'Phase 02D-2 test failed: Keeper update affected % rows', affected_count;
   end if;
 
-  delete from storage.objects
-  where id = '00000000-0000-4000-8000-000000002913';
-  get diagnostics affected_count = row_count;
-  if affected_count <> 1 then
-    raise exception 'Phase 02D-2 test failed: Keeper delete affected % rows', affected_count;
+  begin
+    delete from storage.objects
+    where id = '00000000-0000-4000-8000-000000002913';
+  exception
+    when insufficient_privilege then
+      delete_denied := true;
+  end;
+  if not delete_denied then
+    raise exception 'Phase 02D-2 test failed: Keeper directly deleted Storage';
   end if;
 end;
 $$;

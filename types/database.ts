@@ -292,6 +292,72 @@ export type ContentVersionDatabaseInsert = {
   restore_archived_token?: string | null;
 };
 
+export type StorageReferenceOwnerType =
+  | "ContentProjection"
+  | "ContentRevision"
+  | "ContentVersion";
+
+export type StorageObjectLifecycleState =
+  | "Referenced"
+  | "Unreferenced"
+  | "Quarantine"
+  | "EligibleForPurge";
+
+export type StorageQuarantineReason =
+  | "OrdinaryReplacement"
+  | "FailedUpload"
+  | "PermanentContentDeletion";
+
+export type StorageObjectReferenceDatabaseRow = {
+  id: string;
+  object_path: string;
+  bucket: string;
+  reference_owner_type: StorageReferenceOwnerType;
+  reference_owner_id: string;
+  content_id: string | null;
+  reference_state: "Referenced";
+  created_at: string;
+  updated_at: string;
+};
+
+export type StorageObjectReferenceDatabaseInsert = {
+  id?: string;
+  object_path: string;
+  bucket: string;
+  reference_owner_type: StorageReferenceOwnerType;
+  reference_owner_id: string;
+  content_id?: string | null;
+  reference_state?: "Referenced";
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type StorageObjectLifecycleDatabaseRow = {
+  bucket: string;
+  object_path: string;
+  lifecycle_state: StorageObjectLifecycleState;
+  last_referenced_at: string | null;
+  unreferenced_at: string | null;
+  quarantine_started_at: string | null;
+  quarantine_until: string | null;
+  quarantine_reason: StorageQuarantineReason | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StorageObjectLifecycleDatabaseInsert = {
+  bucket: string;
+  object_path: string;
+  lifecycle_state: StorageObjectLifecycleState;
+  last_referenced_at?: string | null;
+  unreferenced_at?: string | null;
+  quarantine_started_at?: string | null;
+  quarantine_until?: string | null;
+  quarantine_reason?: StorageQuarantineReason | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type TagDatabaseRow = {
   id: string;
   normalized_name: string;
@@ -338,6 +404,16 @@ export type ContentDatabase = {
       content_versions: SupabaseTable<
         ContentVersionDatabaseRow,
         ContentVersionDatabaseInsert,
+        never
+      >;
+      storage_object_references: SupabaseTable<
+        StorageObjectReferenceDatabaseRow,
+        StorageObjectReferenceDatabaseInsert,
+        never
+      >;
+      storage_object_lifecycles: SupabaseTable<
+        StorageObjectLifecycleDatabaseRow,
+        StorageObjectLifecycleDatabaseInsert,
         never
       >;
       growth_notes: SupabaseTable<
@@ -418,6 +494,28 @@ export type ContentDatabase = {
         };
         Returns: Json;
       };
+      inspect_storage_object_purge_safety: {
+        Args: {
+          p_bucket: string;
+          p_object_path: string;
+        };
+        Returns: Json;
+      };
+      quarantine_failed_storage_upload: {
+        Args: {
+          p_bucket: string;
+          p_object_path: string;
+          p_grace_period: string;
+        };
+        Returns: Json;
+      };
+      mark_storage_object_post_delete_bypass: {
+        Args: {
+          p_bucket: string;
+          p_object_path: string;
+        };
+        Returns: Json;
+      };
       resolve_public_content_route: {
         Args: {
           p_region: RegionName;
@@ -439,6 +537,10 @@ export type ContentDatabase = {
       content_language: ContentLanguage;
       relation_type: RelationType;
       home_slot: HomeCurationSlot;
+      storage_reference_owner_type: StorageReferenceOwnerType;
+      storage_reference_state: "Referenced";
+      storage_object_lifecycle_state: StorageObjectLifecycleState;
+      storage_quarantine_reason: StorageQuarantineReason;
     };
     CompositeTypes: Record<string, never>;
   };

@@ -375,6 +375,18 @@ Acceptance:
 - [x] Add typed Admin Content Service/repository contracts, application tests, and a rollback-only SQL integration test
 - [ ] Apply the migration and execute the SQL integration test in Preview
 
+## 4D-3B. Storage reference and purge safety foundation
+
+- [x] Audit the private cover bucket, `contents.cover_image_path`, Draft/Review revisions, immutable version snapshot shapes, and existing Storage policies
+- [x] Add a server-maintained reference ledger for content projections, active revisions, and immutable version/checkpoint references
+- [x] Backfill existing references and synchronize future owner writes through transaction-local database triggers without changing lifecycle RPCs
+- [x] Add ordinary 30-day replacement quarantine, a separate failed-upload grace contract, and a post-commit permanent-deletion bypass marker
+- [x] Add a service-role-only, fail-closed purge inspection contract that rechecks the ledger, projections, active revisions, versions, and elapsed quarantine
+- [x] Define typed server repository, purge evaluation, and reconciliation scanner contracts without implementing a scanner, worker, or physical deletion
+- [x] Remove direct browser-role Storage DELETE privilege while leaving the existing private bucket and all five Storage policy definitions unchanged
+- [x] Add application tests and a rollback-only SQL integration test for reference protection, quarantine, deletion preservation, and direct-delete denial
+- [ ] Apply the migration and execute the SQL integration test in Preview
+
 ---
 
 # Phase 5 — Core content administration

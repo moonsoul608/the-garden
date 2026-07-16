@@ -417,7 +417,7 @@ Acceptance:
 
 ## 5A. Content list
 
-- [ ] List all lifecycle states
+- [x] List all lifecycle states
 - [ ] Search content
 - [ ] Filter by Region
 - [ ] Filter by Content Type
@@ -425,20 +425,20 @@ Acceptance:
 - [ ] Filter by lifecycle
 - [ ] Show last tended
 - [ ] Show Featured
-- [ ] No bulk operations
+- [x] No bulk operations
 
 ## 5B. Create and edit
 
-- [ ] New Draft
-- [ ] Chinese fields
-- [ ] English fields
-- [ ] language mode
-- [ ] Region
-- [ ] Content Type
-- [ ] Detail Level
+- [x] New Draft
+- [x] Chinese fields
+- [x] English fields
+- [x] language mode
+- [x] Region
+- [x] Content Type
+- [x] Detail Level
 - [ ] fixed primary category selection
-- [ ] free tags
-- [ ] Growth Stage
+- [x] free tags
+- [x] Growth Stage
 - [ ] slug suggestion
 - [ ] slug uniqueness check
 - [ ] stable-slug warning after publication
@@ -470,11 +470,11 @@ Acceptance:
 
 Acceptance:
 
-- [ ] create Draft
-- [ ] edit Draft
+- [x] create Draft
+- [x] edit Draft
 - [ ] autosave Draft
-- [ ] recover from save failure
-- [ ] no public Draft exposure
+- [x] recover from save failure
+- [x] no public Draft exposure
 
 ---
 

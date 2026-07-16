@@ -213,5 +213,7 @@ test("protected dashboard keeps noindex, server fetching, and typed empty states
   assert.match(page, /Create Content/);
   assert.match(page, /Review Queue/);
   assert.match(page, /Media/);
-  assert.doesNotMatch(page, /<button|href=/i);
+  assert.match(page, /href:\s*"\/admin\/content\/new"/);
+  assert.match(page, /href=\{action\.href\}/);
+  assert.doesNotMatch(page, /<button/i);
 });

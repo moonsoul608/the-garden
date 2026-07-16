@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   DASHBOARD_LIFECYCLES,
   getDashboardSummary,
@@ -15,6 +17,7 @@ type QuickAction = Readonly<{
   label: string;
   description: string;
   marker: string;
+  href?: string;
 }>;
 
 const recentActivity: readonly RecentActivityItem[] = [];
@@ -24,6 +27,7 @@ const quickActions: readonly QuickAction[] = [
     label: "Create Content",
     description: "Plant a new Draft in the Keeper workspace.",
     marker: "01",
+    href: "/admin/content/new",
   },
   {
     label: "Review Queue",
@@ -149,16 +153,32 @@ export default async function AdminDashboardPage() {
             <ul className="admin-action-list">
               {quickActions.map((action) => (
                 <li key={action.label}>
-                  <div className="admin-action-placeholder" aria-disabled="true">
-                    <span className="admin-action-marker" aria-hidden="true">
-                      {action.marker}
-                    </span>
-                    <span className="admin-action-copy">
-                      <strong>{action.label}</strong>
-                      <small>{action.description}</small>
-                    </span>
-                    <span className="admin-coming-soon">Coming later</span>
-                  </div>
+                  {action.href ? (
+                    <Link
+                      className="admin-action-placeholder admin-action-link"
+                      href={action.href}
+                    >
+                      <span className="admin-action-marker" aria-hidden="true">
+                        {action.marker}
+                      </span>
+                      <span className="admin-action-copy">
+                        <strong>{action.label}</strong>
+                        <small>{action.description}</small>
+                      </span>
+                      <span className="admin-action-ready">Open</span>
+                    </Link>
+                  ) : (
+                    <div className="admin-action-placeholder" aria-disabled="true">
+                      <span className="admin-action-marker" aria-hidden="true">
+                        {action.marker}
+                      </span>
+                      <span className="admin-action-copy">
+                        <strong>{action.label}</strong>
+                        <small>{action.description}</small>
+                      </span>
+                      <span className="admin-coming-soon">Coming later</span>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

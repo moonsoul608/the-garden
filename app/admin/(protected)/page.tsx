@@ -40,6 +40,12 @@ const quickActions: readonly QuickAction[] = [
     description: "Tend cover images and their details.",
     marker: "03",
   },
+  {
+    label: "Lifecycle",
+    description: "Tend Published and Archived garden paths.",
+    marker: "04",
+    href: "/admin/lifecycle",
+  },
 ];
 
 const lifecycleDescriptions: Record<DashboardLifecycle, string> = {

@@ -496,13 +496,13 @@ Acceptance:
 
 ## 6B. Archive and delete
 
-- [ ] Archive Published item
+- [x] Archive Published item
 - [ ] Remove Archived item from discovery
 - [ ] Render resting-state route
-- [ ] Restore Archived item
-- [ ] Show permanent delete only in Archived
-- [ ] Show relation/version/image impact
-- [ ] Require second confirmation
+- [x] Restore Archived item
+- [x] Show permanent delete only in Archived
+- [x] Show relation/version/image impact
+- [x] Require second confirmation
 - [ ] Clean relations safely
 - [ ] Clean unused Storage object
 - [ ] Deleted route returns designed 404/Gone

@@ -1325,6 +1325,431 @@ body:has(.admin-root) > .footer {
   background: #f1f8f1;
 }
 
+.admin-lifecycle-workspace {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.admin-lifecycle-section,
+.admin-deleted-history,
+.admin-lifecycle-unavailable {
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  border: 1px solid #cbd5cc;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 0.75);
+  box-shadow: 0 1.1rem 3rem rgb(23 35 27 / 0.04);
+}
+
+.admin-lifecycle-section .admin-section-heading > div > span {
+  display: block;
+  max-width: 35rem;
+  margin-top: 0.45rem;
+  color: #587061;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.admin-lifecycle-records {
+  display: grid;
+  gap: 0;
+  margin-top: 1.75rem;
+  border-top: 1px solid #d5ddd6;
+}
+
+.admin-lifecycle-row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.25fr) minmax(22rem, 1.7fr) minmax(11rem, auto);
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #d5ddd6;
+}
+
+.admin-lifecycle-row-title,
+.admin-lifecycle-identity {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
+}
+
+.admin-lifecycle-row-title > span,
+.admin-lifecycle-identity > span {
+  color: #607668;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.admin-lifecycle-row-title h3 {
+  overflow: hidden;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-lifecycle-row-title code,
+.admin-lifecycle-identity code,
+.admin-deletion-preview code {
+  overflow: hidden;
+  color: #617568;
+  font-family: inherit;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-lifecycle-row-meta {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr 1fr;
+  gap: 1rem;
+  margin: 0;
+}
+
+.admin-lifecycle-row-meta > div {
+  display: grid;
+  align-content: start;
+  gap: 0.25rem;
+}
+
+.admin-lifecycle-row-meta dt,
+.admin-lifecycle-preview-grid dt {
+  color: #6b7c70;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-lifecycle-row-meta dd,
+.admin-lifecycle-preview-grid dd {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: #33483a;
+  font-size: 0.76rem;
+}
+
+.admin-lifecycle-row-meta dd strong,
+.admin-lifecycle-row-meta dd time {
+  display: block;
+}
+
+.admin-lifecycle-row-meta > div:last-child dd {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.admin-lifecycle-row-meta > div:last-child time {
+  color: #6b7c70;
+  font-size: 0.68rem;
+}
+
+.admin-lifecycle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.admin-lifecycle-actions > button,
+.admin-lifecycle-dialog-actions button,
+.admin-destructive-confirmation {
+  min-height: 2.35rem;
+  border: 1px solid #9eb0a1;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  color: #264333;
+  background: #f7faf6;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.admin-lifecycle-actions .admin-destructive-action {
+  border-color: #d3aaa0;
+  color: #7a2e24;
+  background: #fff7f4;
+}
+
+.admin-lifecycle-action-note {
+  justify-self: end;
+  color: #6b7c70;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.admin-lifecycle-empty,
+.admin-lifecycle-unavailable {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 2rem;
+  color: #5f7466;
+  text-align: center;
+}
+
+.admin-lifecycle-empty > span,
+.admin-lifecycle-unavailable > span {
+  color: #76917d;
+  font-family: var(--font-display);
+  font-size: 2rem;
+}
+
+.admin-lifecycle-empty p,
+.admin-lifecycle-unavailable p,
+.admin-lifecycle-unavailable h2 {
+  margin: 0;
+}
+
+.admin-lifecycle-unavailable {
+  margin-top: 0;
+  border-style: dashed;
+}
+
+.admin-deleted-history {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.75fr) minmax(16rem, 1.35fr) auto;
+  align-items: center;
+  gap: 1.5rem;
+  border-style: dashed;
+  background: rgb(240 243 238 / 0.8);
+}
+
+.admin-deleted-history h2,
+.admin-deleted-history p {
+  margin: 0;
+}
+
+.admin-deleted-history h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.admin-deleted-history > p {
+  color: #5a6d60;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.admin-deleted-history > span {
+  border: 1px solid #c5cec6;
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  color: #67776c;
+  font-size: 0.65rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-lifecycle-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid #aebdb0;
+  border-radius: 1rem;
+  color: #17231b;
+  background: #f9fbf7;
+  box-shadow: 0 2rem 6rem rgb(8 22 13 / 0.3);
+}
+
+.admin-lifecycle-dialog::backdrop {
+  background: rgb(14 31 20 / 0.68);
+  backdrop-filter: blur(3px);
+}
+
+.admin-lifecycle-dialog-body {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+}
+
+.admin-lifecycle-dialog h2,
+.admin-lifecycle-dialog h3,
+.admin-lifecycle-dialog p {
+  margin: 0;
+}
+
+.admin-lifecycle-dialog h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 5vw, 2.4rem);
+  line-height: 1.1;
+}
+
+.admin-lifecycle-identity {
+  padding: 0.9rem 1rem;
+  border-left: 3px solid #6f9279;
+  background: #eef4ec;
+}
+
+.admin-lifecycle-identity strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.admin-lifecycle-impact,
+.admin-deletion-preview {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid #d2dbd3;
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.admin-lifecycle-impact h3,
+.admin-deletion-preview h3 {
+  font-size: 0.78rem;
+}
+
+.admin-lifecycle-impact ul,
+.admin-deletion-preview ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.15rem;
+  color: #506558;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.admin-lifecycle-dialog-note {
+  color: #5b6e61;
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.admin-lifecycle-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+}
+
+.admin-lifecycle-dialog-actions .admin-primary-action {
+  border-color: #183d29;
+  color: #fff;
+  background: #183d29;
+}
+
+.admin-lifecycle-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.admin-lifecycle-preview-grid > div {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem;
+  border: 1px solid #d2dbd3;
+  border-radius: 0.6rem;
+  background: #fff;
+}
+
+.admin-lifecycle-preview-grid dd {
+  line-height: 1.5;
+}
+
+.admin-lifecycle-warning {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d8a99e;
+  border-radius: 0.6rem;
+  color: #6b291f;
+  background: #fff4f0;
+  font-size: 0.77rem;
+  line-height: 1.5;
+}
+
+.admin-deletion-preview {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-deletion-preview section {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #d8dfd8;
+}
+
+.admin-deletion-preview section:last-child {
+  border-bottom: 0;
+}
+
+.admin-deletion-preview p {
+  color: #506558;
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.admin-delete-confirmation {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-delete-confirmation > label {
+  font-size: 0.75rem;
+}
+
+.admin-delete-confirmation > input {
+  min-height: 2.75rem;
+  border: 1px solid #b7867b;
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  color: #4f211a;
+  background: #fff;
+  font: inherit;
+}
+
+.admin-lifecycle-dialog-actions .admin-destructive-confirmation {
+  border-color: #8d3428;
+  color: #fff;
+  background: #8d3428;
+}
+
+.admin-lifecycle-notice {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem;
+  border: 1px solid #d1afa6;
+  border-radius: 0.55rem;
+  color: #67281f;
+  background: #fff6f2;
+  font-size: 0.72rem;
+}
+
+.admin-lifecycle-notice--success {
+  border-color: #a8c4ae;
+  color: #234f34;
+  background: #f1f8f1;
+}
+
+.admin-lifecycle-loading {
+  display: grid;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.admin-lifecycle-loading span {
+  height: 7rem;
+  border: 1px solid #d4dcd5;
+  border-radius: 1rem;
+  background: linear-gradient(90deg, #eef2ed, #fafcf9, #eef2ed);
+}
+
 .admin-review-row > a:focus-visible,
 .admin-editor-review-link a:focus-visible,
 .admin-review-return-form textarea:focus-visible,
@@ -1333,6 +1758,27 @@ body:has(.admin-root) > .footer {
 .admin-review-publish-form input:focus-visible {
   outline: 3px solid #d3af52;
   outline-offset: 3px;
+}
+
+.admin-lifecycle-actions button:focus-visible,
+.admin-lifecycle-dialog button:focus-visible,
+.admin-lifecycle-dialog input:focus-visible {
+  outline: 3px solid #d3af52;
+  outline-offset: 3px;
+}
+
+@media (max-width: 68rem) {
+  .admin-lifecycle-row {
+    grid-template-columns: minmax(12rem, 1fr) minmax(20rem, 1.5fr);
+  }
+
+  .admin-lifecycle-actions,
+  .admin-lifecycle-action-note {
+    grid-column: 1 / -1;
+    justify-self: start;
+    justify-content: flex-start;
+    text-align: left;
+  }
 }
 
 @media (max-width: 48rem) {
@@ -1394,6 +1840,19 @@ body:has(.admin-root) > .footer {
   .admin-review-detail-grid,
   .admin-review-action-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-lifecycle-row,
+  .admin-deleted-history {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-lifecycle-row-meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-deleted-history > span {
+    justify-self: start;
   }
 
   .admin-review-row dl {
@@ -1495,6 +1954,22 @@ body:has(.admin-root) > .footer {
   .admin-review-revision dl,
   .admin-review-checklist-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-lifecycle-row-meta,
+  .admin-lifecycle-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-lifecycle-actions,
+  .admin-lifecycle-actions > button,
+  .admin-lifecycle-dialog-actions,
+  .admin-lifecycle-dialog-actions > button {
+    width: 100%;
+  }
+
+  .admin-lifecycle-dialog-actions {
+    flex-direction: column-reverse;
   }
 
   .admin-review-check,

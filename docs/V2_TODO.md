@@ -387,6 +387,20 @@ Acceptance:
 - [x] Add application tests and a rollback-only SQL integration test for reference protection, quarantine, deletion preservation, and direct-delete denial
 - [ ] Apply the migration and execute the SQL integration test in Preview
 
+## 4D-3C. Redirect contract hardening
+
+- [x] Audit the existing `route_redirects` schema, route consumers, public route boundary, and content service
+- [x] Add a typed server-only redirect domain, repository, service, and typed error contract
+- [x] Add explicit 308 redirect type, optional reason, Keeper actor, and creation-time provenance
+- [x] Reject external or malformed routes, self redirects, loops, and chains
+- [x] Require a reserved source and an existing Published or Archived canonical target
+- [x] Reject Draft, Review, deleted, missing, and redirect-source targets
+- [x] Return the existing record for an identical command and a typed conflict for a different command on the same source
+- [x] Add the narrow Keeper-only `create_route_redirect` RPC and revoke direct authenticated redirect graph writes
+- [x] Preserve redirect RLS, anonymous table denial, Delete Foundation tombstones, and the existing public route resolver
+- [x] Add application tests and a rollback-only SQL integration test
+- [ ] Apply the migration and execute the SQL integration test in Preview
+
 ---
 
 # Phase 5 — Core content administration

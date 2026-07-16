@@ -516,6 +516,15 @@ export type ContentDatabase = {
         };
         Returns: Json;
       };
+      create_route_redirect: {
+        Args: {
+          p_source_route: string;
+          p_target_route: string;
+          p_redirect_type: string;
+          p_reason: string | null;
+        };
+        Returns: Json;
+      };
       resolve_public_content_route: {
         Args: {
           p_region: RegionName;

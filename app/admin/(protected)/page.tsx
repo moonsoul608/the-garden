@@ -39,6 +39,7 @@ const quickActions: readonly QuickAction[] = [
     label: "Media",
     description: "Tend cover images and their details.",
     marker: "03",
+    href: "/admin/media",
   },
   {
     label: "Lifecycle",

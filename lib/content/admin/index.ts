@@ -22,3 +22,7 @@ export * from "./service";
 export type * from "./storage-contracts";
 export * from "./storage-purge-safety";
 export * from "./storage-reference-repository";
+export type * from "./media-contracts";
+export * from "./media-repository";
+export * from "./media-service";
+export * from "./media-validation";

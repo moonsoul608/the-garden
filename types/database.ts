@@ -516,6 +516,10 @@ export type ContentDatabase = {
         };
         Returns: Json;
       };
+      list_keeper_media_workspace: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       create_route_redirect: {
         Args: {
           p_source_route: string;

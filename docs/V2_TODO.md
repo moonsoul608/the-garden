@@ -468,6 +468,18 @@ Acceptance:
 - [ ] autosave does not publish
 - [ ] autosave does not create versions
 
+## 5E. Keeper media workspace
+
+- [x] Add Keeper-only `/admin/media` cover workspace
+- [x] Show safe object path, bucket, usage counts, and lifecycle state
+- [x] Map referenced, unreferenced, and quarantine-candidate awareness states
+- [x] Validate JPEG, PNG, and WebP metadata with a 5 MiB server limit
+- [x] Keep upload authorization and reference updates server-side
+- [x] Replace Draft cover references with optimistic locking
+- [x] Preserve the old object and reference lifecycle history
+- [x] Keep Storage deletion, purge execution, and garbage collection unavailable
+- [x] Add focused authorization, validation, upload, preservation, and mapping tests
+
 Acceptance:
 
 - [x] create Draft

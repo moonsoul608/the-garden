@@ -16,6 +16,7 @@ export type ContentMutationErrorCode =
   | "publishing_disabled"
   | "archiving_disabled"
   | "restoring_disabled"
+  | "deletion_disabled"
   | "archive_lifecycle_conflict"
   | "active_editorial_workspace"
   | "archive_conflict"
@@ -26,6 +27,14 @@ export type ContentMutationErrorCode =
   | "restore_conflict"
   | "restore_operation_conflict"
   | "active_restore_conflict"
+  | "delete_lifecycle_conflict"
+  | "delete_conflict"
+  | "impact_digest_invalid"
+  | "impact_digest_mismatch"
+  | "delete_operation_conflict"
+  | "route_tombstone_conflict"
+  | "route_tombstone_incomplete"
+  | "relation_cleanup_conflict"
   | "invalid_operation_id"
   | "mutation_denied"
   | "invalid_concurrency_token"
@@ -44,6 +53,8 @@ export type ContentMutationOperation =
   | "publishReview"
   | "archiveContent"
   | "restoreVersionToDraft"
+  | "previewDeletionImpact"
+  | "deleteArchivedContent"
   | "startDraftRevision";
 
 const publicMessages: Record<ContentMutationErrorCode, string> = {
@@ -62,6 +73,7 @@ const publicMessages: Record<ContentMutationErrorCode, string> = {
   publishing_disabled: "Publishing is disabled for the current content source mode.",
   archiving_disabled: "Archiving is disabled for the current content source mode.",
   restoring_disabled: "Restoring is disabled for the current content source mode.",
+  deletion_disabled: "Permanent deletion is disabled for the current content source mode.",
   archive_lifecycle_conflict: "Only Published content can be archived.",
   active_editorial_workspace: "This content item has an active editorial workspace.",
   archive_conflict: "The Published content changed before it could be archived.",
@@ -72,6 +84,14 @@ const publicMessages: Record<ContentMutationErrorCode, string> = {
   restore_conflict: "The Archived content changed before it could be restored.",
   restore_operation_conflict: "The restore operation identifier is already in use.",
   active_restore_conflict: "This content item already has an active restoration.",
+  delete_lifecycle_conflict: "Only Archived content can be permanently deleted.",
+  delete_conflict: "The Archived content changed before it could be deleted.",
+  impact_digest_invalid: "The deletion impact confirmation is invalid.",
+  impact_digest_mismatch: "The deletion impact changed after confirmation.",
+  delete_operation_conflict: "The deletion operation identifier is already in use.",
+  route_tombstone_conflict: "A terminal route record conflicts with a live or unrelated route.",
+  route_tombstone_incomplete: "Not every public route could be made terminal.",
+  relation_cleanup_conflict: "The live relation set changed during deletion.",
   invalid_operation_id: "The operation identifier is invalid.",
   mutation_denied: "The content mutation was denied.",
   invalid_concurrency_token: "The concurrency token is invalid.",
@@ -221,6 +241,52 @@ export function mapContentMutationDatabaseError(
       if (knownCode) {
         return new ContentMutationError(knownCode, operation);
       }
+    }
+  }
+
+  if (
+    operation === "previewDeletionImpact" ||
+    operation === "deleteArchivedContent"
+  ) {
+    if (code === "P0002" && message === "content_not_found") {
+      return new ContentMutationError("content_not_found", operation);
+    }
+
+    if (code === "22023") {
+      const knownCode =
+        message === "invalid_concurrency_token" ||
+        message === "invalid_operation_id" ||
+        message === "delete_lifecycle_conflict" ||
+        message === "impact_digest_invalid"
+          ? message
+          : null;
+
+      if (knownCode) {
+        return new ContentMutationError(knownCode, operation);
+      }
+    }
+
+    if (code === "40001") {
+      const knownCode =
+        message === "delete_conflict" ||
+        message === "impact_digest_mismatch" ||
+        message === "delete_operation_conflict" ||
+        message === "route_tombstone_incomplete" ||
+        message === "relation_cleanup_conflict"
+          ? message
+          : null;
+
+      if (knownCode) {
+        return new ContentMutationError(knownCode, operation);
+      }
+    }
+
+    if (code === "23505" && message === "route_tombstone_conflict") {
+      return new ContentMutationError("route_tombstone_conflict", operation);
+    }
+
+    if (code === "55000" && message === "active_editorial_workspace") {
+      return new ContentMutationError("active_editorial_workspace", operation);
     }
   }
 

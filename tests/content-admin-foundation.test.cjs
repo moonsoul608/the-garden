@@ -24,6 +24,10 @@ const restoreRepositoryPath = path.join(
   projectRoot,
   "lib/content/admin/restore-repository.ts",
 );
+const deletionRepositoryPath = path.join(
+  projectRoot,
+  "lib/content/admin/deletion-repository.ts",
+);
 const contentErrorsPath = path.join(projectRoot, "lib/content/errors.ts");
 const mutationErrorsPath = path.join(
   projectRoot,
@@ -48,6 +52,10 @@ const archiveFoundationMigrationPath = path.join(
 const restoreFoundationMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260716010000_phase_04d_restore_foundation.sql",
+);
+const deleteSafetyMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260716030000_phase_04d_delete_safety_foundation.sql",
 );
 const originalLoad = Module._load;
 const originalResolveFilename = Module._resolveFilename;
@@ -110,6 +118,7 @@ const { createAdminContentService } = require(servicePath);
 const { createContentWriteRepository } = require(repositoryPath);
 const { createArchiveRepository } = require(archiveRepositoryPath);
 const { createRestoreRepository } = require(restoreRepositoryPath);
+const { createDeletionRepository } = require(deletionRepositoryPath);
 
 const keeper = { id: "00000000-0000-4000-8000-000000004c01" };
 
@@ -236,6 +245,92 @@ function restoreReceipt(overrides = {}) {
   };
 }
 
+function deletionImpactPreview(overrides = {}) {
+  return {
+    contentId: "00000000-0000-4000-8000-000000004b01",
+    lifecycle: "Archived",
+    expectedArchivedToken: "2026-07-15T12:01:00.000Z",
+    canonicalRoute: "/garden/delete-safety",
+    historicalRoutes: ["/forest/delete-safety-old"],
+    redirectReferences: [
+      {
+        routePath: "/forest/delete-safety-old",
+        destinationPath: "/garden/delete-safety",
+        statusCode: 308,
+      },
+    ],
+    versionCount: 2,
+    revisionStatus: {
+      active: false,
+      revisionId: null,
+      lifecycle: null,
+      lockVersion: null,
+    },
+    inboundRelations: [
+      {
+        relationId: "00000000-0000-4000-8000-000000004a11",
+        relatedContentId: "00000000-0000-4000-8000-000000004a12",
+        relationType: "grewInto",
+      },
+    ],
+    outboundRelations: [
+      {
+        relationId: "00000000-0000-4000-8000-000000004a13",
+        relatedContentId: "00000000-0000-4000-8000-000000004a14",
+        relationType: "relatedTo",
+      },
+    ],
+    storageReferenceCount: 2,
+    affectedInvalidationSurfaces: [
+      "route",
+      "metadata",
+      "sitemap",
+      "search",
+    ],
+    impactDigest: "0123456789abcdef0123456789abcdef",
+    ...overrides,
+  };
+}
+
+function deleteInput(overrides = {}) {
+  const preview = deletionImpactPreview();
+  return {
+    contentId: preview.contentId,
+    expectedArchivedToken: preview.expectedArchivedToken,
+    impactDigest: preview.impactDigest,
+    operationId: "00000000-0000-4000-8000-000000004e02",
+    ...overrides,
+  };
+}
+
+function deletionReceipt(overrides = {}) {
+  return {
+    status: "deleted",
+    contentId: "00000000-0000-4000-8000-000000004b01",
+    operationId: "00000000-0000-4000-8000-000000004e02",
+    deletedAt: "2026-07-15T12:03:00.000Z",
+    deletedBy: keeper.id,
+    impactCounts: {
+      canonicalRouteCount: 1,
+      historicalRouteCount: 1,
+      redirectReferenceCount: 1,
+      versionCount: 2,
+      revisionCount: 0,
+      inboundRelationCount: 1,
+      outboundRelationCount: 1,
+      storageReferenceCount: 2,
+      invalidationSurfaceCount: 4,
+    },
+    tombstoneResult: {
+      requestedCount: 2,
+      createdCount: 2,
+      insertedCount: 1,
+      convertedCount: 1,
+    },
+    ...overrides,
+  };
+}
+
 function repositoryStub(overrides = {}) {
   return {
     createDraft: async () => {
@@ -296,6 +391,11 @@ function mutationAttempts(service) {
       }),
     () => service.archiveContent(archiveInput()),
     () => service.restoreVersionToDraft(restoreInput()),
+    () =>
+      service.previewDeletionImpact({
+        contentId: deleteInput().contentId,
+      }),
+    () => service.deleteArchivedContent(deleteInput()),
   ];
 }
 
@@ -1814,4 +1914,277 @@ test("Restore migration exposes one atomic Keeper-only workflow", () => {
   assert.ok(cloneFunctionEnd > cloneFunctionStart);
   assert.match(cloneFunction, /lifecycle\s*<>\s*'Published'/i);
   assert.doesNotMatch(cloneFunction, /'Archived'/i);
+});
+
+test("Keeper previews impact and deletes Archived content through the narrow repository", async () => {
+  const previewInput = { contentId: deleteInput().contentId };
+  const deleteRequest = deleteInput();
+  const preview = deletionImpactPreview();
+  const receipt = deletionReceipt();
+  const received = [];
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    deletionRepository: {
+      previewDeletionImpact: async (input) => {
+        received.push(["preview", input]);
+        return preview;
+      },
+      deleteArchivedContent: async (input) => {
+        received.push(["delete", input]);
+        return receipt;
+      },
+    },
+  });
+
+  assert.deepEqual(await service.previewDeletionImpact(previewInput), preview);
+  assert.deepEqual(await service.deleteArchivedContent(deleteRequest), receipt);
+  assert.deepEqual(received, [
+    ["preview", previewInput],
+    ["delete", deleteRequest],
+  ]);
+});
+
+test("deletion service validates confirmation inputs before repository access", async () => {
+  let repositoryCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    deletionRepository: {
+      previewDeletionImpact: async () => {
+        repositoryCalls += 1;
+      },
+      deleteArchivedContent: async () => {
+        repositoryCalls += 1;
+      },
+    },
+  });
+
+  await assert.rejects(
+    service.previewDeletionImpact({ contentId: "not-a-content-id" }),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "invalid_content_identity");
+      assert.equal(error.operation, "previewDeletionImpact");
+      return true;
+    },
+  );
+
+  const cases = [
+    [deleteInput({ contentId: "" }), "invalid_content_identity"],
+    [deleteInput({ operationId: "not-an-operation-id" }), "invalid_operation_id"],
+    [deleteInput({ expectedArchivedToken: "not-a-timestamp" }), "invalid_concurrency_token"],
+    [deleteInput({ impactDigest: "client-impact-json" }), "impact_digest_invalid"],
+  ];
+
+  for (const [input, expectedCode] of cases) {
+    await assert.rejects(service.deleteArchivedContent(input), (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, expectedCode);
+      assert.equal(error.operation, "deleteArchivedContent");
+      return true;
+    });
+  }
+
+  assert.equal(repositoryCalls, 0);
+});
+
+test("deletion preview and command are disabled for the legacy source", async () => {
+  let repositoryCalls = 0;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "legacy",
+    deletionRepository: {
+      previewDeletionImpact: async () => {
+        repositoryCalls += 1;
+      },
+      deleteArchivedContent: async () => {
+        repositoryCalls += 1;
+      },
+    },
+  });
+
+  for (const [attempt, operation] of [
+    [
+      () => service.previewDeletionImpact({ contentId: deleteInput().contentId }),
+      "previewDeletionImpact",
+    ],
+    [() => service.deleteArchivedContent(deleteInput()), "deleteArchivedContent"],
+  ]) {
+    await assert.rejects(attempt(), (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "deletion_disabled");
+      assert.equal(error.operation, operation);
+      return true;
+    });
+  }
+
+  assert.equal(repositoryCalls, 0);
+});
+
+test("deletion repository calls only server-owned preview and delete RPCs", async () => {
+  const preview = deletionImpactPreview();
+  const receipt = deletionReceipt();
+  const input = deleteInput();
+  const calls = [];
+  const repository = createDeletionRepository({
+    rpc: async (name, args) => {
+      calls.push([name, args]);
+      return name === "preview_archived_content_deletion"
+        ? { data: preview, error: null }
+        : { data: receipt, error: null };
+    },
+  });
+
+  assert.deepEqual(
+    await repository.previewDeletionImpact({ contentId: input.contentId }),
+    preview,
+  );
+  assert.deepEqual(await repository.deleteArchivedContent(input), receipt);
+  assert.deepEqual(calls, [
+    [
+      "preview_archived_content_deletion",
+      { p_content_id: input.contentId },
+    ],
+    [
+      "delete_archived_content",
+      {
+        p_content_id: input.contentId,
+        p_expected_archived_token: input.expectedArchivedToken,
+        p_impact_digest: input.impactDigest,
+        p_operation_id: input.operationId,
+      },
+    ],
+  ]);
+});
+
+test("deletion repository accepts typed already-completed receipts and rejects malformed data", async () => {
+  const completed = deletionReceipt({ status: "already_completed" });
+  const completedRepository = createDeletionRepository({
+    rpc: async () => ({ data: completed, error: null }),
+  });
+  assert.deepEqual(
+    await completedRepository.deleteArchivedContent(deleteInput()),
+    completed,
+  );
+
+  const malformedRepository = createDeletionRepository({
+    rpc: async () => ({
+      data: deletionReceipt({
+        tombstoneResult: { requestedCount: -1 },
+      }),
+      error: null,
+    }),
+  });
+  await assert.rejects(
+    malformedRepository.deleteArchivedContent(deleteInput()),
+    (error) => {
+      assert.ok(error instanceof ContentMutationError);
+      assert.equal(error.code, "repository_failure");
+      assert.equal(error.operation, "deleteArchivedContent");
+      return true;
+    },
+  );
+});
+
+test("deletion repository maps lifecycle, digest, concurrency, relation, route, and retry errors", async () => {
+  const cases = [
+    [{ code: "P0002", message: "content_not_found" }, "content_not_found"],
+    [{ code: "22023", message: "delete_lifecycle_conflict" }, "delete_lifecycle_conflict"],
+    [{ code: "22023", message: "impact_digest_invalid" }, "impact_digest_invalid"],
+    [{ code: "40001", message: "delete_conflict" }, "delete_conflict"],
+    [{ code: "40001", message: "impact_digest_mismatch" }, "impact_digest_mismatch"],
+    [{ code: "40001", message: "delete_operation_conflict" }, "delete_operation_conflict"],
+    [{ code: "40001", message: "route_tombstone_incomplete" }, "route_tombstone_incomplete"],
+    [{ code: "40001", message: "relation_cleanup_conflict" }, "relation_cleanup_conflict"],
+    [{ code: "23505", message: "route_tombstone_conflict" }, "route_tombstone_conflict"],
+    [{ code: "55000", message: "active_editorial_workspace" }, "active_editorial_workspace"],
+    [{ code: "42501", message: "private policy detail" }, "mutation_denied"],
+  ];
+
+  for (const [databaseError, expectedCode] of cases) {
+    const repository = createDeletionRepository({
+      rpc: async () => ({ data: null, error: databaseError }),
+    });
+
+    await assert.rejects(
+      repository.deleteArchivedContent(deleteInput()),
+      (error) => {
+        assert.ok(error instanceof ContentMutationError);
+        assert.equal(error.code, expectedCode);
+        assert.equal(error.operation, "deleteArchivedContent");
+        assert.doesNotMatch(
+          error.message,
+          /private|policy|public\.|content_versions|route_redirects|sql/i,
+        );
+        return true;
+      },
+    );
+  }
+});
+
+test("Delete safety migration preserves history and orders one atomic terminal workflow", () => {
+  const migration = fs.readFileSync(deleteSafetyMigrationPath, "utf8");
+  const functionStart = migration.search(
+    /create function public\.delete_archived_content/i,
+  );
+  const functionEnd = migration.indexOf(
+    "comment on function public.delete_archived_content",
+    functionStart,
+  );
+
+  assert.notEqual(functionStart, -1);
+  assert.ok(functionEnd > functionStart);
+  const deleteFunction = migration.slice(functionStart, functionEnd);
+  const tombstoneWrite = deleteFunction.search(
+    /update public\.route_redirects as redirect/i,
+  );
+  const relationDelete = deleteFunction.search(
+    /delete from public\.content_relations/i,
+  );
+  const receiptInsert = deleteFunction.search(
+    /insert into public\.content_deletion_receipts/i,
+  );
+  const projectionDelete = deleteFunction.search(
+    /delete from public\.contents as projection/i,
+  );
+
+  assert.match(migration, /create function public\.preview_archived_content_deletion/i);
+  assert.match(deleteFunction, /security definer/i);
+  assert.match(deleteFunction, /private\.is_garden_keeper\(\)/i);
+  assert.match(deleteFunction, /from public\.contents[\s\S]*?for update/i);
+  assert.match(deleteFunction, /content\.lifecycle <> 'Archived'/i);
+  assert.match(deleteFunction, /active_editorial_workspace/i);
+  assert.match(deleteFunction, /impact_digest_mismatch/i);
+  assert.match(deleteFunction, /already_completed/i);
+  assert.ok(tombstoneWrite >= 0);
+  assert.ok(relationDelete > tombstoneWrite);
+  assert.ok(receiptInsert > relationDelete);
+  assert.ok(projectionDelete > receiptInsert);
+  assert.doesNotMatch(
+    deleteFunction,
+    /(?:update|delete\s+from)\s+public\.content_versions/i,
+  );
+  assert.doesNotMatch(deleteFunction, /(?:delete|update)\s+(?:from\s+)?storage\./i);
+  assert.match(
+    migration,
+    /alter table public\.content_versions\s+drop constraint content_versions_content_id_fkey/i,
+  );
+  assert.match(migration, /create table public\.content_deletion_receipts/i);
+  assert.match(migration, /tombstone_original_content_id uuid/i);
+  assert.match(migration, /tombstone_operation_id uuid/i);
+  assert.match(migration, /tombstoned_at timestamptz/i);
+  assert.match(
+    migration,
+    /revoke delete on table public\.contents from authenticated/i,
+  );
+  assert.match(
+    migration,
+    /revoke delete on table public\.route_redirects from authenticated/i,
+  );
+  assert.match(
+    migration,
+    /grant execute on function public\.delete_archived_content[\s\S]*?to authenticated/i,
+  );
+  assert.doesNotMatch(migration, /disable row level security/i);
 });

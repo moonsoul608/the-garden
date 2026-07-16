@@ -405,6 +405,19 @@ export type ContentDatabase = {
         };
         Returns: Json;
       };
+      preview_archived_content_deletion: {
+        Args: { p_content_id: string };
+        Returns: Json;
+      };
+      delete_archived_content: {
+        Args: {
+          p_content_id: string;
+          p_expected_archived_token: string;
+          p_impact_digest: string;
+          p_operation_id: string;
+        };
+        Returns: Json;
+      };
       resolve_public_content_route: {
         Args: {
           p_region: RegionName;

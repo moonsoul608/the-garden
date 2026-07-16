@@ -92,6 +92,87 @@ export type RestoreVersionInput = {
   operationId: string;
 };
 
+export type PreviewDeletionImpactInput = {
+  contentId: string;
+};
+
+export type DeleteArchivedContentInput = {
+  contentId: string;
+  expectedArchivedToken: string;
+  impactDigest: string;
+  operationId: string;
+};
+
+export type DeletionImpactRelation = Readonly<{
+  relationId: string;
+  relatedContentId: string;
+  relationType: "grewFrom" | "grewInto" | "relatedTo";
+}>;
+
+export type DeletionRedirectReference = Readonly<{
+  routePath: string;
+  destinationPath: string | null;
+  statusCode: number;
+}>;
+
+export type DeletionRevisionStatus = Readonly<{
+  active: boolean;
+  revisionId: string | null;
+  lifecycle: "Draft" | "Review" | null;
+  lockVersion: number | null;
+}>;
+
+export type DeletionImpactPreview = Readonly<{
+  contentId: string;
+  lifecycle: "Archived";
+  expectedArchivedToken: string;
+  canonicalRoute: string;
+  historicalRoutes: readonly string[];
+  redirectReferences: readonly DeletionRedirectReference[];
+  versionCount: number;
+  revisionStatus: DeletionRevisionStatus;
+  inboundRelations: readonly DeletionImpactRelation[];
+  outboundRelations: readonly DeletionImpactRelation[];
+  storageReferenceCount: number;
+  affectedInvalidationSurfaces: readonly (
+    | "route"
+    | "metadata"
+    | "sitemap"
+    | "search"
+  )[];
+  impactDigest: string;
+}>;
+
+export type DeletionImpactCounts = Readonly<{
+  canonicalRouteCount: number;
+  historicalRouteCount: number;
+  redirectReferenceCount: number;
+  versionCount: number;
+  revisionCount: number;
+  inboundRelationCount: number;
+  outboundRelationCount: number;
+  storageReferenceCount: number;
+  invalidationSurfaceCount: number;
+}>;
+
+export type TombstoneCreationResult = Readonly<{
+  requestedCount: number;
+  createdCount: number;
+  insertedCount: number;
+  convertedCount: number;
+}>;
+
+/** Append-only operational receipt; contains no editorial or cover data. */
+export type DeletionReceipt = Readonly<{
+  status: "deleted" | "already_completed";
+  contentId: string;
+  operationId: string;
+  deletedAt: string;
+  deletedBy: string;
+  impactCounts: DeletionImpactCounts;
+  tombstoneResult: TombstoneCreationResult;
+}>;
+
 /** Durable archive receipt recovered unchanged when operationId is retried. */
 export type ArchiveReceipt = Readonly<{
   contentId: string;
@@ -193,6 +274,12 @@ export interface AdminContentService {
   publishReview(input: PublishReviewInput): Promise<PublicationReceipt>;
   archiveContent(input: ArchiveContentInput): Promise<ArchiveReceipt>;
   restoreVersionToDraft(input: RestoreVersionInput): Promise<RestoreReceipt>;
+  previewDeletionImpact(
+    input: PreviewDeletionImpactInput,
+  ): Promise<DeletionImpactPreview>;
+  deleteArchivedContent(
+    input: DeleteArchivedContentInput,
+  ): Promise<DeletionReceipt>;
   startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision>;

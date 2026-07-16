@@ -189,7 +189,7 @@ Acceptance:
 - [x] `publishContent`
 - [ ] `archiveContent`
 - [ ] `restoreArchivedContent`
-- [ ] `deleteArchivedContent`
+- [x] `deleteArchivedContent`
 - [ ] `updateGrowthStage`
 - [ ] `manageRelations`
 - [ ] `manageHomeCuration`
@@ -359,6 +359,21 @@ Acceptance:
 - [ ] Apply the migration and execute the SQL integration test in Preview
 - [ ] Integrate the boundary into detail routes during the approved route-migration phase
 - [ ] Implement the full Archived resting-state design in its approved UI phase
+
+## 4D-3A. Delete safety foundation
+
+- [x] Audit `contents`, `content_versions`, `content_revisions`, relation, redirect, dependent-record, grant, RLS, and Storage behavior before deletion
+- [x] Add a Keeper-only server-generated impact preview with canonical/historical routes, redirects, versions, revision state, both relation directions, Storage reference count, and invalidation surfaces
+- [x] Add a deterministic impact digest and revalidate it inside the locked deletion transaction
+- [x] Add the narrow Keeper-only `delete_archived_content` RPC with Archived-only lifecycle and optimistic-concurrency checks
+- [x] Reuse `route_redirects` for canonical and historical terminal 410 records with original content UUID, operation ID, and tombstone time
+- [x] Add an append-only operational deletion receipt containing only actor/time, impact counts, and tombstone results
+- [x] Remove live inbound/outbound relations before projection deletion while retaining immutable `content_versions` rows
+- [x] Preserve Storage objects and immutable version references for the separately approved 04D-3B purge phase
+- [x] Return the original receipt for identical operation retries and a typed already-completed result for a later operation
+- [x] Keep direct authenticated `contents` and route deletion closed without weakening RLS or Storage policies
+- [x] Add typed Admin Content Service/repository contracts, application tests, and a rollback-only SQL integration test
+- [ ] Apply the migration and execute the SQL integration test in Preview
 
 ---
 

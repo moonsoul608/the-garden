@@ -27,10 +27,14 @@ import type {
   ArchiveContentInput,
   ArchiveReceipt,
   CreateDraftInput,
+  DeleteArchivedContentInput,
+  DeletionImpactPreview,
+  DeletionReceipt,
   DraftContentFields,
   DraftListFilters,
   DraftRevision,
   PrepareReviewInput,
+  PreviewDeletionImpactInput,
   PublicationReceipt,
   PublishReviewInput,
   RestoreReceipt,
@@ -59,6 +63,11 @@ import {
   type RestoreRepository,
   type RestoreRepositoryClient,
 } from "./restore-repository";
+import {
+  createDeletionRepository,
+  type DeletionRepository,
+  type DeletionRepositoryClient,
+} from "./deletion-repository";
 
 type AuthorizeAdminRequest = () => Promise<AuthenticatedUser>;
 
@@ -70,6 +79,8 @@ export type AdminContentServiceDependencies = {
   archiveRepositoryFactory?: () => Promise<ArchiveRepository>;
   restoreRepository?: RestoreRepository;
   restoreRepositoryFactory?: () => Promise<RestoreRepository>;
+  deletionRepository?: DeletionRepository;
+  deletionRepositoryFactory?: () => Promise<DeletionRepository>;
   sourceMode?: ContentSourceMode;
 };
 
@@ -409,6 +420,13 @@ async function createDefaultRestoreRepository(): Promise<RestoreRepository> {
   );
 }
 
+async function createDefaultDeletionRepository(): Promise<DeletionRepository> {
+  const client = await createClient();
+  return createDeletionRepository(
+    client as unknown as DeletionRepositoryClient,
+  );
+}
+
 export function createAdminContentService(
   dependencies: AdminContentServiceDependencies = {},
 ): AdminContentService {
@@ -424,6 +442,10 @@ export function createAdminContentService(
   let restoreRepositoryPromise: Promise<RestoreRepository> | null =
     dependencies.restoreRepository
       ? Promise.resolve(dependencies.restoreRepository)
+      : null;
+  let deletionRepositoryPromise: Promise<DeletionRepository> | null =
+    dependencies.deletionRepository
+      ? Promise.resolve(dependencies.deletionRepository)
       : null;
 
   function getRepository(): Promise<ContentWriteRepository> {
@@ -444,6 +466,13 @@ export function createAdminContentService(
       dependencies.restoreRepositoryFactory?.() ??
       createDefaultRestoreRepository();
     return restoreRepositoryPromise;
+  }
+
+  function getDeletionRepository(): Promise<DeletionRepository> {
+    deletionRepositoryPromise ??=
+      dependencies.deletionRepositoryFactory?.() ??
+      createDefaultDeletionRepository();
+    return deletionRepositoryPromise;
   }
 
   async function createDraft(input: CreateDraftInput): Promise<DraftRevision> {
@@ -756,6 +785,92 @@ export function createAdminContentService(
     return (await getRestoreRepository()).restoreVersionToDraft(input);
   }
 
+  async function previewDeletionImpact(
+    input: PreviewDeletionImpactInput,
+  ): Promise<DeletionImpactPreview> {
+    await authorize();
+
+    if (!UUID_PATTERN.test(input.contentId)) {
+      throw new ContentMutationError(
+        "invalid_content_identity",
+        "previewDeletionImpact",
+      );
+    }
+
+    let sourceMode: ContentSourceMode;
+    try {
+      sourceMode = dependencies.sourceMode ?? getContentSourceMode();
+    } catch {
+      throw new ContentMutationError(
+        "deletion_disabled",
+        "previewDeletionImpact",
+      );
+    }
+    if (sourceMode === "legacy") {
+      throw new ContentMutationError(
+        "deletion_disabled",
+        "previewDeletionImpact",
+      );
+    }
+
+    return (await getDeletionRepository()).previewDeletionImpact(input);
+  }
+
+  async function deleteArchivedContent(
+    input: DeleteArchivedContentInput,
+  ): Promise<DeletionReceipt> {
+    await authorize();
+
+    if (!UUID_PATTERN.test(input.contentId)) {
+      throw new ContentMutationError(
+        "invalid_content_identity",
+        "deleteArchivedContent",
+      );
+    }
+
+    if (!UUID_PATTERN.test(input.operationId)) {
+      throw new ContentMutationError(
+        "invalid_operation_id",
+        "deleteArchivedContent",
+      );
+    }
+
+    if (
+      !input.expectedArchivedToken ||
+      !Number.isFinite(Date.parse(input.expectedArchivedToken))
+    ) {
+      throw new ContentMutationError(
+        "invalid_concurrency_token",
+        "deleteArchivedContent",
+      );
+    }
+
+    if (!/^[0-9a-f]{32}$/.test(input.impactDigest)) {
+      throw new ContentMutationError(
+        "impact_digest_invalid",
+        "deleteArchivedContent",
+      );
+    }
+
+    let sourceMode: ContentSourceMode;
+    try {
+      sourceMode = dependencies.sourceMode ?? getContentSourceMode();
+    } catch {
+      throw new ContentMutationError(
+        "deletion_disabled",
+        "deleteArchivedContent",
+      );
+    }
+    if (sourceMode === "legacy") {
+      throw new ContentMutationError(
+        "deletion_disabled",
+        "deleteArchivedContent",
+      );
+    }
+
+    return (await getDeletionRepository()).deleteArchivedContent(input);
+  }
+
   async function startDraftRevision(
     input: StartDraftRevisionInput,
   ): Promise<DraftRevision> {
@@ -784,6 +899,8 @@ export function createAdminContentService(
     publishReview,
     archiveContent,
     restoreVersionToDraft,
+    previewDeletionImpact,
+    deleteArchivedContent,
     startDraftRevision,
   };
 }

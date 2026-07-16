@@ -44,6 +44,8 @@ export type ContentMutationOperation =
   | "createDraft"
   | "getDraftById"
   | "listDrafts"
+  | "getReviewById"
+  | "listReviews"
   | "readContentWorkflow"
   | "readDraftRevision"
   | "updateDraft"

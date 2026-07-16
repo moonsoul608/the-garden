@@ -33,6 +33,7 @@ const quickActions: readonly QuickAction[] = [
     label: "Review Queue",
     description: "See work waiting for an editorial check.",
     marker: "02",
+    href: "/admin/review",
   },
   {
     label: "Media",

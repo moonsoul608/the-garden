@@ -93,12 +93,12 @@ export default async function AdminContentPage() {
                     <Link href={`/admin/content/${item.revisionId}`}>
                       Edit Draft <span aria-hidden="true">→</span>
                     </Link>
+                  ) : item.revisionLifecycle === "Review" && item.revisionId ? (
+                    <Link href={`/admin/review/${item.revisionId}`}>
+                      Inspect Review <span aria-hidden="true">→</span>
+                    </Link>
                   ) : (
-                    <span>
-                      {item.revisionLifecycle === "Review"
-                        ? "Awaiting review"
-                        : "No Draft open"}
-                    </span>
+                    <span>No Draft open</span>
                   )}
                 </div>
               </article>

@@ -7,6 +7,8 @@ import {
   requireGardenKeeper,
 } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProtectedAdminLayout({
   children,
 }: Readonly<{
@@ -37,7 +39,7 @@ export default async function ProtectedAdminLayout({
         <nav className="admin-navigation" aria-label="Admin navigation">
           <Link href="/admin">Dashboard</Link>
           <Link href="/admin/content">Content</Link>
-          <span aria-disabled="true">Review queue — coming later</span>
+          <Link href="/admin/review">Review queue</Link>
         </nav>
 
         <div className="admin-identity">

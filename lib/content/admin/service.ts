@@ -298,7 +298,9 @@ function buildReviewReadinessReport(
     current.contentId,
   );
   const validation = mergeValidationResults(
-    validateLifecycleTransition(current.lifecycle, "Review"),
+    current.lifecycle === "Draft"
+      ? validateLifecycleTransition(current.lifecycle, "Review")
+      : { valid: true, issues: [] },
     validateLifecycleRequirements(validationCandidate, "Review"),
     validateReviewTaxonomy({
       id: current.contentId,
@@ -502,6 +504,18 @@ export function createAdminContentService(
     return (await getRepository()).listDrafts(filters);
   }
 
+  async function getReviewById(
+    revisionId: string,
+  ): Promise<DraftRevision | null> {
+    await authorize();
+    return (await getRepository()).getReviewById(revisionId);
+  }
+
+  async function listReviews(): Promise<DraftRevision[]> {
+    await authorize();
+    return (await getRepository()).listReviews();
+  }
+
   async function updateDraft(input: UpdateDraftInput): Promise<DraftRevision> {
     await authorize();
 
@@ -574,13 +588,6 @@ export function createAdminContentService(
       input,
       "prepareReview",
     );
-    if (revision.lifecycle !== "Draft") {
-      throw new ContentMutationError(
-        "invalid_revision_state",
-        "prepareReview",
-      );
-    }
-
     const context = await repository.getReviewPreparationContext(revision);
     return buildReviewReadinessReport(revision, context);
   }
@@ -892,6 +899,8 @@ export function createAdminContentService(
     createDraft,
     getDraftById,
     listDrafts,
+    getReviewById,
+    listReviews,
     updateDraft,
     prepareReview,
     submitForReview,

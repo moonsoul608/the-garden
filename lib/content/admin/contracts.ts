@@ -267,6 +267,8 @@ export interface AdminContentService {
   createDraft(input: CreateDraftInput): Promise<DraftRevision>;
   getDraftById(revisionId: string): Promise<DraftRevision | null>;
   listDrafts(filters?: DraftListFilters): Promise<DraftRevision[]>;
+  getReviewById(revisionId: string): Promise<DraftRevision | null>;
+  listReviews(): Promise<DraftRevision[]>;
   updateDraft(input: UpdateDraftInput): Promise<DraftRevision>;
   prepareReview(input: PrepareReviewInput): Promise<ReviewReadinessReport>;
   submitForReview(input: ReviewTransitionInput): Promise<DraftRevision>;

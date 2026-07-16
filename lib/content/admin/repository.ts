@@ -103,6 +103,8 @@ export interface ContentWriteRepository {
   createDraft(fields: DraftContentFields): Promise<DraftRevision>;
   getDraftById(revisionId: string): Promise<DraftRevision | null>;
   listDrafts(filters?: DraftListFilters): Promise<DraftRevision[]>;
+  getReviewById(revisionId: string): Promise<DraftRevision | null>;
+  listReviews(): Promise<DraftRevision[]>;
   getContentWorkflowState(
     contentId: string,
   ): Promise<ContentWorkflowState | null>;
@@ -372,6 +374,39 @@ export function createContentWriteRepository(
 
     const result = await query.order("updated_at", { ascending: false });
     if (result.error) throwRepositoryError(result.error, "listDrafts");
+
+    return (result.data ?? []).map((row) =>
+      mapRevision(row as unknown as ContentRevisionDatabaseRow),
+    );
+  }
+
+  async function getReviewById(
+    revisionId: string,
+  ): Promise<DraftRevision | null> {
+    const result = await client
+      .from("content_revisions")
+      .select(REVISION_COLUMNS)
+      .eq("id", revisionId)
+      .eq("lifecycle", "Review")
+      .maybeSingle();
+
+    if (result.error) {
+      throwRepositoryError(result.error, "getReviewById");
+    }
+
+    return result.data
+      ? mapRevision(result.data as unknown as ContentRevisionDatabaseRow)
+      : null;
+  }
+
+  async function listReviews(): Promise<DraftRevision[]> {
+    const result = await client
+      .from("content_revisions")
+      .select(REVISION_COLUMNS)
+      .eq("lifecycle", "Review")
+      .order("review_submitted_at", { ascending: false });
+
+    if (result.error) throwRepositoryError(result.error, "listReviews");
 
     return (result.data ?? []).map((row) =>
       mapRevision(row as unknown as ContentRevisionDatabaseRow),
@@ -668,6 +703,8 @@ export function createContentWriteRepository(
     createDraft,
     getDraftById,
     listDrafts,
+    getReviewById,
+    listReviews,
     getContentWorkflowState,
     getDraftRevision,
     updateDraft,

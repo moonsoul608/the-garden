@@ -54,6 +54,11 @@ export default async function EditAdminContentPage({
           </div>
         </dl>
       </header>
+      <div className="admin-editor-review-link">
+        <Link href={`/admin/review/${draft.revisionId}`}>
+          Check Review readiness <span aria-hidden="true">→</span>
+        </Link>
+      </div>
       <ContentForm mode="edit" action={saveDraftAction} draft={draft} />
     </main>
   );

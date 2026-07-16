@@ -10,7 +10,7 @@
     "lint": "eslint . --max-warnings=0",
     "test:seed-gardener": "node --test tests/seed-gardener.test.cjs",
     "test:authorization": "node --test tests/authorization.test.cjs",
-    "test:content-admin": "node --test tests/content-admin-foundation.test.cjs",
+    "test:content-admin": "node --test tests/content-admin-foundation.test.cjs tests/public-content-route-boundary.test.cjs",
     "test:phase5": "node tests/phase5-browser-audit.cjs",
     "test:smoke:garden-index": "node tests/garden-index-route-smoke.cjs",
     "content:v1:extract": "node --experimental-strip-types scripts/content-v1/extract.ts",

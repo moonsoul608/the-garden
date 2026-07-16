@@ -346,6 +346,20 @@ Acceptance:
 - [x] Add application tests and a rollback-only SQL integration test
 - [ ] Apply the migration and execute the SQL integration test in Preview
 
+## 4D-2C. Archived route boundary
+
+- [x] Add a public Published / Archived / not-found route disposition boundary
+- [x] Add a dedicated allow-listed Archived resting DTO
+- [x] Keep Draft and Review routes indistinguishable from not found
+- [x] Prevent dual-read V1 fallback for Archived, Draft, Review, and tombstoned identities
+- [x] Keep normal public content and relation queries Published-only
+- [x] Limit Archived related targets to current Published projections
+- [x] Add lifecycle invalidation hook contracts for route, metadata, sitemap, and search
+- [x] Add application tests and a rollback-only SQL integration test
+- [ ] Apply the migration and execute the SQL integration test in Preview
+- [ ] Integrate the boundary into detail routes during the approved route-migration phase
+- [ ] Implement the full Archived resting-state design in its approved UI phase
+
 ---
 
 # Phase 5 — Core content administration

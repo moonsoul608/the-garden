@@ -4,6 +4,7 @@ import type {
   ContentQuery,
   PublicContentCard,
   PublicContentDetail,
+  PublicContentRouteDisposition,
   PublicHomeCurationItem,
   RegionName,
 } from "@/types";
@@ -38,6 +39,10 @@ export interface PublicContentService {
     region: RegionName,
     slug: string,
   ): Promise<PublicContentDetail | null>;
+  getPublicContentRouteDisposition(
+    region: RegionName,
+    slug: string,
+  ): Promise<PublicContentRouteDisposition>;
   getPublishedHomeCuration(): Promise<PublicHomeCurationItem[]>;
 }
 
@@ -148,9 +153,17 @@ export function createContentService(
     ]);
     const mappedDatabaseItems = databaseItems.map(mapRepositoryContent);
     const migratedRoutes = new Set(mappedDatabaseItems.map(routeKey));
+    const fallbackCandidates = legacyItems.filter(
+      (item) => !migratedRoutes.has(routeKey(item)),
+    );
+    const unmigratedRoutes = await repository.getUnmigratedRouteKeys(
+      fallbackCandidates.map(({ region, slug }) => ({ region, slug })),
+    );
     const merged = [
       ...mappedDatabaseItems,
-      ...legacyItems.filter((item) => !migratedRoutes.has(routeKey(item))),
+      ...fallbackCandidates.filter((item) =>
+        unmigratedRoutes.has(routeKey(item)),
+      ),
     ];
 
     return applyWindow(merged, query);
@@ -160,20 +173,51 @@ export function createContentService(
     region: RegionName,
     slug: string,
   ): Promise<PublicContentDetail | null> {
+    const disposition = await getPublicContentRouteDisposition(region, slug);
+    return disposition.kind === "published" ? disposition.content : null;
+  }
+
+  async function getPublicContentRouteDisposition(
+    region: RegionName,
+    slug: string,
+  ): Promise<PublicContentRouteDisposition> {
     if (mode === "legacy") {
-      return legacySource.getPublishedContentByRoute(region, slug);
+      const content = await legacySource.getPublishedContentByRoute(
+        region,
+        slug,
+      );
+      return content
+        ? { kind: "published", content }
+        : { kind: "not_found" };
     }
 
     const repository = await getRepository();
-    const databaseItem = await repository.getPublishedContentByRoute(
+    const disposition = await repository.resolvePublicContentRoute(
       region,
       slug,
     );
-    if (databaseItem) return mapRepositoryDetail(databaseItem);
 
-    return mode === "dual"
-      ? legacySource.getPublishedContentByRoute(region, slug)
-      : null;
+    if (disposition.kind === "archived") {
+      return { kind: "archived", content: disposition.content };
+    }
+
+    if (disposition.kind === "published") {
+      const content = await repository.getPublishedContentByRoute(region, slug);
+      if (!content) {
+        throw new ContentRepositoryError("readResolvedPublishedContentByRoute");
+      }
+      return { kind: "published", content: mapRepositoryDetail(content) };
+    }
+
+    if (mode === "dual" && disposition.legacyFallbackAllowed) {
+      const content = await legacySource.getPublishedContentByRoute(
+        region,
+        slug,
+      );
+      if (content) return { kind: "published", content };
+    }
+
+    return { kind: "not_found" };
   }
 
   async function getPublishedHomeCuration(): Promise<
@@ -199,6 +243,7 @@ export function createContentService(
   return {
     getPublishedContent,
     getPublishedContentByRoute,
+    getPublicContentRouteDisposition,
     getPublishedHomeCuration,
   };
 }
@@ -221,6 +266,13 @@ export function getPublishedContentByRoute(
   slug: string,
 ): Promise<PublicContentDetail | null> {
   return getDefaultService().getPublishedContentByRoute(region, slug);
+}
+
+export function getPublicContentRouteDisposition(
+  region: RegionName,
+  slug: string,
+): Promise<PublicContentRouteDisposition> {
+  return getDefaultService().getPublicContentRouteDisposition(region, slug);
 }
 
 export function getPublishedHomeCuration(): Promise<

@@ -126,6 +126,31 @@ export type PublicContentDetail = PublicContentCard & {
   relations: PublicContentRelation[];
 };
 
+export type PublicArchivedRelation = {
+  relationType: RelationType;
+  target: {
+    slug: string;
+    region: RegionName;
+    growthStage: GrowthStage;
+    title: string;
+  };
+};
+
+/** Deliberately limited payload for an Archived route resting state. */
+export type PublicArchivedContent = {
+  title: string;
+  region: RegionName;
+  growthStage: GrowthStage;
+  lifecycle: "Archived";
+  restingState: "archived";
+  relations: PublicArchivedRelation[];
+};
+
+export type PublicContentRouteDisposition =
+  | { kind: "published"; content: PublicContentDetail }
+  | { kind: "archived"; content: PublicArchivedContent }
+  | { kind: "not_found" };
+
 export type PublicHomeCurationItem = {
   slot: HomeCurationSlot;
   order: number;

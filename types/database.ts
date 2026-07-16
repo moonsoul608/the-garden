@@ -405,6 +405,17 @@ export type ContentDatabase = {
         };
         Returns: Json;
       };
+      resolve_public_content_route: {
+        Args: {
+          p_region: RegionName;
+          p_slug: string;
+        };
+        Returns: Json;
+      };
+      filter_unmigrated_public_routes: {
+        Args: { p_routes: Json };
+        Returns: Json;
+      };
     };
     Enums: {
       garden_region: RegionName;

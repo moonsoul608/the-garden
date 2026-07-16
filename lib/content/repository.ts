@@ -9,7 +9,14 @@ import type {
   HomeCurationDatabaseRow,
   PublicContentDatabaseRow,
 } from "@/types/database";
-import type { ContentQuery, Lifecycle } from "@/types";
+import type {
+  ContentQuery,
+  GrowthStage,
+  Lifecycle,
+  PublicArchivedContent,
+  RegionName,
+  RelationType,
+} from "@/types";
 
 import { ContentRepositoryError } from "./errors";
 
@@ -59,12 +66,29 @@ export type RepositoryHomeCuration = {
   content: RepositoryContent;
 };
 
+export type ContentRouteIdentity = {
+  region: RegionName;
+  slug: string;
+};
+
+export type RepositoryRouteDisposition =
+  | { kind: "published" }
+  | { kind: "archived"; content: PublicArchivedContent }
+  | { kind: "not_found"; legacyFallbackAllowed: boolean };
+
 export interface ContentRepository {
   getPublishedContent(query?: ContentQuery): Promise<RepositoryContent[]>;
   getPublishedContentByRoute(
     region: PublicContentDatabaseRow["region"],
     slug: string,
   ): Promise<RepositoryContentDetail | null>;
+  resolvePublicContentRoute(
+    region: RegionName,
+    slug: string,
+  ): Promise<RepositoryRouteDisposition>;
+  getUnmigratedRouteKeys(
+    routes: readonly ContentRouteIdentity[],
+  ): Promise<Set<string>>;
   getPublishedHomeCuration(): Promise<RepositoryHomeCuration[]>;
 }
 
@@ -82,6 +106,108 @@ function normalizeSearchTerm(value: string): string {
 
 function normalizeTag(value: string): string {
   return value.trim().toLocaleLowerCase();
+}
+
+const REGIONS = new Set<RegionName>(["Garden", "Forest", "Lake", "Ruins"]);
+const GROWTH_STAGES = new Set<GrowthStage>([
+  "Seed",
+  "Sprout",
+  "Growing",
+  "Bloom",
+  "Dormant",
+]);
+const RELATION_TYPES = new Set<RelationType>([
+  "grewFrom",
+  "grewInto",
+  "relatedTo",
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseArchivedContent(value: unknown): PublicArchivedContent {
+  if (!isRecord(value)) {
+    throw new ContentRepositoryError("resolvePublicContentRoute");
+  }
+
+  const { title, region, growthStage, lifecycle, restingState } = value;
+  if (
+    typeof title !== "string" ||
+    !REGIONS.has(region as RegionName) ||
+    !GROWTH_STAGES.has(growthStage as GrowthStage) ||
+    lifecycle !== "Archived" ||
+    restingState !== "archived" ||
+    !Array.isArray(value.relations)
+  ) {
+    throw new ContentRepositoryError("resolvePublicContentRoute");
+  }
+
+  const relations = value.relations.map((relation) => {
+    if (!isRecord(relation) || !isRecord(relation.target)) {
+      throw new ContentRepositoryError("resolvePublicContentRoute");
+    }
+
+    const relationType = relation.relationType;
+    const target = relation.target;
+    if (
+      !RELATION_TYPES.has(relationType as RelationType) ||
+      typeof target.slug !== "string" ||
+      !REGIONS.has(target.region as RegionName) ||
+      !GROWTH_STAGES.has(target.growthStage as GrowthStage) ||
+      typeof target.title !== "string"
+    ) {
+      throw new ContentRepositoryError("resolvePublicContentRoute");
+    }
+
+    return {
+      relationType: relationType as RelationType,
+      target: {
+        slug: target.slug,
+        region: target.region as RegionName,
+        growthStage: target.growthStage as GrowthStage,
+        title: target.title,
+      },
+    };
+  });
+
+  return {
+    title,
+    region: region as RegionName,
+    growthStage: growthStage as GrowthStage,
+    lifecycle: "Archived",
+    restingState: "archived",
+    relations,
+  };
+}
+
+function parseRouteDisposition(value: unknown): RepositoryRouteDisposition {
+  if (!isRecord(value)) {
+    throw new ContentRepositoryError("resolvePublicContentRoute");
+  }
+
+  if (value.disposition === "published") return { kind: "published" };
+  if (value.disposition === "archived") {
+    return { kind: "archived", content: parseArchivedContent(value.content) };
+  }
+  if (value.disposition === "not_found") {
+    if (
+      value.legacyFallback !== "allowed" &&
+      value.legacyFallback !== "forbidden"
+    ) {
+      throw new ContentRepositoryError("resolvePublicContentRoute");
+    }
+    return {
+      kind: "not_found",
+      legacyFallbackAllowed: value.legacyFallback === "allowed",
+    };
+  }
+
+  throw new ContentRepositoryError("resolvePublicContentRoute");
+}
+
+function contentRouteKey(route: ContentRouteIdentity): string {
+  return `${route.region}/${route.slug}`;
 }
 
 export function createContentRepository(
@@ -303,6 +429,40 @@ export function createContentRepository(
     };
   }
 
+  async function resolvePublicContentRoute(
+    region: RegionName,
+    slug: string,
+  ): Promise<RepositoryRouteDisposition> {
+    const result = await client.rpc("resolve_public_content_route", {
+      p_region: region,
+      p_slug: slug,
+    });
+    assertNoRepositoryError(result.error, "resolvePublicContentRoute");
+    return parseRouteDisposition(result.data);
+  }
+
+  async function getUnmigratedRouteKeys(
+    routes: readonly ContentRouteIdentity[],
+  ): Promise<Set<string>> {
+    if (routes.length === 0) return new Set();
+
+    const requestedKeys = new Set(routes.map(contentRouteKey));
+    const result = await client.rpc("filter_unmigrated_public_routes", {
+      p_routes: routes.map(({ region, slug }) => ({ region, slug })),
+    });
+    assertNoRepositoryError(result.error, "filterUnmigratedPublicRoutes");
+
+    if (!Array.isArray(result.data)) {
+      throw new ContentRepositoryError("filterUnmigratedPublicRoutes");
+    }
+
+    const keys = result.data.filter(
+      (key): key is string =>
+        typeof key === "string" && requestedKeys.has(key),
+    );
+    return new Set(keys);
+  }
+
   async function getPublishedHomeCuration(): Promise<
     RepositoryHomeCuration[]
   > {
@@ -342,6 +502,8 @@ export function createContentRepository(
   return {
     getPublishedContent,
     getPublishedContentByRoute,
+    resolvePublicContentRoute,
+    getUnmigratedRouteKeys,
     getPublishedHomeCuration,
   };
 }

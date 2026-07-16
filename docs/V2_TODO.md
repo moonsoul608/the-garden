@@ -266,6 +266,16 @@ Acceptance:
 - [x] visible focus
 - [x] mobile basic-use layout
 
+### 4B-1. Admin Dashboard foundation
+
+- [x] Add a Keeper-only read service for dashboard aggregation
+- [x] Show total content and mutually exclusive lifecycle counts
+- [x] Map active Review work for never-published Draft projections
+- [x] Add typed Recent Activity and Quick Actions placeholders
+- [x] Add safe empty and workspace-unavailable states
+- [x] Keep dashboard data fetching server-side with no client mutation path
+- [x] Verify authorization boundary, lifecycle mapping, and empty states
+
 Acceptance:
 
 - [ ] non-admin access denied

@@ -1,6 +1,10 @@
 import "server-only";
 
 export type * from "./contracts";
+export type * from "./dashboard-contracts";
+export { DASHBOARD_LIFECYCLES } from "./dashboard-contracts";
+export * from "./dashboard-repository";
+export * from "./dashboard-service";
 export * from "./errors";
 export * from "./archive-repository";
 export * from "./deletion-repository";

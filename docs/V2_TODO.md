@@ -217,6 +217,13 @@ Acceptance:
 - [ ] Seed Version 1 public copy
 - [x] Produce machine-readable migration report
 - [x] Complete deterministic dry-run verification with no database writes
+- [x] Add typed per-record import preview output
+- [x] Reuse extract, transform, verify, and shared publication validation
+- [x] Report exact blockers, compatibility warnings, and child readiness
+- [x] Detect destination legacy ID and Region/slug conflicts from snapshots
+- [x] Generate deterministic source, destination, and preview digests
+- [x] Define approved-snapshot and unchanged-source approval checks
+- [x] Add deterministic, blocker, warning, write-safety, invalidation, and digest tests
 
 Acceptance:
 

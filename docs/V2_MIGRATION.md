@@ -135,6 +135,42 @@ The dry-run report is JSON and always includes:
 
 Phase 03C has no data rollback because it performs no database writes. Rollback consists of reverting the tooling and discarding generated JSON reports. Content source modules, application routes, database schema, and Supabase policies remain unchanged. Future Preview execution must add a pre-run Preview backup/export and a post-run restore procedure before any write path is enabled.
 
+### Phase 06B import preview contract
+
+Phase 06B keeps the same write-free extract → transform → verify pipeline and
+adds `scripts/content-v1/preview.ts` as the reusable server-side preview
+boundary. `apply.ts` remains a dry-run command wrapper and has no import
+execution implementation.
+
+The preview contains one typed record for every V1 item, including:
+
+- immutable source `legacyId` and route identity;
+- deterministic preview and destination import identities;
+- Region, Content Type, and target lifecycle;
+- `Create`, `Update`, `Unchanged`, or `None` planning;
+- `Ready`, `Blocked`, or `Warning` validation state;
+- exact blockers with the required field, reason, and manual action;
+- preserved compatibility warnings;
+- child readiness for relations, tags, and content-tag links.
+
+Validation combines structural verification with the shared V2 publication
+contract. It checks required publication fields, Growth Stage, source and
+destination Region/slug uniqueness, legacy identity duplication, lifecycle
+compatibility, relation integrity, and child readiness. Values are never
+generated or inferred.
+
+The dry-run writes the human report to stderr and machine-readable JSON to
+stdout. `--output=<path>` writes only the JSON snapshot to the requested file.
+The default audited summary remains 14 planned creates, five blocked Lake
+records, and four compatibility warnings.
+
+Every preview contains SHA-256 digests for the source state, normalized
+destination state, and complete preview. The future execution input contract
+must contain an explicitly approved preview snapshot with the same three
+digests. A changed source, changed destination state, or mismatched preview
+digest invalidates approval. Phase 06B validates that contract only; it does
+not approve or execute an import.
+
 ---
 
 ## 2. Migration principles

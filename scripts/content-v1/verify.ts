@@ -7,6 +7,7 @@ import type {
   V1MigrationCompatibilityWarning,
   V1MigrationIssue,
 } from "../../types/content.ts";
+import { validateV1MigrationBundle } from "../../lib/content/validation.ts";
 
 import { transformV1Content } from "./transform.ts";
 
@@ -144,8 +145,34 @@ export function verifyV1MigrationBundle(
     }
   }
 
+  const sharedValidation = validateV1MigrationBundle(bundle);
+  const blocked = [...bundle.issues];
+  const blockedKeys = new Set(
+    blocked.map((issue) =>
+      [issue.code, issue.legacyId ?? "", issue.field ?? ""].join(":"),
+    ),
+  );
+  for (const issue of sharedValidation.issues) {
+    const migrationIssue: V1MigrationIssue = {
+      code: issue.code as V1MigrationIssue["code"],
+      severity: "blocked",
+      legacyId: issue.legacyId ?? null,
+      field: issue.field ?? null,
+      message: issue.message,
+    };
+    const key = [
+      migrationIssue.code,
+      migrationIssue.legacyId ?? "",
+      migrationIssue.field ?? "",
+    ].join(":");
+    if (!blockedKeys.has(key)) {
+      blocked.push(migrationIssue);
+      blockedKeys.add(key);
+    }
+  }
+
   const blockedIds = new Set(
-    bundle.issues
+    blocked
       .filter((issue) => issue.severity === "blocked" && issue.legacyId)
       .map((issue) => issue.legacyId as string),
   );
@@ -172,7 +199,7 @@ export function verifyV1MigrationBundle(
     },
     blockedContentExcluded,
     importableLegacyIds,
-    blocked: bundle.issues.filter((issue) => issue.severity === "blocked"),
+    blocked: blocked.filter((issue) => issue.severity === "blocked"),
     failed,
     warnings: structuredClone(bundle.compatibilityWarnings),
   };

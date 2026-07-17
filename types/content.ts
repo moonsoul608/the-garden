@@ -181,6 +181,19 @@ export type ContentQuery = {
 export type V1MigrationIssueCode =
   | "missing_growth_stage"
   | "missing_required_field"
+  | "missing_title"
+  | "missing_summary"
+  | "missing_body"
+  | "missing_slug"
+  | "invalid_slug"
+  | "missing_primary_category"
+  | "invalid_primary_category"
+  | "invalid_region_content_type"
+  | "missing_cover_path"
+  | "orphaned_cover_alt"
+  | "missing_cover_alt"
+  | "invalid_lifecycle_transition"
+  | "slug_conflict"
   | "invalid_value"
   | "duplicate_identity"
   | "duplicate_route"
@@ -281,6 +294,133 @@ export type V1MigrationBundle = {
   siteCopy: V1MigrationSiteCopyItem[];
   compatibilityWarnings: V1MigrationCompatibilityWarning[];
   issues: V1MigrationIssue[];
+};
+
+export type V1MigrationPreviewState = "Ready" | "Blocked" | "Warning";
+
+export type V1MigrationPlannedOperation =
+  | "Create"
+  | "Update"
+  | "Unchanged"
+  | "None";
+
+export type V1MigrationPreviewBlocker = {
+  code: string;
+  field: string;
+  message: string;
+  whyRequired: string;
+  manualAction: string;
+};
+
+export type V1MigrationPreviewWarning = {
+  code: string;
+  field: string | null;
+  message: string;
+};
+
+export type V1MigrationPreviewRecord = {
+  previewRecordId: string;
+  sourceIdentity: {
+    source: "v1-static-typescript";
+    legacyId: string;
+    route: string;
+  };
+  destinationIdentity: {
+    collection: "contents";
+    keyField: "legacy_id";
+    keyValue: string;
+    deterministicId: string;
+    existingContentId: string | null;
+    exists: boolean;
+    route: string;
+  };
+  region: RegionName;
+  contentType: ContentType;
+  lifecycleTarget: "Published";
+  plannedOperation: V1MigrationPlannedOperation;
+  validationStatus: V1MigrationPreviewState;
+  blockers: V1MigrationPreviewBlocker[];
+  warnings: V1MigrationPreviewWarning[];
+};
+
+export type V1MigrationPreviewApprovalContract = {
+  approvedPreviewSnapshotRequired: true;
+  matchingDigestRequired: true;
+  unchangedSourceStateRequired: true;
+  unchangedDestinationStateRequired: true;
+  previewDigest: string;
+  sourceDigest: string;
+  destinationStateDigest: string;
+};
+
+export type V1ApprovedPreviewSnapshot = {
+  schemaVersion: 1;
+  approved: true;
+  previewDigest: string;
+  sourceDigest: string;
+  destinationStateDigest: string;
+};
+
+export type V1MigrationPreview = {
+  schemaVersion: 1;
+  kind: "v1-import-preview";
+  environment: "none" | "preview";
+  status: V1MigrationPreviewState;
+  source: "v1-static-typescript";
+  sourceDigest: string;
+  destinationStateDigest: string;
+  previewDigest: string;
+  records: V1MigrationPreviewRecord[];
+  blockers: V1MigrationPreviewBlocker[];
+  warnings: V1MigrationPreviewWarning[];
+  failures: {
+    code: string;
+    legacyId: string | null;
+    message: string;
+  }[];
+  childReadiness: {
+    relations: {
+      ready: number;
+      blocked: number;
+      duplicates: number;
+      blockedItems: {
+        identity: string;
+        blockers: V1MigrationPreviewBlocker[];
+      }[];
+    };
+    tags: {
+      ready: number;
+      blocked: number;
+      duplicates: number;
+      blockedItems: {
+        identity: string;
+        blockers: V1MigrationPreviewBlocker[];
+      }[];
+    };
+    contentTags: {
+      ready: number;
+      blocked: number;
+      duplicates: number;
+      blockedItems: {
+        identity: string;
+        blockers: V1MigrationPreviewBlocker[];
+      }[];
+    };
+  };
+  summary: {
+    total: number;
+    ready: number;
+    blocked: number;
+    warningRecords: number;
+    warnings: number;
+    create: number;
+    update: number;
+    unchanged: number;
+    noOperation: number;
+    existing: number;
+    duplicateConflicts: number;
+  };
+  approval: V1MigrationPreviewApprovalContract;
 };
 
 export type ContentItem = {

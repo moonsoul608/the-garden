@@ -241,7 +241,7 @@ test("approval contract generates matching source, destination, and preview dige
   });
 });
 
-test("execute remains rejected and no import execution occurs", async () => {
+test("the dry-run command rejects execute and remains write-free", async () => {
   const report = await buildV1DryRunReport({
     preview: true,
     execute: true,
@@ -251,7 +251,11 @@ test("execute remains rejected and no import execution occurs", async () => {
     outputPath: null,
   });
 
-  assert.ok(report.failures.some((failure) => failure.code === "writes_not_implemented"));
+  assert.ok(
+    report.failures.some(
+      (failure) => failure.code === "dry_run_execution_forbidden",
+    ),
+  );
   assert.equal(report.readiness.importReady, false);
 
   const applySource = await readFile(

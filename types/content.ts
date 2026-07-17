@@ -485,6 +485,97 @@ export type V1MigrationPreview = {
   approval: V1MigrationPreviewApprovalContract;
 };
 
+export type V1ImportDestinationContent = {
+  id: string;
+  legacy_id: string | null;
+  slug: string | null;
+  region: RegionName;
+  content_type: ContentType;
+  detail_level: DetailLevel;
+  lifecycle: Lifecycle;
+  growth_stage: GrowthStage;
+  title_zh: string | null;
+  title_en: string | null;
+  summary_zh: string | null;
+  summary_en: string | null;
+  body_zh_markdown: string | null;
+  body_en_markdown: string | null;
+  content_language: ContentLanguage;
+  primary_categories: string[];
+  cover_image_path: string | null;
+  cover_image_alt_zh: string | null;
+  cover_image_alt_en: string | null;
+  featured: boolean;
+  manual_order: number | null;
+  published_at: string | null;
+  archived_at: string | null;
+  last_tended_at: string | null;
+};
+
+export type V1ImportExecutionPayload = {
+  schemaVersion: 1;
+  kind: "v1-import-execution";
+  importDigest: string;
+  sourceDigest: string;
+  destinationStateDigest: string;
+  sourceVersion: {
+    source: "v1-static-typescript";
+    schemaVersion: 1;
+  };
+  expectedDestinationContents: V1ImportDestinationContent[];
+  contents: Array<
+    Omit<V1MigrationContentRecord, "growthStage"> & {
+      growthStage: GrowthStage;
+      growthStageResolution: V1GrowthStageResolutionAudit | null;
+    }
+  >;
+  relations: V1MigrationRelation[];
+  tags: V1MigrationTag[];
+  contentTags: V1MigrationContentTag[];
+  growthNotes: Array<{
+    contentLegacyId: string;
+    fromStage: GrowthStage | null;
+    toStage: GrowthStage;
+    noteZh: string | null;
+    noteEn: string | null;
+    occurredAt: string;
+    isPublic: boolean;
+  }>;
+  warnings: V1MigrationPreviewWarning[];
+};
+
+export type V1ImportVerification = {
+  contentCount: number;
+  expectedContentCount: number;
+  slugUnique: boolean;
+  relationIntegrity: boolean;
+  lifecycleValid: boolean;
+  passed: boolean;
+};
+
+export type V1ImportResult = {
+  schemaVersion: 1;
+  kind: "v1-import-result";
+  importDigest: string;
+  importedAt: string;
+  sourceVersion: {
+    source: "v1-static-typescript";
+    schemaVersion: 1;
+  };
+  idempotent: boolean;
+  created: {
+    contents: string[];
+    versions: string[];
+    relations: string[];
+    growthNotes: string[];
+    tags: string[];
+    contentTags: string[];
+  };
+  skippedRecords: string[];
+  warnings: V1MigrationPreviewWarning[];
+  verification: V1ImportVerification;
+};
+
 export type ContentItem = {
   id: string;
   slug: string;

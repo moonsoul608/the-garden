@@ -195,7 +195,71 @@ approval readiness requires complete required fields, passing verification,
 zero record/global/child blockers, zero safeguard failures, and generated
 digests. `validateV1ApprovedPreviewSnapshot()` rejects a matching approval
 snapshot while any readiness condition is false. The command remains a dry run;
-`--execute` and `--production` are rejected and no importer exists.
+`--execute` and `--production` remain rejected by the dry-run command.
+
+### Phase 06C import execution contract
+
+Phase 06C adds a separate server/script-only execution command. It does not
+change `apply.ts`, public source mode, routes, Admin UI, lifecycle services,
+Storage policies, or V1 source content.
+
+Execution requires all of the following:
+
+- `--execute` and `--preview`;
+- `--approval=<path>` containing the explicit 06B approved-snapshot envelope;
+- `--digest=<sha256>` matching the approved preview digest;
+- `--resolutions=<path>` containing the exact manual Growth Stage input used
+  to generate the approved preview;
+- `NEXT_PUBLIC_SUPABASE_URL` and the server-only `SUPABASE_SECRET_KEY` for the
+  Preview project;
+- the Phase 06C database migration already applied.
+
+Example, after a Garden Keeper has supplied real approvals and approved the
+resulting preview:
+
+```bash
+npm run content:v1:import -- \
+  --execute \
+  --preview \
+  --approval=tmp/v1-approved-preview.json \
+  --digest=sha256:<approved-preview-digest> \
+  --resolutions=tmp/v1-growth-stage-resolutions.json \
+  --output=tmp/v1-import-result.json
+```
+
+The script regenerates the source state and reads a fresh destination snapshot
+before calling one service-role-only RPC. A missing or incomplete approval,
+explicit digest mismatch, source change, destination change, unresolved
+blocker, duplicate identity, duplicate relation, missing relation endpoint, or
+existing unreceipted migration identity rejects the import before commit.
+
+`execute_v1_import(jsonb)` owns the database transaction. It creates all 19
+content projections, valid tags and associations, valid relations, approved
+structured Growth Notes when present, and exactly one immutable initial
+version per content. Current V1 supplies no structured Growth Note rows; its
+sections named “Growth notes” remain in the preserved Markdown body, and no
+note text or historical timestamp is invented. Initial version snapshots
+retain the V1 `legacyId`, source version, source/import digests, and manual
+Growth Stage resolution provenance.
+
+The transaction verifies content count, Region/slug uniqueness, relation
+integrity, Published lifecycle validity, and initial-version count before it
+writes an immutable import receipt. Any validation or insert failure rolls the
+whole statement back. A repeated call with the same import digest returns the
+stored result with `idempotent: true` and creates no content, version,
+relation, tag, or receipt duplicate.
+
+The machine result contains the import digest, technical import timestamp,
+source version, created identities, skipped identities, warnings, and
+verification result. The human report prints created content/version/relation
+counts, skipped records, warnings, and verification status. Neither path
+performs public cutover.
+
+Implementation and rollback-only tests exist, but no Preview import was run in
+Phase 06C because the five real Lake Growth Stage approvals and an approved
+snapshot were not supplied. The migration and SQL integration test must be
+applied and run against the real Preview database before execution evidence is
+claimed.
 
 ---
 

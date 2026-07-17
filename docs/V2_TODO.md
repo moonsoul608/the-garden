@@ -229,14 +229,24 @@ Acceptance:
 - [x] Keep all five missing Growth Stage decisions explicitly Pending by default
 - [x] Require complete fields, passing validation, resolved blockers, and digests before approval readiness
 - [x] Add blocker-resolution, policy, digest-invalidation, and no-execution tests
+- [x] Add a server/script-only Preview import executor
+- [x] Require an approved snapshot, explicit matching digest, unchanged source/destination, and zero blockers
+- [x] Add one service-role-only transactional import RPC and immutable import receipt
+- [x] Create contents, initial immutable versions, valid relations, tags, content tags, and approved structured metadata atomically
+- [x] Preserve V1 identity and migration provenance in every initial version
+- [x] Return an idempotent existing result for a completed import digest
+- [x] Run post-import count, slug, relation, lifecycle, and version verification before commit
+- [x] Add invalid approval, digest mismatch, idempotency, rollback, relation, and version tests
+- [ ] Apply the Phase 06C migration and run the rollback-only SQL test in Preview
+- [ ] Execute an approved Preview import after real Growth Stage approvals exist
 
 Acceptance:
 
 - [ ] exactly 19 initial items imported
 - [ ] all old public URLs resolve in Preview
 - [x] no invented content in the migration bundle
-- [ ] migration is repeatable
-- [ ] migration does not duplicate records
+- [x] migration execution is repeatable by digest
+- [x] migration execution prevents duplicate records
 
 ---
 

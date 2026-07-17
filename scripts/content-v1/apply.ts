@@ -94,9 +94,10 @@ export async function buildV1DryRunReport(
     });
   } else if (options.execute) {
     safeguardFailures.push({
-      code: "writes_not_implemented",
+      code: "dry_run_execution_forbidden",
       legacyId: null,
-      message: "Import execution is intentionally not implemented.",
+      message:
+        "This command is dry-run only; approved Preview execution uses the separate content:v1:import command.",
     });
   }
 

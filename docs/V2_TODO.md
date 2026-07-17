@@ -182,6 +182,9 @@ Acceptance:
 - [x] Create legacy static-content adapter
 - [x] `getPublishedContent`
 - [x] `getPublishedContentByRoute`
+- [x] Harden the public read adapter for legacy, dual, and database source modes
+- [x] Keep public DTOs free of internal IDs, admin metadata, and migration fields
+- [x] Make dual-read collection merging database-first and route-deduplicated
 - [ ] `getAdminContent`
 - [x] `createDraft`
 - [x] `updateDraft`

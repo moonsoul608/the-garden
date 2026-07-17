@@ -132,7 +132,6 @@ export function mapContentRecordToPublicCard(
   }
 
   return {
-    id: content.id,
     slug: content.slug,
     region: content.region,
     contentType: content.contentType,
@@ -159,7 +158,6 @@ export function mapContentRecordToPublicCard(
     tags: [...content.tags],
     cover: content.cover ? { ...content.cover } : null,
     featured: content.featured,
-    manualOrder: content.manualOrder,
     publishedAt: content.publishedAt,
     lastTendedAt: content.lastTendedAt,
   };
@@ -183,8 +181,7 @@ export function mapContentRecordToPublicDetail(
     bodyEnMarkdown: content.bodyEnMarkdown,
     growthTimeline: growthNotes
       .filter((note) => note.isPublic)
-      .map(({ id, fromStage, toStage, noteZh, noteEn, occurredAt }) => ({
-        id,
+      .map(({ fromStage, toStage, noteZh, noteEn, occurredAt }) => ({
         fromStage,
         toStage,
         noteZh,
@@ -205,12 +202,10 @@ export function mapRepositoryRelationToPublic(
   );
 
   return {
-    id: relation.relation.id,
     relationType: relation.relation.relation_type,
     noteZh: relation.relation.note_zh,
     noteEn: relation.relation.note_en,
     target: {
-      id: target.id,
       slug: target.slug,
       region: target.region,
       contentType: target.contentType,

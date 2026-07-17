@@ -76,9 +76,12 @@ export type HomeCurationItem = {
   updatedAt: string;
 };
 
-/** Minimal serializable shape consumed by public collection components. */
+/**
+ * Allow-listed serializable shape consumed by public collection components.
+ * Database IDs, migration identity, and Keeper-only metadata stay behind the
+ * public read boundary.
+ */
 export type PublicContentCard = {
-  id: string;
   slug: string;
   region: RegionName;
   contentType: ContentType;
@@ -97,25 +100,23 @@ export type PublicContentCard = {
   tags: string[];
   cover: CoverMetadata | null;
   featured: boolean;
-  manualOrder: number | null;
   publishedAt: string | null;
   lastTendedAt: string | null;
 };
 
 export type PublicContentRelation = {
-  id: string;
   relationType: RelationType;
   noteZh: string | null;
   noteEn: string | null;
   target: Pick<
     PublicContentCard,
-    "id" | "slug" | "region" | "contentType" | "growthStage" | "title"
+    "slug" | "region" | "contentType" | "growthStage" | "title"
   >;
 };
 
 export type PublicGrowthNote = Pick<
   GrowthNote,
-  "id" | "fromStage" | "toStage" | "noteZh" | "noteEn" | "occurredAt"
+  "fromStage" | "toStage" | "noteZh" | "noteEn" | "occurredAt"
 >;
 
 export type PublicContentDetail = PublicContentCard & {

@@ -74,20 +74,41 @@ function mapRepositoryContent(item: RepositoryContent): PublicContentCard {
   );
 }
 
+function isPublishedRepositoryContent(item: RepositoryContent): boolean {
+  return item.row.lifecycle === "Published";
+}
+
 function mapRepositoryDetail(
   item: RepositoryContentDetail,
 ): PublicContentDetail {
+  if (!isPublishedRepositoryContent(item)) {
+    throw new ContentRepositoryError("mapUnpublishedPublicContentDetail");
+  }
+
   const content = mapContentDatabaseRow(item.row, item.tags);
   const growthNotes = item.growthNotes.map(mapGrowthNoteDatabaseRow);
-  const relations = item.relations.map((relation) =>
-    mapRepositoryRelationToPublic(relation),
-  );
+  const relations = item.relations
+    .filter(({ target }) => target.lifecycle === "Published")
+    .map((relation) => mapRepositoryRelationToPublic(relation));
 
   return mapContentRecordToPublicDetail(content, growthNotes, relations);
 }
 
 function routeKey(item: Pick<PublicContentCard, "region" | "slug">): string {
   return `${item.region}/${item.slug}`;
+}
+
+function deduplicateByRoute(
+  items: readonly PublicContentCard[],
+): PublicContentCard[] {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = routeKey(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function applyWindow(
@@ -132,6 +153,10 @@ export function createContentService(
   async function getPublishedContent(
     query: ContentQuery = {},
   ): Promise<PublicContentCard[]> {
+    if (query.lifecycles && !query.lifecycles.includes("Published")) {
+      return [];
+    }
+
     if (mode === "legacy") {
       return legacySource.getPublishedContent(query);
     }
@@ -139,7 +164,9 @@ export function createContentService(
     const repository = await getRepository();
     if (mode === "database") {
       const items = await repository.getPublishedContent(query);
-      return items.map(mapRepositoryContent);
+      return items
+        .filter(isPublishedRepositoryContent)
+        .map(mapRepositoryContent);
     }
 
     const unboundedQuery: ContentQuery = {
@@ -151,20 +178,24 @@ export function createContentService(
       repository.getPublishedContent(unboundedQuery),
       legacySource.getPublishedContent(unboundedQuery),
     ]);
-    const mappedDatabaseItems = databaseItems.map(mapRepositoryContent);
+    const mappedDatabaseItems = deduplicateByRoute(
+      databaseItems
+        .filter(isPublishedRepositoryContent)
+        .map(mapRepositoryContent),
+    );
     const migratedRoutes = new Set(mappedDatabaseItems.map(routeKey));
-    const fallbackCandidates = legacyItems.filter(
+    const fallbackCandidates = deduplicateByRoute(legacyItems).filter(
       (item) => !migratedRoutes.has(routeKey(item)),
     );
     const unmigratedRoutes = await repository.getUnmigratedRouteKeys(
       fallbackCandidates.map(({ region, slug }) => ({ region, slug })),
     );
-    const merged = [
+    const merged = deduplicateByRoute([
       ...mappedDatabaseItems,
       ...fallbackCandidates.filter((item) =>
         unmigratedRoutes.has(routeKey(item)),
       ),
-    ];
+    ]);
 
     return applyWindow(merged, query);
   }
@@ -232,12 +263,14 @@ export function createContentService(
 
     // Dual mode deliberately has no legacy Home fallback while its conflicts
     // and display overrides remain deferred.
-    return rows.map(({ row, content }) =>
-      mapHomeCurationToPublic(
-        row,
-        mapContentDatabaseRow(content.row, content.tags),
-      ),
-    );
+    return rows
+      .filter(({ content }) => isPublishedRepositoryContent(content))
+      .map(({ row, content }) =>
+        mapHomeCurationToPublic(
+          row,
+          mapContentDatabaseRow(content.row, content.tags),
+        ),
+      );
   }
 
   return {

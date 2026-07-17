@@ -34,7 +34,6 @@ export interface LegacyContentSource {
 
 function mapLegacyItemToPublicCard(item: ContentItem): PublicContentCard {
   return {
-    id: item.id,
     slug: item.slug,
     region: item.region,
     contentType: item.contentType,
@@ -51,7 +50,6 @@ function mapLegacyItemToPublicCard(item: ContentItem): PublicContentCard {
     tags: [...(item.tags ?? [])],
     cover: null,
     featured: false,
-    manualOrder: null,
     publishedAt: null,
     lastTendedAt: null,
   };

@@ -246,9 +246,16 @@ Acceptance:
 - [x] Verify Published, Archived, Draft, and Review behavior through supplied public-service probes
 - [x] Emit deterministic human and machine reports with PASS, FAIL, WARNING, digest, timestamp, and checks
 - [x] Add missing-content, slug, relation, version, and determinism tests
+- [x] Add a deterministic Phase 06E cutover readiness checklist
+- [x] Define guarded legacy to dual to database source-mode transitions
+- [x] Document cutover prerequisites, risks, rollback conditions, and cache invalidation
+- [x] Add the final operator migration runbook without switching source mode
+- [x] Add checklist, rollback, transition, and failed-verification gate tests
 - [ ] Apply the Phase 06C migration and run the rollback-only SQL test in Preview
 - [ ] Execute an approved Preview import after real Growth Stage approvals exist
 - [ ] Collect real Preview V2 query results and run Phase 06D verification
+- [ ] Supply real backup, monitoring, cache, redirect, and public-read readiness evidence
+- [ ] Approve a future cutover window; Phase 06E leaves source mode unchanged
 
 Acceptance:
 

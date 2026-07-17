@@ -309,6 +309,43 @@ being promoted into invented content.
 The implementation and fixture tests exist, but no real Preview verification
 report was generated in Phase 06D because Phase 06C has not been executed.
 
+### Phase 06E cutover preparation contract
+
+Phase 06E prepares cutover without changing Production behavior. It adds an
+ordered, deterministic readiness gate and the operator runbook in
+`docs/V2_PHASE_06E_CUTOVER_PREPARATION.md`. It does not import content, change
+`CONTENT_SOURCE_MODE`, alter public routes or the content service, delete V1
+content, write database data, or create a database migration.
+
+The readiness gate covers data, application, operational, and safety evidence.
+Every check is blocking. A Phase 06D `FAIL` always blocks cutover. A `WARNING`
+also blocks cutover until its exact findings receive explicit operator
+acceptance; acceptance does not convert or hide those findings.
+
+Forward source-mode transitions are strictly ordered:
+
+```text
+legacy -> dual -> database
+```
+
+`legacy -> database` is forbidden. Entry to `dual` requires every readiness
+check and an approved cutover window. Entry to `database` additionally requires
+an accepted stability period, zero legacy fallback use, healthy monitoring,
+reverified parity, and explicit final approval. These rules prepare a future
+operator decision only; Phase 06E performs neither transition.
+
+Any verification regression, public-read failure, redirect/404 regression,
+duplicate or discovery mismatch, private/Archived exposure, database outage,
+cache incoherence, or operator stop decision requires rollback. Rollback
+restores `legacy` mode, preserves imported V2 data and the V1 fallback, and
+invalidates public caches. Incident response must not delete V2 or V1 data.
+
+The current cutover assessment remains **BLOCKED** because a real approved
+preview, Preview import receipt, Phase 06D report, Production backup evidence,
+monitoring evidence, and cache-invalidation readiness have not been supplied.
+Existing resolver, lifecycle, and redirect contract tests are supporting
+evidence only; real Preview route and public-read probes remain required.
+
 ---
 
 ## 2. Migration principles

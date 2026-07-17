@@ -10,7 +10,7 @@
     "lint": "eslint . --max-warnings=0",
     "test:seed-gardener": "node --test tests/seed-gardener.test.cjs",
     "test:authorization": "node --test tests/authorization.test.cjs",
-    "test:content-admin": "node --experimental-strip-types --test tests/content-admin-foundation.test.cjs tests/admin-dashboard.test.cjs tests/admin-content-management.test.cjs tests/admin-review-workspace.test.cjs tests/admin-lifecycle-management.test.cjs tests/admin-media-workspace.test.cjs tests/public-content-route-boundary.test.cjs tests/redirect-contract.test.cjs tests/storage-purge-safety.test.cjs tests/content-v1-preview.test.ts tests/content-v1-import-execution.test.ts tests/content-v1-migration-verification.test.ts",
+    "test:content-admin": "node --experimental-strip-types --test tests/content-admin-foundation.test.cjs tests/admin-dashboard.test.cjs tests/admin-content-management.test.cjs tests/admin-review-workspace.test.cjs tests/admin-lifecycle-management.test.cjs tests/admin-media-workspace.test.cjs tests/public-content-route-boundary.test.cjs tests/redirect-contract.test.cjs tests/storage-purge-safety.test.cjs tests/content-v1-preview.test.ts tests/content-v1-import-execution.test.ts tests/content-v1-migration-verification.test.ts tests/content-v1-cutover-readiness.test.ts",
     "test:phase5": "node tests/phase5-browser-audit.cjs",
     "test:smoke:garden-index": "node tests/garden-index-route-smoke.cjs",
     "content:v1:extract": "node --experimental-strip-types scripts/content-v1/extract.ts",

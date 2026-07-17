@@ -29,9 +29,10 @@ Warnings:
 The five Lake records remain blocked because `growthStage` is absent. The
 preview does not suggest or generate a value. Each blocker names the field,
 explains the V2 requirement, and requires an explicit Garden Keeper decision.
-The unresolved legacy `publishedAt` policy is also exposed as a global approval
-blocker: confirmed dates or an explicitly approved migration-specific nullable
-rule are still required. It does not change the five-record blocker count.
+Task 06B-1 subsequently adopted the migration-specific nullable legacy
+`publishedAt` rule. The five Growth Stage decisions remain Pending; no value has
+been proposed or generated. See
+`docs/V2_PHASE_06B1_MIGRATION_BLOCKER_RESOLUTION.md`.
 
 ## Preview boundary
 
@@ -94,7 +95,9 @@ The preview generates the digest reference, while the separate
 `V1ApprovedPreviewSnapshot` type requires an explicit `approved: true` marker.
 `validateV1ApprovedPreviewSnapshot()` defines the future execution preflight. A
 missing approval marker or a source, destination, or preview change invalidates
-the approval. The preview service cannot approve or execute an import.
+the approval. An otherwise matching snapshot is also rejected until required
+fields are complete, validation passes, every blocker is resolved, and record
+digests exist. The preview service cannot approve or execute an import.
 
 ## Safety
 

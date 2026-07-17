@@ -2,13 +2,16 @@ import { createHash } from "node:crypto";
 
 import type {
   V1ApprovedPreviewSnapshot,
+  V1GrowthStageResolutionAudit,
   V1MigrationContentRecord,
   V1MigrationIssue,
   V1MigrationPlannedOperation,
   V1MigrationPreview,
   V1MigrationPreviewBlocker,
   V1MigrationPreviewRecord,
+  V1MigrationResolutionInput,
   V1MigrationPreviewWarning,
+  V1PublishedAtMigrationPolicy,
 } from "../../types/content.ts";
 
 import {
@@ -17,12 +20,20 @@ import {
 } from "./extract.ts";
 import { transformV1Content } from "./transform.ts";
 import { verifyV1MigrationBundle } from "./verify.ts";
+import {
+  applyV1MigrationResolutions,
+  validateV1PublishedAtPolicy,
+  V1_GROWTH_STAGE_BLOCKER_IDS,
+  V1_PUBLISHED_AT_POLICY,
+} from "./resolutions.ts";
 
 export type V1ExistingContent = Record<string, unknown>;
 
 export type V1MigrationPreviewOptions = {
   extract?: V1ExtractManifest;
   existingContents?: readonly V1ExistingContent[];
+  resolutionInput?: V1MigrationResolutionInput | null;
+  publishedAtPolicy?: V1PublishedAtMigrationPolicy;
   environment?: "none" | "preview";
   safeguardFailures?: readonly {
     code: string;
@@ -238,10 +249,20 @@ export function buildV1MigrationPreview(
   options: V1MigrationPreviewOptions = {},
 ): V1MigrationPreview {
   const extract = options.extract ?? extractV1Content();
-  const bundle = transformV1Content(extract);
+  const resolutionInput = options.resolutionInput ?? null;
+  const publishedAtPolicy = options.publishedAtPolicy ?? V1_PUBLISHED_AT_POLICY;
+  const resolution = applyV1MigrationResolutions(
+    transformV1Content(extract),
+    resolutionInput,
+  );
+  const bundle = resolution.bundle;
   const verification = verifyV1MigrationBundle(bundle);
   const existingContents = [...(options.existingContents ?? [])];
-  const sourceDigest = digest(extract);
+  const sourceDigest = digest({
+    extract,
+    resolutionInput,
+    publishedAtPolicy,
+  });
   const destinationStateDigest = digest(
     existingContents.map((content) => stableJson(content)).sort(),
   );
@@ -271,20 +292,24 @@ export function buildV1MigrationPreview(
   const globalBlockers = verification.blocked
     .filter((issue) => issue.legacyId === null)
     .map(toBlocker);
-  if (
-    bundle.contents.some(
-      (content) => content.lifecycle === "Published" && !content.publishedAt,
-    )
-  ) {
-    addBlocker(
-      globalBlockers,
-      makeBlocker(
-        "publication_timestamp_policy_unresolved",
-        "publishedAt",
-        "Legacy Published candidates have no confirmed publication timestamps and no approved migration-specific nullable timestamp rule.",
-      ),
-    );
+  const publishedAtIssues = validateV1PublishedAtPolicy(
+    bundle,
+    publishedAtPolicy,
+  );
+  for (const issue of publishedAtIssues) {
+    if (issue.legacyId === null) addBlocker(globalBlockers, toBlocker(issue));
   }
+
+  const policyRecordIssues = publishedAtIssues.filter(
+    (issue) => issue.legacyId !== null,
+  );
+  const failures = [
+    ...verification.failed,
+    ...(options.safeguardFailures ?? []),
+  ];
+  const growthStageResolutionById = new Map<string, V1GrowthStageResolutionAudit>(
+    resolution.growthStages.map((item) => [item.legacyId, item]),
+  );
 
   const records: V1MigrationPreviewRecord[] = bundle.contents.map((content) => {
     const matches = existingByLegacyId.get(content.legacyId) ?? [];
@@ -294,6 +319,11 @@ export function buildV1MigrationPreview(
     const blockers = verification.blocked
       .filter((issue) => issue.legacyId === content.legacyId)
       .map(toBlocker);
+    for (const issue of policyRecordIssues.filter(
+      (candidate) => candidate.legacyId === content.legacyId,
+    )) {
+      addBlocker(blockers, toBlocker(issue));
+    }
 
     if (matches.length > 1) {
       addBlocker(
@@ -352,7 +382,7 @@ export function buildV1MigrationPreview(
       }
     }
 
-    return {
+    const recordCore = {
       previewRecordId: deterministicRecordId(content.legacyId),
       sourceIdentity: {
         source: "v1-static-typescript",
@@ -371,6 +401,9 @@ export function buildV1MigrationPreview(
       region: content.region,
       contentType: content.contentType,
       lifecycleTarget: content.lifecycle,
+      growthStage: content.growthStage,
+      growthStageResolution:
+        growthStageResolutionById.get(content.legacyId) ?? null,
       plannedOperation,
       validationStatus:
         blockers.length > 0
@@ -380,6 +413,20 @@ export function buildV1MigrationPreview(
             : "Ready",
       blockers,
       warnings,
+    } satisfies Omit<V1MigrationPreviewRecord, "recordDigest" | "importReady">;
+    const recordDigest = digest({
+      content: comparableCandidate(content),
+      preview: recordCore,
+    });
+    const digestGenerated = /^sha256:[a-f0-9]{64}$/.test(recordDigest);
+    return {
+      ...recordCore,
+      recordDigest,
+      importReady:
+        blockers.length === 0 &&
+        globalBlockers.length === 0 &&
+        failures.length === 0 &&
+        digestGenerated,
     };
   });
 
@@ -475,10 +522,6 @@ export function buildV1MigrationPreview(
     }
   }
 
-  const failures = [
-    ...verification.failed,
-    ...(options.safeguardFailures ?? []),
-  ];
   const summary: V1MigrationPreview["summary"] = {
     total: records.length,
     ready: records.filter((record) => record.validationStatus !== "Blocked").length,
@@ -494,6 +537,44 @@ export function buildV1MigrationPreview(
       record.blockers.some((blocker) => blocker.code.includes("duplicate")),
     ).length,
   };
+
+  const blockedChildren =
+    blockedRelations + blockedTags + blockedContentTags;
+  const blockersResolved =
+    summary.blocked === 0 &&
+    globalBlockers.length === 0 &&
+    blockedChildren === 0;
+  const requiredFieldsComplete = records.every((record) =>
+    record.blockers.every(
+      (blocker) =>
+        !blocker.code.startsWith("missing_") &&
+        blocker.field !== "growthStage" &&
+        blocker.field !== "publishedAt",
+    ),
+  );
+  const validationPassed =
+    verification.status === "passed" &&
+    failures.length === 0 &&
+    summary.blocked === 0 &&
+    globalBlockers.length === 0;
+  const digestGenerated = records.every((record) =>
+    /^sha256:[a-f0-9]{64}$/.test(record.recordDigest),
+  );
+  const readiness = {
+    importReady:
+      requiredFieldsComplete &&
+      validationPassed &&
+      blockersResolved &&
+      digestGenerated &&
+      records.every((record) => record.importReady),
+    requiredFieldsComplete,
+    validationPassed,
+    blockersResolved,
+    digestGenerated,
+  };
+  const resolvedGrowthStages = resolution.growthStages.filter(
+    (item) => item.approvalStatus === "Approved",
+  ).length;
 
   const previewCore = {
     schemaVersion: 1 as const,
@@ -532,6 +613,18 @@ export function buildV1MigrationPreview(
         blockedItems: blockedContentTagItems,
       },
     },
+    resolutionReport: {
+      before: {
+        blocked: V1_GROWTH_STAGE_BLOCKER_IDS.length,
+      },
+      after: {
+        resolved: resolvedGrowthStages,
+        remaining: V1_GROWTH_STAGE_BLOCKER_IDS.length - resolvedGrowthStages,
+      },
+      growthStages: resolution.growthStages,
+      publishedAt: publishedAtPolicy,
+    },
+    readiness,
     summary,
   };
   const previewDigest = digest(previewCore);
@@ -544,6 +637,11 @@ export function buildV1MigrationPreview(
       matchingDigestRequired: true,
       unchangedSourceStateRequired: true,
       unchangedDestinationStateRequired: true,
+      importReady: readiness.importReady,
+      requiredFieldsComplete: readiness.requiredFieldsComplete,
+      validationPassed: readiness.validationPassed,
+      blockersResolved: readiness.blockersResolved,
+      digestGenerated: readiness.digestGenerated,
       previewDigest,
       sourceDigest,
       destinationStateDigest,
@@ -557,6 +655,9 @@ export function validateV1ApprovedPreviewSnapshot(
 ): { valid: true } | { valid: false; reason: string } {
   if ((approved as { approved?: unknown }).approved !== true) {
     return { valid: false, reason: "preview_not_approved" };
+  }
+  if (!current.readiness.importReady) {
+    return { valid: false, reason: "preview_not_import_ready" };
   }
   if (approved.sourceDigest !== current.sourceDigest) {
     return { valid: false, reason: "source_state_changed" };
@@ -591,6 +692,12 @@ export function formatV1MigrationPreview(
     "Warnings:",
     String(preview.summary.warnings),
     "",
+    "Growth Stage blocker resolution:",
+    `Before blocked: ${preview.resolutionReport.before.blocked}`,
+    `Resolved: ${preview.resolutionReport.after.resolved}`,
+    `Remaining: ${preview.resolutionReport.after.remaining}`,
+    `Import ready: ${preview.readiness.importReady ? "yes" : "no"}`,
+    "",
     `Planned operations: ${preview.summary.create} create, ${preview.summary.update} update, ${preview.summary.unchanged} unchanged, ${preview.summary.noOperation} none.`,
     `Approval digest: ${preview.previewDigest}`,
   ];
@@ -612,6 +719,16 @@ export function formatV1MigrationPreview(
       `Global blocker: ${blocker.field}`,
       `- Why required: ${blocker.whyRequired}`,
       `  Manual action: ${blocker.manualAction}`,
+    );
+  }
+
+  for (const item of preview.resolutionReport.growthStages) {
+    lines.push(
+      "",
+      `Growth Stage resolution: ${item.legacyId}`,
+      `- Blocker reason: ${item.blockerReason}`,
+      `  Resolution source: ${item.resolutionSource ?? "pending manual input"}`,
+      `  Approval status: ${item.approvalStatus}`,
     );
   }
 

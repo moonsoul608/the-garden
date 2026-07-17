@@ -1,13 +1,17 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-import type { V1MigrationPreview } from "../../types/content.ts";
+import type {
+  V1MigrationPreview,
+  V1MigrationResolutionInput,
+} from "../../types/content.ts";
 import {
   buildV1MigrationPreview,
   formatV1MigrationPreview,
   serializeV1MigrationPreview,
   type V1ExistingContent,
 } from "./preview.ts";
+import { parseV1MigrationResolutionInput } from "./resolutions.ts";
 
 export type V1ApplyReport = V1MigrationPreview;
 
@@ -16,19 +20,34 @@ export type ApplyOptions = {
   execute: boolean;
   production: boolean;
   existingPath: string | null;
+  resolutionsPath: string | null;
   outputPath: string | null;
 };
 
 function parseOptions(args: string[]): ApplyOptions {
   const existingArgument = args.find((arg) => arg.startsWith("--existing="));
+  const resolutionsArgument = args.find((arg) =>
+    arg.startsWith("--resolutions="),
+  );
   const outputArgument = args.find((arg) => arg.startsWith("--output="));
   return {
     preview: args.includes("--preview"),
     execute: args.includes("--execute"),
     production: args.includes("--production"),
     existingPath: existingArgument?.slice("--existing=".length) || null,
+    resolutionsPath:
+      resolutionsArgument?.slice("--resolutions=".length) || null,
     outputPath: outputArgument?.slice("--output=".length) || null,
   };
+}
+
+async function readResolutionInput(
+  path: string | null,
+): Promise<V1MigrationResolutionInput | null> {
+  if (!path) return null;
+  return parseV1MigrationResolutionInput(
+    JSON.parse(await readFile(path, "utf8")) as unknown,
+  );
 }
 
 async function readExistingContents(
@@ -55,6 +74,7 @@ export async function buildV1DryRunReport(
     execute: false,
     production: false,
     existingPath: null,
+    resolutionsPath: null,
     outputPath: null,
   },
 ): Promise<V1ApplyReport> {
@@ -94,9 +114,24 @@ export async function buildV1DryRunReport(
     });
   }
 
+  let resolutionInput: V1MigrationResolutionInput | null = null;
+  try {
+    resolutionInput = await readResolutionInput(options.resolutionsPath);
+  } catch (error) {
+    safeguardFailures.push({
+      code: "invalid_resolution_input",
+      legacyId: null,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Resolution input could not be read.",
+    });
+  }
+
   return buildV1MigrationPreview({
     environment: options.preview ? "preview" : "none",
     existingContents,
+    resolutionInput,
     safeguardFailures,
   });
 }

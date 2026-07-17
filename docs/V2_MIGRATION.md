@@ -86,7 +86,7 @@ Arrays retain source order. No timestamp, filesystem metadata, or random identif
 }
 ```
 
-The current V1 bundle contains all 19 source records but is `blocked` because all five Lake records have no confirmed Growth Stage. Those records remain visible in the manifest with `growthStage: null`; they are excluded from the dry-run importable set. Growth Stages are never guessed.
+The current V1 bundle contains all 19 source records but is `blocked` because all five Lake records have no confirmed Growth Stage. Those records remain visible in the manifest with `growthStage: null`; they are excluded from the dry-run importable set. Growth Stages are never guessed. Task 06B-1 adds a separate manual resolution input; absent approvals remain explicitly Pending.
 
 Current intentional empty collections:
 
@@ -162,7 +162,9 @@ generated or inferred.
 The dry-run writes the human report to stderr and machine-readable JSON to
 stdout. `--output=<path>` writes only the JSON snapshot to the requested file.
 The default audited summary remains 14 planned creates, five blocked Lake
-records, and four compatibility warnings.
+records, and four compatibility warnings. Its resolution report states Before:
+Blocked 5; After: Resolved 0, Remaining 5. A manually supplied, valid approval
+changes only its named record and the digest-covered preview state.
 
 Every preview contains SHA-256 digests for the source state, normalized
 destination state, and complete preview. The future execution input contract
@@ -170,6 +172,30 @@ must contain an explicitly approved preview snapshot with the same three
 digests. A changed source, changed destination state, or mismatched preview
 digest invalidates approval. Phase 06B validates that contract only; it does
 not approve or execute an import.
+
+### Phase 06B-1 blocker-resolution contract
+
+The legacy publication timestamp policy is `v1-published-at-preserve-null`.
+Current V1 records contain no confirmed `plantedOn` values, so legacy Published
+candidates preserve `publishedAt: null`. This is a migration-only exception:
+normal V2 publication still assigns its transaction timestamp. File times, Git
+history, build time, preview time, and future import time are forbidden as
+substitute editorial dates. A non-null unconfirmed value fails policy
+validation.
+
+Growth Stage resolutions are accepted only from a separate JSON input passed
+with `--resolutions=<path>`. Each decision must name one of the five audited
+legacy IDs, contain one allowed Growth Stage, declare `decisionMethod:
+"manual"`, and include a non-empty resolution source, approver, approval time,
+and `approvalStatus: "Approved"`. Missing, duplicate, unknown, incomplete, or
+invalid decisions do not fill content and remain blocked with audit metadata.
+
+The preview exposes record digests and `importReady` state. Whole-preview
+approval readiness requires complete required fields, passing verification,
+zero record/global/child blockers, zero safeguard failures, and generated
+digests. `validateV1ApprovedPreviewSnapshot()` rejects a matching approval
+snapshot while any readiness condition is false. The command remains a dry run;
+`--execute` and `--production` are rejected and no importer exists.
 
 ---
 

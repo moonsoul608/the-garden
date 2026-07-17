@@ -235,7 +235,7 @@ export type V1MigrationContentRecord = {
   cover: CoverMetadata | null;
   featured: false;
   manualOrder: null;
-  publishedAt: null;
+  publishedAt: string | null;
   archivedAt: null;
   lastTendedAt: null;
 };
@@ -312,6 +312,41 @@ export type V1MigrationPreviewBlocker = {
   manualAction: string;
 };
 
+export type V1GrowthStageApproval = {
+  legacyId: string;
+  growthStage: GrowthStage;
+  decisionMethod: "manual";
+  resolutionSource: string;
+  approvedBy: string;
+  approvedAt: string;
+  approvalStatus: "Approved";
+};
+
+export type V1MigrationResolutionInput = {
+  schemaVersion: 1;
+  kind: "v1-migration-resolution-input";
+  growthStages: V1GrowthStageApproval[];
+};
+
+export type V1GrowthStageResolutionAudit = {
+  legacyId: string;
+  blockerReason: string;
+  growthStage: GrowthStage | null;
+  resolutionSource: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  approvalStatus: "Approved" | "Pending" | "Invalid";
+};
+
+export type V1PublishedAtMigrationPolicy = {
+  policyId: "v1-published-at-preserve-null";
+  outcome: "preserve-null";
+  approvalStatus: "Approved";
+  resolutionSource: string;
+  rationale: string;
+  prohibitsDerivedDates: true;
+};
+
 export type V1MigrationPreviewWarning = {
   code: string;
   field: string | null;
@@ -337,10 +372,14 @@ export type V1MigrationPreviewRecord = {
   region: RegionName;
   contentType: ContentType;
   lifecycleTarget: "Published";
+  growthStage: GrowthStage | null;
+  growthStageResolution: V1GrowthStageResolutionAudit | null;
   plannedOperation: V1MigrationPlannedOperation;
   validationStatus: V1MigrationPreviewState;
   blockers: V1MigrationPreviewBlocker[];
   warnings: V1MigrationPreviewWarning[];
+  recordDigest: string;
+  importReady: boolean;
 };
 
 export type V1MigrationPreviewApprovalContract = {
@@ -348,6 +387,11 @@ export type V1MigrationPreviewApprovalContract = {
   matchingDigestRequired: true;
   unchangedSourceStateRequired: true;
   unchangedDestinationStateRequired: true;
+  importReady: boolean;
+  requiredFieldsComplete: boolean;
+  validationPassed: boolean;
+  blockersResolved: boolean;
+  digestGenerated: boolean;
   previewDigest: string;
   sourceDigest: string;
   destinationStateDigest: string;
@@ -406,6 +450,24 @@ export type V1MigrationPreview = {
         blockers: V1MigrationPreviewBlocker[];
       }[];
     };
+  };
+  resolutionReport: {
+    before: {
+      blocked: number;
+    };
+    after: {
+      resolved: number;
+      remaining: number;
+    };
+    growthStages: V1GrowthStageResolutionAudit[];
+    publishedAt: V1PublishedAtMigrationPolicy;
+  };
+  readiness: {
+    importReady: boolean;
+    requiredFieldsComplete: boolean;
+    validationPassed: boolean;
+    blockersResolved: boolean;
+    digestGenerated: boolean;
   };
   summary: {
     total: number;

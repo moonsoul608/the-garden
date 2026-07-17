@@ -224,6 +224,11 @@ Acceptance:
 - [x] Generate deterministic source, destination, and preview digests
 - [x] Define approved-snapshot and unchanged-source approval checks
 - [x] Add deterministic, blocker, warning, write-safety, invalidation, and digest tests
+- [x] Adopt the legacy Published `publishedAt: null` exception without derived dates
+- [x] Add manual Growth Stage resolution input and per-record audit metadata
+- [x] Keep all five missing Growth Stage decisions explicitly Pending by default
+- [x] Require complete fields, passing validation, resolved blockers, and digests before approval readiness
+- [x] Add blocker-resolution, policy, digest-invalidation, and no-execution tests
 
 Acceptance:
 

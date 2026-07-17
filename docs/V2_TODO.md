@@ -237,8 +237,18 @@ Acceptance:
 - [x] Return an idempotent existing result for a completed import digest
 - [x] Run post-import count, slug, relation, lifecycle, and version verification before commit
 - [x] Add invalid approval, digest mismatch, idempotency, rollback, relation, and version tests
+- [x] Add deterministic read-only post-import migration verification tooling
+- [x] Verify content counts by total, Region, and Content Type
+- [x] Verify source identity, slug, Region, lifecycle, duplicates, missing, and unexpected records
+- [x] Verify one immutable initial version and complete migration provenance per item
+- [x] Verify relation count, targets, orphan safety, and Published endpoint lifecycle
+- [x] Verify Growth Stage, Growth Notes, tags, content-tag bindings, and structured metadata digests
+- [x] Verify Published, Archived, Draft, and Review behavior through supplied public-service probes
+- [x] Emit deterministic human and machine reports with PASS, FAIL, WARNING, digest, timestamp, and checks
+- [x] Add missing-content, slug, relation, version, and determinism tests
 - [ ] Apply the Phase 06C migration and run the rollback-only SQL test in Preview
 - [ ] Execute an approved Preview import after real Growth Stage approvals exist
+- [ ] Collect real Preview V2 query results and run Phase 06D verification
 
 Acceptance:
 

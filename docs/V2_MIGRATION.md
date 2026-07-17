@@ -261,6 +261,54 @@ snapshot were not supplied. The migration and SQL integration test must be
 applied and run against the real Preview database before execution evidence is
 claimed.
 
+### Phase 06D migration verification contract
+
+Phase 06D adds a deterministic, read-only verification boundary after import.
+It does not execute an import, update migrated content, change public source
+mode, alter routes, delete V1 data, or write to the database.
+
+The command accepts three JSON inputs:
+
+- `--report=<path>`: the immutable Phase 06C `v1-import-result` receipt;
+- `--preview=<path>`: the exact approved `v1-import-preview` snapshot;
+- `--queries=<path>`: a migration-scoped
+  `v1-migration-verification-query-results` read snapshot.
+
+The query snapshot contains V2 content, initial versions, relations, tags,
+content-tag bindings, Growth Notes, and public-service read probes. Content and
+child rows must be scoped to the migration identities. Public probes are
+collected through the unchanged content service and cover every migrated
+Published record plus Archived, Draft, and Review control records. Missing
+control coverage produces `WARNING`; observed lifecycle incompatibility
+produces `FAIL`.
+
+Run verification after a real approved Preview import and after collecting the
+read-only query snapshot:
+
+```bash
+npm run content:v1:verify-migration -- \
+  --report=tmp/v1-import-result.json \
+  --preview=tmp/v1-approved-preview.json \
+  --queries=tmp/v1-v2-query-results.json \
+  --output=tmp/v1-migration-verification.json
+```
+
+Verification checks total, Region, and Content Type counts; missing, duplicate,
+and unexpected identities; slug, Region, lifecycle, Growth Stage, and complete
+structured-record digests; blocked-record exclusion; one immutable initial
+version and complete migration provenance per item; relation count, targets,
+orphans, and lifecycle validity; tags, content-tag bindings, and Growth Notes;
+and Published/Archived/Draft/Review public-read behavior.
+
+The machine report contains `PASS`, `FAIL`, or `WARNING`, a deterministic SHA-256
+verification digest, the query-capture timestamp, section summaries, and every
+check performed. The human report prints the same section outcomes and all
+non-passing findings. A `FAIL` exits non-zero. Warnings are preserved without
+being promoted into invented content.
+
+The implementation and fixture tests exist, but no real Preview verification
+report was generated in Phase 06D because Phase 06C has not been executed.
+
 ---
 
 ## 2. Migration principles

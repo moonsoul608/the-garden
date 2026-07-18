@@ -8,7 +8,7 @@ import type {
   PublicHomeCurationItem,
   RegionName,
 } from "@/types";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicServerClient } from "@/lib/supabase/public-server";
 
 import { ContentRepositoryError, ContentServiceError } from "./errors";
 import {
@@ -56,6 +56,7 @@ export interface PublicContentService {
 
 export type ContentServiceDependencies = {
   mode?: ContentSourceMode;
+  environment?: SourceCutoverEnvironment;
   repository?: ContentRepository;
   repositoryFactory?: () => Promise<ContentRepository>;
   legacySource?: LegacyContentSource;
@@ -140,7 +141,7 @@ function applyWindow(
 
 async function createDefaultRepository(): Promise<ContentRepository> {
   try {
-    const client = await createClient();
+    const client = createPublicServerClient();
     return createContentRepository(
       client as unknown as ContentRepositoryClient,
     );
@@ -153,11 +154,18 @@ async function createDefaultRepository(): Promise<ContentRepository> {
 export function createContentService(
   dependencies: ContentServiceDependencies = {},
 ): PublicContentService {
-  const mode = dependencies.mode ?? getContentSourceMode();
+  const environment =
+    dependencies.environment ??
+    (process.env as unknown as SourceCutoverEnvironment);
+  const sourceConfiguration =
+    dependencies.mode === undefined
+      ? resolveContentSourceConfiguration(environment)
+      : null;
+  const mode = dependencies.mode ?? sourceConfiguration!.mode;
   const databaseModeValidation =
     dependencies.databaseModeValidation ??
-    (dependencies.mode === undefined && mode === "database"
-      ? getDatabaseModeValidationProbes()
+    (sourceConfiguration?.transition === "dual->database"
+      ? getDatabaseModeValidationProbes(environment)
       : false);
   const legacySource =
     dependencies.legacySource ?? createLegacyContentSource();
@@ -279,6 +287,18 @@ export function createContentService(
       mode === "database"
         ? await getValidatedRepository()
         : await getRepository();
+
+    // A database-only Published route can be resolved directly through the
+    // RLS-constrained detail query. Non-Published identities still use the
+    // disposition RPC so Archived resting states and hidden lifecycle routes
+    // remain explicit. Dual mode must always authorize fallback first.
+    if (mode === "database") {
+      const content = await repository.getPublishedContentByRoute(region, slug);
+      if (content) {
+        return { kind: "published", content: mapRepositoryDetail(content) };
+      }
+    }
+
     const disposition = await repository.resolvePublicContentRoute(
       region,
       slug,

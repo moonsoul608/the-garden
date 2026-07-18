@@ -56,6 +56,7 @@ export const PREVIEW_CUTOVER_PUBLIC_SURFACES = [
   "lake",
   "ruins",
   "search",
+  "garden-index",
 ] as const;
 
 export const PREVIEW_CUTOVER_ROLLBACK_PATH = [
@@ -72,7 +73,7 @@ export type PreviewLifecycleControls = {
 
 export type PreviewCutoverCheckId =
   | "preview_scope"
-  | "legacy_default_unchanged"
+  | "database_default_active"
   | "database_no_legacy_fallback"
   | "public_surfaces"
   | "detail_routes"
@@ -312,8 +313,8 @@ export async function verifyPreviewDatabaseCutover({
 
   const passed: Record<PreviewCutoverCheckId, boolean> = {
     preview_scope: deploymentEnvironment === "preview",
-    legacy_default_unchanged:
-      resolveContentSourceConfiguration({}).mode === "legacy",
+    database_default_active:
+      resolveContentSourceConfiguration({}).mode === "database",
     database_no_legacy_fallback: legacyReads === 0,
     public_surfaces: publicSurfacesPass,
     detail_routes: detailRoutesPass,

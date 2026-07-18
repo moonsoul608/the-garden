@@ -14,10 +14,11 @@ The server uses `deepseek-v4-flash` with thinking mode disabled. Before making a
 
 ## Public content source
 
-Public content remains in `legacy` mode when `CONTENT_SOURCE_MODE` is absent.
-Do not enable Dual or Database reads by setting a single flag. Controlled
-forward transitions, database validation probes, rollback values, and cache
-refresh requirements are defined in
+Public content uses `database` mode when `CONTENT_SOURCE_MODE` is absent.
+Database reads remain fail-closed with no legacy fallback. An explicit
+`dual -> database` transition still requires the four lifecycle admission
+probes. The legacy adapter, Dual mode, adjacent rollback values, and cache
+refresh requirements remain defined in
 `docs/V2_PHASE_07D_SOURCE_CUTOVER.md`. No repository setup step executes a
 cutover automatically.
 

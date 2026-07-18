@@ -381,6 +381,16 @@ blocks Production scope, leaves the absent-mode default at `legacy`, and does
 not authorize or execute any deployment cutover. See
 `docs/V2_PHASE_08E1_PREVIEW_CUTOVER.md`.
 
+Task 08E-2 completes the application default switch after the Preview cutover
+passed. An absent `CONTENT_SOURCE_MODE` now resolves to `database`; the same
+shared service path covers Home, all four Region collections, Search, Garden
+Index, all 19 details, metadata, and sitemap. Explicit database entry still
+requires its four lifecycle probes; the accepted absent-mode default reads the
+database directly and fails closed without reading legacy content. The V1
+adapter and Dual mode remain intact, and rollback remains
+`database -> dual -> legacy`. See
+`docs/V2_PHASE_08E2_DATABASE_DEFAULT_SWITCH.md`.
+
 ---
 
 ## 2. Migration principles

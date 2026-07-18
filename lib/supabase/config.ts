@@ -3,14 +3,24 @@ type SupabasePublicConfig = {
   publishableKey: string;
 };
 
+type SupabasePublicEnvironment = Partial<
+  Record<
+    "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    string
+  >
+>;
+
 function configurationError(detail: string) {
   return new Error(`Supabase is not configured: ${detail}`);
 }
 
-export function getSupabasePublicConfig(): SupabasePublicConfig {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+export function getSupabasePublicConfig(
+  environment: SupabasePublicEnvironment =
+    process.env as unknown as SupabasePublicEnvironment,
+): SupabasePublicConfig {
+  const url = environment.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const publishableKey =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+    environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
 
   const missingVariables: string[] = [];
 
@@ -28,8 +38,9 @@ export function getSupabasePublicConfig(): SupabasePublicConfig {
     );
   }
 
+  let projectUrl: URL;
   try {
-    const projectUrl = new URL(url!);
+    projectUrl = new URL(url!);
 
     if (projectUrl.protocol !== "https:" && projectUrl.protocol !== "http:") {
       throw new Error("unsupported protocol");
@@ -40,8 +51,24 @@ export function getSupabasePublicConfig(): SupabasePublicConfig {
     );
   }
 
+  if (
+    projectUrl.pathname === "/rest/v1" ||
+    projectUrl.pathname === "/rest/v1/"
+  ) {
+    projectUrl.pathname = "/";
+  }
+  if (
+    projectUrl.pathname !== "/" ||
+    projectUrl.search ||
+    projectUrl.hash
+  ) {
+    throw configurationError(
+      "NEXT_PUBLIC_SUPABASE_URL must be a project base URL or its /rest/v1 endpoint.",
+    );
+  }
+
   return {
-    url: url!,
+    url: projectUrl.origin,
     publishableKey: publishableKey!,
   };
 }

@@ -184,6 +184,7 @@ test("Preview database verification covers every public render and rollback boun
     "lake",
     "ruins",
     "search",
+    "garden-index",
   ]);
   assert.equal(
     Object.values(PREVIEW_CUTOVER_ROUTE_MANIFEST).flat().length,
@@ -199,7 +200,7 @@ test("Preview database verification covers every public render and rollback boun
   assert.equal(result.cutoverExecuted, false);
   assert.equal(result.productionCutoverAuthorized, false);
   assert.equal(result.defaultSourceModeChanged, false);
-  assert.equal(result.publicSurfaceCount, 6);
+  assert.equal(result.publicSurfaceCount, 7);
   assert.equal(result.detailRouteCount, 19);
   assert.deepEqual(result.blockingCheckIds, []);
   assert.ok(result.checks.every(({ status }) => status === "PASS"));

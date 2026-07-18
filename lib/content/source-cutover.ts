@@ -76,7 +76,8 @@ function parseMode(value: string | undefined, variable: string) {
 
 /**
  * Source changes are deployment configuration, never runtime inference.
- * An absent mode intentionally retains the V1 legacy default.
+ * After the verified V2 cutover, an absent mode selects the database source.
+ * Explicit Legacy and Dual modes remain available for controlled rollback.
  */
 export function resolveContentSourceConfiguration(
   environment: SourceCutoverEnvironment = process.env as unknown as SourceCutoverEnvironment,
@@ -91,7 +92,7 @@ export function resolveContentSourceConfiguration(
         "Source transition variables require an explicit CONTENT_SOURCE_MODE.",
       );
     }
-    return { mode: "legacy", previousMode: null, transition: null };
+    return { mode: "database", previousMode: null, transition: null };
   }
 
   const mode = parseMode(configuredMode, "CONTENT_SOURCE_MODE");

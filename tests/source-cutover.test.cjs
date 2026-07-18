@@ -62,9 +62,13 @@ const {
   resolveContentSourceConfiguration,
   validateDatabaseMode,
 } = require(path.join(projectRoot, "lib/content/source-cutover.ts"));
-const { createContentService } = require(path.join(
+const { createContentService, getContentSourceMode } = require(path.join(
   projectRoot,
   "lib/content/service.ts",
+));
+const { getSupabasePublicConfig } = require(path.join(
+  projectRoot,
+  "lib/supabase/config.ts",
 ));
 const { createPublicRouteIntegration } = require(path.join(
   projectRoot,
@@ -187,12 +191,17 @@ function legacySourceStub(overrides = {}) {
   };
 }
 
-test("legacy remains the default and source changes require adjacent explicit confirmation", () => {
+test("database is the default while explicit legacy and adjacent transitions remain available", () => {
   assert.deepEqual(resolveContentSourceConfiguration({}), {
-    mode: "legacy",
+    mode: "database",
     previousMode: null,
     transition: null,
   });
+  assert.equal(getContentSourceMode({}), "database");
+  assert.deepEqual(
+    resolveContentSourceConfiguration({ CONTENT_SOURCE_MODE: "legacy" }),
+    { mode: "legacy", previousMode: null, transition: null },
+  );
 
   for (const [previousMode, mode] of [
     ["legacy", "dual"],
@@ -252,10 +261,95 @@ test("database mode validation proves adapter, public queries, and lifecycle con
   await validateDatabaseMode(repositoryStub(), probes);
 });
 
+test("public database configuration accepts the project URL and standard REST endpoint", () => {
+  const publishableKey = "test-publishable-key";
+  assert.deepEqual(
+    getSupabasePublicConfig({
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co/rest/v1/",
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: publishableKey,
+    }),
+    {
+      url: "https://example.supabase.co",
+      publishableKey,
+    },
+  );
+  assert.throws(
+    () =>
+      getSupabasePublicConfig({
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co/private/path",
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: publishableKey,
+      }),
+    /project base URL/,
+  );
+});
+
+test("the absent-mode default reads only the database adapter", async () => {
+  let legacyReads = 0;
+  const service = createContentService({
+    environment: {},
+    repository: repositoryStub(),
+    legacySource: legacySourceStub({
+      getPublishedContent: async () => {
+        legacyReads += 1;
+        return [];
+      },
+    }),
+  });
+
+  const items = await service.getPublishedContent();
+  assert.equal(items.length, 1);
+  assert.equal(items[0].slug, "published-seed");
+  assert.equal(legacyReads, 0);
+});
+
+test("database Published details do not depend on fallback disposition lookup", async () => {
+  let dispositionReads = 0;
+  const service = createContentService({
+    environment: {},
+    repository: repositoryStub({
+      resolvePublicContentRoute: async () => {
+        dispositionReads += 1;
+        throw new Error("Published database details must resolve directly.");
+      },
+    }),
+  });
+
+  const detail = await service.getPublishedContentByRoute(
+    probes.published.region,
+    probes.published.slug,
+  );
+  assert.equal(detail?.slug, probes.published.slug);
+  assert.equal(dispositionReads, 0);
+});
+
+test("an explicit database transition retains lifecycle admission validation", async () => {
+  let validationCollectionReads = 0;
+  const service = createContentService({
+    environment: {
+      CONTENT_SOURCE_MODE: "database",
+      CONTENT_SOURCE_PREVIOUS_MODE: "dual",
+      CONTENT_SOURCE_MODE_CONFIRM: "database",
+      CONTENT_DATABASE_PUBLISHED_PROBE: "/garden/published-seed",
+      CONTENT_DATABASE_DRAFT_PROBE: "/garden/draft-seed",
+      CONTENT_DATABASE_REVIEW_PROBE: "/forest/review-question",
+      CONTENT_DATABASE_ARCHIVED_PROBE: "/ruins/archived-trace",
+    },
+    repository: repositoryStub({
+      getPublishedContent: async () => {
+        validationCollectionReads += 1;
+        return [{ row: databaseRow(), tags: [] }];
+      },
+    }),
+  });
+
+  await service.getPublishedContent();
+  assert.equal(validationCollectionReads, 2);
+});
+
 test("failed database validation fails closed without legacy fallback or raw errors", async () => {
   let legacyReads = 0;
   const service = createContentService({
-    mode: "database",
+    mode: getContentSourceMode({}),
     databaseModeValidation: probes,
     repository: repositoryStub({
       getPublishedContent: async () => {

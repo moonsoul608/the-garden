@@ -250,3 +250,10 @@ Known non-blocking release notes:
 - [x] Production build succeeds
 
 Final acceptance status: Phases 0 through 6 are complete. The Version 1 release criteria are satisfied subject only to the documented deployment-time DeepSeek key/balance requirement and the non-user-facing Next.js invalid-slug diagnostic above.
+
+Production Admin authentication follow-up:
+
+- [x] Redirect unauthenticated `/admin` requests into the server-side GitHub OAuth flow
+- [x] Preserve the authenticated non-Keeper 403 boundary and Keeper RPC authorization
+- [x] Keep OAuth callback destinations restricted to safe same-origin paths
+- [x] Add regression coverage for OAuth startup, failure handling, and authorization branching

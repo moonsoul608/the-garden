@@ -429,3 +429,32 @@ test("all four detail pages use only the public route boundary", () => {
     assert.match(errorSource, /public-route-error/);
   }
 });
+
+test("Garden Guide remains viewport-fixed and exposes Index and Search", () => {
+  const styles = fs.readFileSync(
+    path.join(projectRoot, "app/globals.css"),
+    "utf8",
+  );
+  const topBarRule = styles.match(/\.top-bar\s*\{([^}]+)\}/)?.[1] ?? "";
+  const guidePanelRule = styles.match(/\.guide-panel\s*\{([^}]+)\}/)?.[1] ?? "";
+  const regionsSource = fs.readFileSync(
+    path.join(projectRoot, "lib/regions.ts"),
+    "utf8",
+  );
+
+  assert.match(guidePanelRule, /position:\s*fixed/);
+  assert.doesNotMatch(topBarRule, /backdrop-filter|transform|perspective|contain:/);
+  assert.match(regionsSource, /name:\s*"Garden Index",\s*href:\s*"\/garden-index"/);
+  assert.match(regionsSource, /name:\s*"Search the Garden",\s*href:\s*"\/search"/);
+});
+
+test("the legacy Index alias redirects to the canonical Garden Index", () => {
+  const config = fs.readFileSync(
+    path.join(projectRoot, "next.config.ts"),
+    "utf8",
+  );
+
+  assert.match(config, /source:\s*"\/index"/);
+  assert.match(config, /destination:\s*"\/garden-index"/);
+  assert.match(config, /permanent:\s*true/);
+});

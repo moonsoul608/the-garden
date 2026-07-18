@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { forbidden, unauthorized } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 
 import {
   AuthenticationRequiredError,
@@ -18,7 +18,7 @@ export default async function ProtectedAdminLayout({
     await requireGardenKeeper();
   } catch (error) {
     if (error instanceof AuthenticationRequiredError) {
-      unauthorized();
+      redirect("/auth/login/github?next=/admin");
     }
 
     if (error instanceof GardenKeeperRequiredError) {

@@ -279,6 +279,7 @@ Acceptance:
 - [x] Add 08D-4 controlled cutover preparation for the completed 19/19/4 migration, receipt, source modes, rollback path, and cache boundary without executing cutover
 - [x] Add 08E-1 Preview-only database cutover verification for Home, Regions, Search, all 19 details, metadata, sitemap, lifecycle visibility, relations, Lake-null presentation, and adjacent rollback without changing the default source mode
 - [x] Add 08E-2 database-default source switch with Home, Regions, Search, Garden Index, all 19 details, metadata, sitemap, lifecycle visibility, Lake-null presentation, zero legacy fallback, and preserved rollback coverage
+- [x] Add 08E-3 final post-cutover validation for the absent-mode database default, zero legacy fallback, all public surfaces and 19 details, metadata, sitemap, lifecycle visibility, relations, Growth Stage presentation, Admin compatibility, and preserved adjacent rollback
 - [x] Verify content counts by total, Region, and Content Type
 - [x] Verify source identity, slug, Region, lifecycle, duplicates, missing, and unexpected records
 - [x] Verify one immutable initial version and complete migration provenance per item

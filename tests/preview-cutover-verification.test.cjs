@@ -170,7 +170,7 @@ function previewRepository(overrides = {}) {
   };
 }
 
-test("Preview database verification covers every public render and rollback boundary", async () => {
+test("database-default verification covers every public render and rollback boundary", async () => {
   const result = await verifyPreviewDatabaseCutover({
     deploymentEnvironment: "preview",
     repository: previewRepository(),

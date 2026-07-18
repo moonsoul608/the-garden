@@ -162,8 +162,8 @@ function rollbackConfigurationIsReady() {
 }
 
 /**
- * Read-only Preview verification. It injects database mode into a private
- * service instance and never mutates the process-wide source configuration.
+ * Read-only cutover verification. It resolves an absent source environment
+ * through the post-cutover default and never mutates process configuration.
  */
 export async function verifyPreviewDatabaseCutover({
   deploymentEnvironment,
@@ -172,7 +172,7 @@ export async function verifyPreviewDatabaseCutover({
 }: VerificationDependencies): Promise<PreviewCutoverVerificationResult> {
   let legacyReads = 0;
   const service: PublicContentService = createContentService({
-    mode: "database",
+    environment: {},
     databaseModeValidation: false,
     repository,
     legacySource: {

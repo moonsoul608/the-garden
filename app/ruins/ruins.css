@@ -1,4 +1,4 @@
-.ruins-page { overflow: hidden; background: #e4e0d7; }
+.ruins-page { overflow: clip; background: #e4e0d7; }
 .ruins-entrance { position: relative; display: grid; min-height: min(45rem, calc(100vh - 5rem)); grid-template-columns: minmax(0, 1.05fr) minmax(20rem, .95fr); align-items: center; gap: clamp(3rem, 8vw, 8rem); width: min(78rem, calc(100% - 2rem)); margin-inline: auto; padding: clamp(5rem, 10vw, 9rem) 0; }
 .ruins-entrance::before { position: absolute; top: -15rem; right: -20rem; width: 40rem; aspect-ratio: 1; border-radius: 50%; background: #d2d2c4; content: ""; }
 .ruins-entrance-copy { position: relative; z-index: 2; }
@@ -69,3 +69,5 @@
   .ruins-sprout { animation: none; }
 }
 .trace-type-number { color: #5d625b; }
+.trace-card:has(a:is(:hover, :focus-visible)) { border-color: #807b6f; }
+@media (max-width: 48rem) { .trace-card { min-height: 0; } }

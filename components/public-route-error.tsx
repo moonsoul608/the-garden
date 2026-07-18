@@ -5,8 +5,8 @@ import Link from "next/link";
 export default function PublicRouteError() {
   return (
     <main id="main-content" tabIndex={-1} className="not-found">
-      <section className="not-found-card card">
-        <h1>This path is still being prepared.</h1>
+      <section className="not-found-card card" aria-labelledby="route-error-title">
+        <h1 id="route-error-title">This path is still being prepared.</h1>
         <nav
           className="not-found-actions"
           aria-label="Continue from the unavailable path"

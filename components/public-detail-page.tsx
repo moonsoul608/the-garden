@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Public covers may use editor-approved HTTPS origins that are not known at build time. */
 import Link from "next/link";
 
 import {
@@ -11,6 +12,7 @@ import type {
   PublicContentRelation,
 } from "@/types";
 import {
+  approvedPublicImageUrl,
   createPublicContentStructuredData,
   serializeStructuredData,
 } from "@/lib/seo";
@@ -149,21 +151,70 @@ function MarkdownBlocks({ markdown }: { markdown: string }) {
   });
 }
 
-function relationPaths(relations: PublicContentRelation[]): RelatedPath[] {
+type RelatedPathPresentation = RelatedPath & {
+  context?: string;
+  note?: string;
+  relationship?: string;
+};
+
+const relationshipLabels = {
+  grewFrom: "Grew from",
+  grewInto: "Grew into",
+  relatedTo: "Related path",
+} as const;
+
+function relationPaths(
+  relations: PublicContentRelation[],
+): RelatedPathPresentation[] {
   const seen = new Set<string>();
-  return relations.flatMap(({ target }) => {
+  return relations.flatMap((relation) => {
+    const { target } = relation;
     const href = `/${target.region.toLowerCase()}/${target.slug}`;
     if (seen.has(href)) return [];
     seen.add(href);
-    return [{ label: target.title, href }];
+    return [
+      {
+        label: target.title,
+        href,
+        relationship: relationshipLabels[relation.relationType],
+        context: `${target.region} · ${target.contentType}`,
+        note: relation.noteZh?.trim() || relation.noteEn?.trim() || undefined,
+      },
+    ];
   });
+}
+
+function publicDate(value: string | null): {
+  dateTime: string;
+  label: string;
+} | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return {
+    dateTime: date.toISOString(),
+    label: new Intl.DateTimeFormat("en", {
+      day: "numeric",
+      month: "short",
+      timeZone: "UTC",
+      year: "numeric",
+    }).format(date),
+  };
+}
+
+function preferredCoverAlt(
+  cover: PublicContentDetail["cover"],
+): string | null {
+  if (!cover) return null;
+  return cover.altZh?.trim() || cover.altEn?.trim() || null;
 }
 
 function RelatedPaths({
   paths,
   title = "Related paths",
 }: {
-  paths: RelatedPath[];
+  paths: RelatedPathPresentation[];
   title?: string;
 }) {
   if (paths.length === 0) return null;
@@ -180,8 +231,21 @@ function RelatedPaths({
               href={path.href}
               key={`${path.href}-${path.label}`}
             >
-              <span>{path.label}</span>
-              <span aria-hidden="true">→</span>
+              <span className="related-path-copy">
+                {path.relationship ? (
+                  <small className="related-relationship">
+                    {path.relationship}
+                  </small>
+                ) : null}
+                <strong>{path.label}</strong>
+                {path.context ? (
+                  <small className="related-context">{path.context}</small>
+                ) : null}
+                {path.note ? (
+                  <span className="related-note">{path.note}</span>
+                ) : null}
+              </span>
+              <span className="related-arrow" aria-hidden="true">→</span>
             </Link>
           ) : (
             <div className="related-path related-future" key={path.label}>
@@ -198,13 +262,58 @@ function RelatedPaths({
   );
 }
 
+function GrowthTimeline({
+  notes,
+}: {
+  notes: PublicContentDetail["growthTimeline"];
+}) {
+  if (notes.length === 0) return null;
+
+  return (
+    <section className="detail-timeline" aria-labelledby="growth-timeline-title">
+      <p className="eyebrow">Tending notes</p>
+      <h2 id="growth-timeline-title">Growth Timeline</h2>
+      <ol className="timeline-list">
+        {notes.map((note, index) => {
+          const occurredAt = publicDate(note.occurredAt);
+          const copy = note.noteZh?.trim() || note.noteEn?.trim();
+
+          return (
+            <li key={`${note.occurredAt}-${note.toStage}-${index}`}>
+              <div className="timeline-marker" aria-hidden="true" />
+              <div className="timeline-heading">
+                <StatusBadge status={note.toStage} />
+                {occurredAt ? (
+                  <time dateTime={occurredAt.dateTime}>{occurredAt.label}</time>
+                ) : null}
+              </div>
+              {note.fromStage ? (
+                <p className="timeline-transition">From {note.fromStage}</p>
+              ) : null}
+              {copy ? <p>{copy}</p> : null}
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
 export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
   const legacyPresentation = detailContent[item.region][item.slug];
   const relatedPaths =
-    legacyPresentation?.relatedPaths ?? relationPaths(item.relations);
+    item.relations.length > 0
+      ? relationPaths(item.relations)
+      : (legacyPresentation?.relatedPaths ?? []);
   const structuredData = serializeStructuredData(
     createPublicContentStructuredData(item),
   );
+  const coverUrl = item.cover
+    ? approvedPublicImageUrl(item.cover.path)
+    : null;
+  const coverAlt = preferredCoverAlt(item.cover);
+  const publishedAt = publicDate(item.publishedAt);
+  const lastTendedAt = publicDate(item.lastTendedAt);
 
   return (
     <main
@@ -227,10 +336,12 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
           <h1>{item.title}</h1>
           <p className="detail-summary">{item.summary}</p>
           <dl className="detail-meta">
-            <div>
-              <dt>{metadataLabels[item.region]}</dt>
-              <dd>{item.primaryCategories.join(" · ")}</dd>
-            </div>
+            {item.primaryCategories.length > 0 ? (
+              <div>
+                <dt>{metadataLabels[item.region]}</dt>
+                <dd>{item.primaryCategories.join(" · ")}</dd>
+              </div>
+            ) : null}
             {item.growthStage ? (
               <div>
                 <dt>Status</dt>
@@ -239,8 +350,44 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
                 </dd>
               </div>
             ) : null}
+            {publishedAt ? (
+              <div>
+                <dt>Published</dt>
+                <dd><time dateTime={publishedAt.dateTime}>{publishedAt.label}</time></dd>
+              </div>
+            ) : null}
+            {lastTendedAt ? (
+              <div>
+                <dt>Last tended</dt>
+                <dd><time dateTime={lastTendedAt.dateTime}>{lastTendedAt.label}</time></dd>
+              </div>
+            ) : null}
+            {item.tags.length > 0 ? (
+              <div className="detail-meta-wide">
+                <dt>Tags</dt>
+                <dd>
+                  <ul className="detail-tags" aria-label="Tags">
+                    {item.tags.map((tag) => <li key={tag}>{tag}</li>)}
+                  </ul>
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </header>
+
+        {coverUrl && coverAlt ? (
+          <figure className="detail-cover">
+            <img
+              src={coverUrl}
+              alt={coverAlt}
+              width={1600}
+              height={900}
+              decoding="async"
+              fetchPriority="high"
+              loading="eager"
+            />
+          </figure>
+        ) : null}
 
         {item.detailLevel === "short" ? (
           <section className="short-detail" aria-labelledby="unfinished-title">
@@ -259,12 +406,11 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
           </section>
         ) : (
           <div className="detail-body">
-            <section>
-              <MarkdownBlocks markdown={item.bodyMarkdown} />
-            </section>
+            <MarkdownBlocks markdown={item.bodyMarkdown} />
           </div>
         )}
 
+        <GrowthTimeline notes={item.growthTimeline} />
         <RelatedPaths
           paths={relatedPaths}
           title={legacyPresentation?.relatedTitle}
@@ -284,6 +430,8 @@ export function ArchivedDetailPage({ item }: { item: PublicArchivedContent }) {
   const paths = item.relations.map(({ target }) => ({
     label: target.title,
     href: `/${target.region.toLowerCase()}/${target.slug}`,
+    context: `${target.region} · ${target.growthStage}`,
+    relationship: "Related path",
   }));
 
   return (

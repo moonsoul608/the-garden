@@ -913,59 +913,59 @@ Acceptance:
 
 ## 12A. Visual
 
-- [ ] Preserve V1 regional moods
-- [ ] Improve card hierarchy
+- [x] Preserve V1 regional moods
+- [x] Improve card hierarchy
 - [ ] Integrate optional cover images
-- [ ] Improve detail hierarchy
-- [ ] Improve Growth Stage display
-- [ ] Improve Growth Timeline
-- [ ] Improve relation display
+- [x] Improve detail hierarchy
+- [x] Improve Growth Stage display
+- [x] Improve Growth Timeline
+- [x] Improve relation display
 - [ ] Add restrained Home status hints
-- [ ] No full visual replacement
+- [x] No full visual replacement
 
 ## 12B. Mobile
 
-- [ ] Home path list
-- [ ] detail reading order
-- [ ] Garden Index filters
+- [x] Home path list
+- [x] detail reading order
+- [x] Garden Index filters
 - [ ] Saved/Recent sections
-- [ ] Greenhouse input/results
+- [x] Greenhouse input/results
 - [ ] admin basic use
-- [ ] touch target sizes
-- [ ] no horizontal overflow
+- [x] touch target sizes
+- [x] no horizontal overflow
 
 ## 12C. Accessibility
 
-- [ ] semantic heading order
-- [ ] skip link
-- [ ] keyboard navigation
-- [ ] visible focus
+- [x] semantic heading order
+- [x] skip link
+- [x] keyboard navigation
+- [x] visible focus
 - [ ] accessible dialogs
-- [ ] accessible form labels
-- [ ] live regions
+- [x] accessible form labels
+- [x] live regions
 - [ ] star state not color-only
-- [ ] image alt
-- [ ] status icon + text
-- [ ] reduced motion
-- [ ] no essential hover-only information
+- [x] image alt
+- [x] status icon + text
+- [x] reduced motion
+- [x] no essential hover-only information
 
 ## 12D. Performance
 
 - [ ] image optimization
 - [ ] sensible caching
-- [ ] no excessive client-side data
-- [ ] no unnecessary animation dependency
+- [x] no excessive client-side data
+- [x] no unnecessary animation dependency
 - [ ] no repeated database queries
 - [ ] loading and error boundaries
-- [ ] production bundle review
+- [x] production bundle review
 
 Acceptance:
 
-- [ ] desktop and mobile QA pass
-- [ ] keyboard QA pass
-- [ ] reduced-motion QA pass
-- [ ] no horizontal overflow
-- [ ] public pages remain content-first
+- [x] desktop and mobile QA pass
+- [x] keyboard QA pass
+- [x] reduced-motion QA pass
+- [x] no horizontal overflow
+- [x] public pages remain content-first
 
 ---
 

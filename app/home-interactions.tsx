@@ -25,19 +25,6 @@ const compassCandidates = [
   })),
 ] as const;
 
-export function Opening() {
-  return (
-    <section className="opening" aria-label="Opening">
-      <a className="opening-skip" href="#welcome">Skip opening</a>
-      <div className="opening-words">
-        <p>Take your time.</p>
-        <p>There is no right path.</p>
-      </div>
-      <a className="button button-primary opening-button" href="#welcome">Plant the seed.</a>
-    </section>
-  );
-}
-
 export function RandomCompass() {
   const [resultIndex, setResultIndex] = useState<number | null>(null);
   const previousIndex = useRef<number | null>(null);

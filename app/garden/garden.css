@@ -1,4 +1,4 @@
-.garden-page { overflow: hidden; background: #f7f3e8; }
+.garden-page { overflow: clip; background: #f7f3e8; }
 .garden-entrance { position: relative; display: grid; min-height: min(45rem, calc(100vh - 5rem)); grid-template-columns: minmax(0, 1.05fr) minmax(20rem, .95fr); align-items: center; gap: clamp(3rem, 8vw, 8rem); width: min(78rem, calc(100% - 2rem)); margin-inline: auto; padding: clamp(5rem, 10vw, 9rem) 0; }
 .garden-entrance::before { position: absolute; z-index: 0; top: -12rem; left: -20rem; width: 38rem; aspect-ratio: 1; border-radius: 50%; background: #e5edcf; content: ""; filter: blur(2px); }
 .garden-entrance-copy { position: relative; z-index: 1; }
@@ -22,3 +22,6 @@
 .garden-search input { min-width: 0; }
 .garden-search-field button { min-width: 4.25rem; min-height: 2.75rem; border: 0; border-radius: var(--radius-sm); color: var(--color-leaf-dark); background: transparent; cursor: pointer; font-weight: 700; }
 .bed-number { color: var(--color-ink-muted); }
+.garden-search-field:focus-within { border-color: var(--color-focus); box-shadow: 0 2px 0 rgb(23 105 170 / .2); }
+.seed-card:has(.seed-link:is(:hover, :focus-visible)) { border-color: var(--color-leaf); }
+@media (max-width: 48rem) { .seed-card, .seed-card:first-child { min-height: 0; } }

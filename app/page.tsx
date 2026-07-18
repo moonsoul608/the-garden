@@ -2,7 +2,7 @@ import Link from "next/link";
 import { gardenItems } from "@/content/garden";
 import { regions } from "@/lib/regions";
 import { createPublicPageMetadata } from "@/lib/seo";
-import { HiddenSeed, Opening, RandomCompass } from "./home-interactions";
+import { HiddenSeed, RandomCompass } from "./home-interactions";
 import "./home.css";
 
 export const metadata = createPublicPageMetadata({
@@ -57,6 +57,19 @@ function SectionHeading({ id, title, tagline, description }: { id: string; title
       {tagline && <p className="home-tagline">{tagline}</p>}
       {description && <p className="home-description">{description}</p>}
     </header>
+  );
+}
+
+function Opening() {
+  return (
+    <section className="opening" aria-label="Opening">
+      <a className="opening-skip" href="#welcome">Skip opening</a>
+      <div className="opening-words">
+        <p>Take your time.</p>
+        <p>There is no right path.</p>
+      </div>
+      <a className="button button-primary opening-button" href="#welcome">Plant the seed.</a>
+    </section>
   );
 }
 

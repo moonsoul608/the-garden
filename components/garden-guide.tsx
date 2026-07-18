@@ -66,7 +66,7 @@ export function GardenGuide() {
           <ul className="guide-list">
             {regions.map((region) => (
               <li key={region.name}>
-                <Link className="guide-link" href={region.href} aria-current={isCurrent(region.href) ? "page" : undefined}>
+                <Link className="guide-link" href={region.href} aria-current={isCurrent(region.href) ? "page" : undefined} onClick={() => setOpen(false)}>
                   <span>{region.name}</span>
                   {isCurrent(region.href) && <span className="current-marker">You are here.</span>}
                 </Link>
@@ -77,7 +77,7 @@ export function GardenGuide() {
         <nav aria-label="Garden utilities">
           <p className="guide-label">Utilities</p>
           <ul className="guide-list">
-            {utilities.map((utility) => <li key={utility.name}><Link className="guide-link" href={utility.href}>{utility.name}</Link></li>)}
+            {utilities.map((utility) => <li key={utility.name}><Link className="guide-link" href={utility.href} onClick={() => setOpen(false)}>{utility.name}</Link></li>)}
           </ul>
         </nav>
       </div>

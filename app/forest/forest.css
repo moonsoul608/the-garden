@@ -1,4 +1,4 @@
-.forest-page { overflow: hidden; background: #e5e9e5; }
+.forest-page { overflow: clip; background: #e5e9e5; }
 .forest-entrance { position: relative; display: grid; min-height: min(45rem, calc(100vh - 5rem)); grid-template-columns: minmax(0, 1.05fr) minmax(20rem, .95fr); align-items: center; gap: clamp(3rem, 8vw, 8rem); width: min(78rem, calc(100% - 2rem)); margin-inline: auto; padding: clamp(5rem, 10vw, 9rem) 0; }
 .forest-entrance::before { position: absolute; top: -15rem; right: -20rem; width: 42rem; aspect-ratio: 1; border-radius: 50%; background: #c8d3d0; content: ""; filter: blur(3px); }
 .forest-entrance-copy { position: relative; z-index: 2; }
@@ -29,3 +29,7 @@
 @media (max-width: 48rem) { .forest-entrance { min-height: 0; grid-template-columns: 1fr; gap: var(--space-7); }.forest-landscape { width: min(22rem, 88%); margin-inline: auto; }.forest-tree-one { left: 12%; }.forest-tree-three, .forest-mist { display: none; }.trail-sign { min-height: 0; grid-template-columns: 2.5rem minmax(0, 1fr); width: 100%; gap: var(--space-3); }.trail-sign:nth-child(even) { margin-left: 0; }.trail-number { display: none; }.trail-copy small { margin-top: var(--space-2); }.trail-state { grid-column: 2; }.trail-filters { display: grid; grid-template-columns: 1fr; }.trail-filter { width: 100%; }.collection-heading, .found-inner { display: block; }.question-count { margin-top: var(--space-5); }.question-grid { grid-template-columns: 1fr; }.question-card { min-height: 22rem; }.found-result { min-height: 12rem; }.found-card { margin-top: var(--space-6); }.found-actions, .forest-ending-actions { flex-direction: column; }.found-actions .button, .forest-ending-actions .button { width: 100%; }.forest-section { width: min(100% - 1.5rem, 78rem); }.question-collection { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .forest-mist { animation: none; }.trail-sign:hover, .question-card:hover { transform: none; } }
 .trail-copy > span { color: #44574f; }
+.trail-sign:is(:hover, :focus-visible) { transform: translateX(.3rem); background: #e0e6e3; }
+.question-card:is(:hover, :focus-visible) { transform: translateY(-3px); border-color: #526f66; }
+@media (max-width: 48rem) { .question-card { min-height: 0; } }
+@media (prefers-reduced-motion: reduce) { .trail-sign:is(:hover, :focus-visible), .question-card:is(:hover, :focus-visible) { transform: none; } }

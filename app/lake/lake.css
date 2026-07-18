@@ -1,4 +1,4 @@
-.lake-page { overflow: hidden; background: #dce7eb; }
+.lake-page { overflow: clip; background: #dce7eb; }
 .lake-entrance { position: relative; display: grid; min-height: min(45rem, calc(100vh - 5rem)); grid-template-columns: minmax(0, 1fr) minmax(20rem, 1fr); align-items: center; gap: clamp(3rem, 8vw, 8rem); width: min(78rem, calc(100% - 2rem)); margin-inline: auto; padding: clamp(5rem, 10vw, 9rem) 0; }
 .lake-entrance::before { position: absolute; top: -16rem; right: -22rem; width: 44rem; aspect-ratio: 1; border-radius: 50%; background: #c6d8df; content: ""; }
 .lake-entrance-copy { position: relative; z-index: 2; }
@@ -27,3 +27,6 @@
 @media (max-width: 25rem) { .ripple-filters { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .lake-water span { animation: none; }.lake-water span:nth-child(2), .lake-water span:nth-child(3) { display: none; }.reflection-card:hover { transform: none; } }
 .ripples-section .lake-description { color: #4c626b; }
+.reflection-card:is(:hover, :focus-visible) { transform: translateY(-3px); border-color: #668b98; }
+@media (max-width: 48rem) { .reflection-card { min-height: 0; } }
+@media (prefers-reduced-motion: reduce) { .reflection-card:is(:hover, :focus-visible) { transform: none; } }

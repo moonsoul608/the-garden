@@ -1,4 +1,4 @@
-.greenhouse-page { overflow: hidden; background: linear-gradient(180deg, #f5f6e8 0%, var(--region-greenhouse) 48%, #f8f4e9 100%); }
+.greenhouse-page { overflow: clip; background: linear-gradient(180deg, #f5f6e8 0%, var(--region-greenhouse) 48%, #f8f4e9 100%); }
 .greenhouse-hero, .greenhouse-workbench, .seed-result-section, .sample-seeds, .greenhouse-ending { width: min(76rem, calc(100% - 2rem)); margin-inline: auto; padding: clamp(4rem, 9vw, 7rem) 0; }
 .greenhouse-hero { display: grid; min-height: 41rem; grid-template-columns: 1.05fr 0.95fr; align-items: center; gap: clamp(2rem, 7vw, 6rem); }
 .greenhouse-hero-copy > p:not(.eyebrow, .tagline) { max-width: 40rem; font-size: 1.05rem; }
@@ -69,3 +69,5 @@
   .result-actions { display: grid; }.result-actions .button { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .sprout-loader::before { animation: none; } }
+.sample-card:is(:hover, :focus-visible) { border-color: var(--color-leaf); transform: translateY(-3px); }
+@media (prefers-reduced-motion: reduce) { .sample-card:is(:hover, :focus-visible) { transform: none; } }

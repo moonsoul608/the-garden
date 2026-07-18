@@ -274,6 +274,7 @@ Acceptance:
 - [x] Prevent a post-import verification failure from producing a success receipt
 - [x] Add deterministic read-only post-import migration verification tooling
 - [x] Add the 08D-1 fixed 19-identity post-import verification boundary, including Lake-null and non-Lake Growth Stage applicability
+- [x] Add 08D-2 database-source read verification for all Region collections, 19 detail routes, metadata, relations, and Lake-null Growth Stages
 - [x] Verify content counts by total, Region, and Content Type
 - [x] Verify source identity, slug, Region, lifecycle, duplicates, missing, and unexpected records
 - [x] Verify one immutable initial version and complete migration provenance per item

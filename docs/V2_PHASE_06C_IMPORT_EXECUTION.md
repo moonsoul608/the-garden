@@ -17,16 +17,19 @@ policy, V1 content module, or existing content row was changed manually.
 ## Execution boundary
 
 `scripts/content-v1/executor.ts` is the reusable preflight and orchestration
-boundary. It requires:
+boundary. Task 08B strengthens it to require:
 
-- an existing, structurally complete approved preview snapshot;
-- a separately supplied digest matching that snapshot;
+- an existing, structurally complete approved migration snapshot containing
+  the frozen records, mappings, relations, warnings, and resolution audit;
+- a separately supplied snapshot digest matching that artifact;
 - the exact resolution input used by the approved preview;
 - unchanged extracted source state;
 - an unchanged destination content snapshot;
 - complete validation, resolved blockers, and import-ready records.
 
-The executor rejects modified, stale, blocked, or incompletely approved input.
+The executor regenerates the full approval artifact using current inputs and
+the recorded approval timestamp. It rejects modified, stale, blocked, or
+incompletely approved input before constructing the frozen import payload.
 It also rejects an existing V1 migration identity when no matching immutable
 import receipt proves that the import already completed.
 

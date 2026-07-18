@@ -1,20 +1,19 @@
 import type {
-  V1ApprovedPreviewSnapshot,
+  V1ApprovedMigrationSnapshot,
   V1ImportDestinationContent,
   V1ImportExecutionPayload,
   V1ImportResult,
   V1MigrationResolutionInput,
 } from "../../types/content.ts";
 
-import { extractV1Content, type V1ExtractManifest } from "./extract.ts";
 import {
-  buildV1MigrationPreview,
-  validateV1ApprovedPreviewSnapshot,
-} from "./preview.ts";
-import { applyV1MigrationResolutions } from "./resolutions.ts";
-import { transformV1Content } from "./transform.ts";
-
-const SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/;
+  buildV1ApprovedMigrationSnapshot,
+  parseV1ApprovedMigrationSnapshot,
+  V1ApprovedMigrationSnapshotError,
+  validateV1ApprovedMigrationSnapshot,
+} from "./approved-snapshot.ts";
+import { extractV1Content, type V1ExtractManifest } from "./extract.ts";
+import { buildV1MigrationPreview } from "./preview.ts";
 
 export class V1ImportExecutionError extends Error {
   readonly code: string;
@@ -33,7 +32,7 @@ export type V1ImportExecutionBoundary = {
 };
 
 export type V1ImportExecutionOptions = {
-  approvedSnapshot: V1ApprovedPreviewSnapshot | null;
+  approvedSnapshot: V1ApprovedMigrationSnapshot | null;
   matchingDigest: string;
   resolutionInput: V1MigrationResolutionInput | null;
   extract?: V1ExtractManifest;
@@ -43,35 +42,20 @@ function executionError(code: string, message: string): never {
   throw new V1ImportExecutionError(code, message);
 }
 
-function hasDigest(value: unknown): value is string {
-  return typeof value === "string" && SHA256_DIGEST.test(value);
-}
-
-export function parseV1ApprovedPreviewSnapshot(
+function requireApprovedSnapshot(
   value: unknown,
-): V1ApprovedPreviewSnapshot {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return executionError(
-      "approved_snapshot_missing",
-      "An approved preview snapshot is required.",
-    );
-  }
-
-  const snapshot = value as Record<string, unknown>;
-  if (
-    snapshot.schemaVersion !== 1 ||
-    snapshot.approved !== true ||
-    !hasDigest(snapshot.previewDigest) ||
-    !hasDigest(snapshot.sourceDigest) ||
-    !hasDigest(snapshot.destinationStateDigest)
-  ) {
+): V1ApprovedMigrationSnapshot {
+  try {
+    return parseV1ApprovedMigrationSnapshot(value);
+  } catch (error) {
+    if (error instanceof V1ApprovedMigrationSnapshotError) {
+      return executionError(error.code, error.message);
+    }
     return executionError(
       "incomplete_approval",
-      "The approval must be schemaVersion 1, explicitly approved, and contain all three SHA-256 digests.",
+      "The approved migration snapshot could not be validated.",
     );
   }
-
-  return snapshot as V1ApprovedPreviewSnapshot;
 }
 
 function validateRelations(
@@ -102,7 +86,7 @@ function validateRelations(
 }
 
 function buildPayload(
-  approved: V1ApprovedPreviewSnapshot,
+  approved: V1ApprovedMigrationSnapshot,
   destinationContents: V1ImportDestinationContent[],
   resolutionInput: V1MigrationResolutionInput | null,
   extract: V1ExtractManifest,
@@ -113,7 +97,26 @@ function buildPayload(
     resolutionInput,
     extract,
   });
-  const approvalValidation = validateV1ApprovedPreviewSnapshot(approved, preview);
+  const regeneratedSnapshot = buildV1ApprovedMigrationSnapshot({
+    preview,
+    resolutionInput,
+    createdAt: approved.createdAt,
+    extract,
+    existingContents: destinationContents,
+  });
+  if (
+    regeneratedSnapshot.digests.snapshotDigest !==
+    approved.digests.snapshotDigest
+  ) {
+    executionError(
+      "snapshot_content_mismatch",
+      "The approved snapshot content no longer matches the regenerated import inputs.",
+    );
+  }
+  const approvalValidation = validateV1ApprovedMigrationSnapshot(
+    approved,
+    preview,
+  );
   if (!approvalValidation.valid) {
     executionError(
       approvalValidation.reason,
@@ -131,47 +134,39 @@ function buildPayload(
     );
   }
 
-  const resolution = applyV1MigrationResolutions(
-    transformV1Content(extract),
-    resolutionInput,
-  );
-  const previewByLegacyId = new Map(
-    preview.records.map((record) => [record.sourceIdentity.legacyId, record]),
-  );
-  const contents = resolution.bundle.contents.map((content) => {
-    if (!content.growthStage) {
+  const contents = approved.records.map((record) => {
+    if (!record.sourceRecord.growthStage) {
       return executionError(
         "unresolved_growth_stage",
-        `Growth Stage remains unresolved for ${content.legacyId}.`,
+        `Growth Stage remains unresolved for ${record.sourceRecord.legacyId}.`,
       );
     }
     return {
-      ...content,
-      growthStage: content.growthStage,
-      growthStageResolution:
-        previewByLegacyId.get(content.legacyId)?.growthStageResolution ?? null,
+      ...structuredClone(record.sourceRecord),
+      growthStage: record.sourceRecord.growthStage,
+      growthStageResolution: structuredClone(record.growthStageResolution),
     };
   });
 
   const payload: V1ImportExecutionPayload = {
     schemaVersion: 1,
     kind: "v1-import-execution",
-    importDigest: approved.previewDigest,
-    sourceDigest: approved.sourceDigest,
-    destinationStateDigest: approved.destinationStateDigest,
+    importDigest: approved.digests.snapshotDigest,
+    sourceDigest: approved.digests.sourceDigest,
+    destinationStateDigest: approved.digests.destinationStateDigest,
     sourceVersion: {
       source: "v1-static-typescript",
       schemaVersion: 1,
     },
     expectedDestinationContents: structuredClone(destinationContents),
     contents,
-    relations: structuredClone(resolution.bundle.relations),
-    tags: structuredClone(resolution.bundle.tags),
-    contentTags: structuredClone(resolution.bundle.contentTags),
+    relations: structuredClone(approved.relations),
+    tags: structuredClone(approved.tags),
+    contentTags: structuredClone(approved.contentTags),
     // V1 has no structured Growth Note records. Detail sections named
     // "Growth notes" remain part of the preserved Markdown body.
     growthNotes: [],
-    warnings: structuredClone(preview.warnings),
+    warnings: structuredClone(approved.warnings),
   };
   validateRelations(payload);
   return payload;
@@ -199,11 +194,11 @@ export async function executeV1Import(
   options: V1ImportExecutionOptions,
   boundary: V1ImportExecutionBoundary,
 ): Promise<V1ImportResult> {
-  const approved = parseV1ApprovedPreviewSnapshot(options.approvedSnapshot);
-  if (options.matchingDigest !== approved.previewDigest) {
+  const approved = requireApprovedSnapshot(options.approvedSnapshot);
+  if (options.matchingDigest !== approved.digests.snapshotDigest) {
     executionError(
       "matching_digest_mismatch",
-      "The explicitly supplied digest does not match the approved preview snapshot.",
+      "The explicitly supplied digest does not match the approved migration snapshot.",
     );
   }
 
@@ -212,18 +207,29 @@ export async function executeV1Import(
     extract,
     resolutionInput: options.resolutionInput,
   });
-  if (sourceCheck.sourceDigest !== approved.sourceDigest) {
+  if (
+    sourceCheck.resolutionReport.resolutionDigest !==
+    approved.digests.resolutionDigest
+  ) {
+    executionError(
+      "resolution_state_changed",
+      "The approved Growth Stage resolution changed after snapshot approval.",
+    );
+  }
+  if (sourceCheck.sourceDigest !== approved.digests.sourceDigest) {
     executionError(
       "source_state_changed",
-      "The V1 source or approved resolution input changed after preview approval.",
+      "The V1 source changed after snapshot approval.",
     );
   }
 
-  const existingResult = await boundary.findImportResult(approved.previewDigest);
+  const existingResult = await boundary.findImportResult(
+    approved.digests.snapshotDigest,
+  );
   if (existingResult) {
     return validateResult(
       { ...structuredClone(existingResult), idempotent: true },
-      approved.previewDigest,
+      approved.digests.snapshotDigest,
     );
   }
 
@@ -235,7 +241,7 @@ export async function executeV1Import(
     extract,
   );
   const result = await boundary.executeAtomicImport(payload);
-  return validateResult(result, approved.previewDigest);
+  return validateResult(result, approved.digests.snapshotDigest);
 }
 
 export function formatV1ImportResult(result: V1ImportResult): string {

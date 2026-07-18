@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 import type {
   V1ApprovedPreviewSnapshot,
   V1GrowthStageResolutionAudit,
@@ -13,6 +11,12 @@ import type {
   V1MigrationPreviewWarning,
   V1PublishedAtMigrationPolicy,
 } from "../../types/content.ts";
+
+import {
+  canonicalizeV1MigrationValue,
+  digestV1MigrationValue,
+  stableV1MigrationJson,
+} from "./digest.ts";
 
 import {
   extractV1Content,
@@ -42,26 +46,6 @@ export type V1MigrationPreviewOptions = {
   }[];
 };
 
-function canonicalize(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonicalize);
-  if (!value || typeof value !== "object") return value;
-
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>)
-      .filter(([, entry]) => entry !== undefined)
-      .sort(([left], [right]) => left.localeCompare(right, "en-US"))
-      .map(([key, entry]) => [key, canonicalize(entry)]),
-  );
-}
-
-function stableJson(value: unknown): string {
-  return JSON.stringify(canonicalize(value));
-}
-
-function digest(value: unknown): string {
-  return `sha256:${createHash("sha256").update(stableJson(value)).digest("hex")}`;
-}
-
 function canonicalResolutionInput(
   input: V1MigrationResolutionInput | null,
 ): unknown {
@@ -70,9 +54,12 @@ function canonicalResolutionInput(
     schemaVersion: input.schemaVersion,
     kind: input.kind,
     growthStages: input.growthStages
-      .map((record) => canonicalize(record))
+      .map((record) => canonicalizeV1MigrationValue(record))
       .sort((left, right) =>
-        stableJson(left).localeCompare(stableJson(right), "en-US"),
+        stableV1MigrationJson(left).localeCompare(
+          stableV1MigrationJson(right),
+          "en-US",
+        ),
       ),
   };
 }
@@ -253,7 +240,7 @@ function addBlocker(
 }
 
 function deterministicRecordId(legacyId: string): string {
-  return digest(`v1-static-typescript:${legacyId}`);
+  return digestV1MigrationValue(`v1-static-typescript:${legacyId}`);
 }
 
 function deterministicDestinationId(legacyId: string): string {
@@ -273,14 +260,16 @@ export function buildV1MigrationPreview(
   const bundle = resolution.bundle;
   const verification = verifyV1MigrationBundle(bundle);
   const existingContents = [...(options.existingContents ?? [])];
-  const sourceDigest = digest({
+  const sourceDigest = digestV1MigrationValue({
     extract,
     resolutionInput: canonicalResolutionInput(resolutionInput),
     publishedAtPolicy,
   });
-  const resolutionDigest = digest(canonicalResolutionInput(resolutionInput));
-  const destinationStateDigest = digest(
-    existingContents.map((content) => stableJson(content)).sort(),
+  const resolutionDigest = digestV1MigrationValue(
+    canonicalResolutionInput(resolutionInput),
+  );
+  const destinationStateDigest = digestV1MigrationValue(
+    existingContents.map((content) => stableV1MigrationJson(content)).sort(),
   );
 
   const existingByLegacyId = new Map<string, V1ExistingContent[]>();
@@ -389,8 +378,8 @@ export function buildV1MigrationPreview(
     if (blockers.length === 0) {
       if (!current) plannedOperation = "Create";
       else if (
-        stableJson(comparableCandidate(content)) ===
-        stableJson(comparableExisting(current))
+        stableV1MigrationJson(comparableCandidate(content)) ===
+        stableV1MigrationJson(comparableExisting(current))
       ) {
         plannedOperation = "Unchanged";
       } else {
@@ -430,7 +419,7 @@ export function buildV1MigrationPreview(
       blockers,
       warnings,
     } satisfies Omit<V1MigrationPreviewRecord, "recordDigest" | "importReady">;
-    const recordDigest = digest({
+    const recordDigest = digestV1MigrationValue({
       content: comparableCandidate(content),
       preview: recordCore,
     });
@@ -662,7 +651,7 @@ export function buildV1MigrationPreview(
     readiness,
     summary,
   };
-  const previewDigest = digest(previewCore);
+  const previewDigest = digestV1MigrationValue(previewCore);
 
   return {
     ...previewCore,

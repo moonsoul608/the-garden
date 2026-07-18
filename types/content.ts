@@ -416,6 +416,67 @@ export type V1ApprovedPreviewSnapshot = {
   destinationStateDigest: string;
 };
 
+export type V1ApprovedMigrationSnapshotBlocker = {
+  code: string;
+  legacyId: string | null;
+  message: string;
+};
+
+export type V1ApprovedMigrationSnapshotRecord = {
+  sourceRecord: V1MigrationContentRecord;
+  destinationMapping: {
+    identity: V1MigrationPreviewRecord["destinationIdentity"];
+    plannedOperation: V1MigrationPlannedOperation;
+    recordDigest: string;
+  };
+  resolvedGrowthStage: GrowthStage | null;
+  growthStageResolution: V1GrowthStageResolutionAudit | null;
+  warnings: V1MigrationPreviewWarning[];
+};
+
+/**
+ * Immutable, machine-readable approval boundary for one exact migration
+ * preview. Blocked candidates use the same format but cannot cross the import
+ * execution boundary.
+ */
+export type V1ApprovedMigrationSnapshot = {
+  snapshotVersion: 1;
+  schemaVersion: 1;
+  kind: "v1-approved-migration-snapshot";
+  createdAt: string;
+  approvalStatus: "Approved" | "Blocked";
+  source: {
+    name: "v1-static-typescript";
+    schemaVersion: 1;
+    recordCount: number;
+  };
+  records: V1ApprovedMigrationSnapshotRecord[];
+  relations: V1MigrationRelation[];
+  tags: V1MigrationTag[];
+  contentTags: V1MigrationContentTag[];
+  homeCuration: V1MigrationHomeCurationItem[];
+  siteCopy: V1MigrationSiteCopyItem[];
+  warnings: V1MigrationPreviewWarning[];
+  resolution: {
+    validationStatus: "Valid" | "Blocked" | "Invalid";
+    growthStages: V1GrowthStageResolutionAudit[];
+    publishedAt: V1PublishedAtMigrationPolicy;
+  };
+  preview: {
+    environment: "none" | "preview";
+    status: V1MigrationPreviewState;
+    recordCount: number;
+  };
+  blockers: V1ApprovedMigrationSnapshotBlocker[];
+  digests: {
+    snapshotDigest: string;
+    previewDigest: string;
+    resolutionDigest: string;
+    sourceDigest: string;
+    destinationStateDigest: string;
+  };
+};
+
 export type V1MigrationPreview = {
   schemaVersion: 1;
   kind: "v1-import-preview";

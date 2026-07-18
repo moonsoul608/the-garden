@@ -912,6 +912,21 @@ Do not infer relations from shared categories.
 
 Version 1 detail `relatedPaths` remain presentation navigation and are not migrated as relations.
 
+### 8.10 Approved migration snapshot
+
+Final approval uses the complete `v1-approved-migration-snapshot` format from
+Task 08B. The artifact freezes all 19 source records, their destination
+mappings, resolved Growth Stage audit records, relations, supported child
+metadata, warnings, and source, destination, resolution, preview, and snapshot
+digests.
+
+Approval is rejected when records are incomplete, blockers remain, a required
+Growth Stage is unresolved, schema versions differ, or any reviewed digest is
+stale. Import preparation requires the full artifact plus its explicit snapshot
+digest and regenerates the approval boundary from current source, resolution,
+and destination state before any execution call. See
+`docs/V2_PHASE_08B_APPROVED_MIGRATION_SNAPSHOT.md`.
+
 ### 8.9 Home
 
 Convert Home items into curation references.

@@ -12,10 +12,13 @@ import type {
 import {
   executeV1Import,
   formatV1ImportResult,
-  parseV1ApprovedPreviewSnapshot,
   V1ImportExecutionError,
   type V1ImportExecutionBoundary,
 } from "./executor.ts";
+import {
+  parseV1ApprovedMigrationSnapshot,
+  V1ApprovedMigrationSnapshotError,
+} from "./approved-snapshot.ts";
 import { parseV1MigrationResolutionInput } from "./resolutions.ts";
 
 const DESTINATION_COLUMNS = [
@@ -90,13 +93,13 @@ function requireExecutionOptions(options: ImportCliOptions): asserts options is
   if (!options.approvalPath) {
     throw new V1ImportExecutionError(
       "approved_snapshot_missing",
-      "Import execution requires --approval=<approved-preview-snapshot.json>.",
+      "Import execution requires --approval=<approved-snapshot.json>.",
     );
   }
   if (!options.digest) {
     throw new V1ImportExecutionError(
       "matching_digest_missing",
-      "Import execution requires --digest=<approved-preview-digest>.",
+      "Import execution requires --digest=<approved-snapshot-digest>.",
     );
   }
   if (!options.resolutionsPath) {
@@ -176,9 +179,17 @@ async function readJson(path: string): Promise<unknown> {
 
 async function run(options: ImportCliOptions): Promise<V1ImportResult> {
   requireExecutionOptions(options);
-  const approvedSnapshot = parseV1ApprovedPreviewSnapshot(
-    await readJson(options.approvalPath),
-  );
+  let approvedSnapshot;
+  try {
+    approvedSnapshot = parseV1ApprovedMigrationSnapshot(
+      await readJson(options.approvalPath),
+    );
+  } catch (error) {
+    if (error instanceof V1ApprovedMigrationSnapshotError) {
+      throw new V1ImportExecutionError(error.code, error.message);
+    }
+    throw error;
+  }
   const resolutionInput: V1MigrationResolutionInput =
     parseV1MigrationResolutionInput(await readJson(options.resolutionsPath));
   const url = requireEnvironment("NEXT_PUBLIC_SUPABASE_URL");

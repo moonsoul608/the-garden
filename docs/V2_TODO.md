@@ -242,6 +242,13 @@ Acceptance:
 - [x] Reuse V2 Growth Stage runtime validation for migration resolutions
 - [x] Report resolution digest, approved records, validation status, and review notes
 - [x] Reject unknown stages, malformed source identities, and duplicate approvals
+- [x] Add the Task 08B complete approved migration snapshot format
+- [x] Freeze source records, destination mappings, resolved stages, relations, metadata, and warnings
+- [x] Require matching schema, preview, resolution, source, and destination digests for approval
+- [x] Add deterministic READY/BLOCKED machine and human approval reports
+- [x] Invalidate approved snapshots when content, resolution, preview, or destination state changes
+- [x] Require the full approved snapshot and snapshot digest at import preparation
+- [x] Add unresolved-blocker, valid-approval, digest, stale-state, incomplete-record, and determinism tests
 - [ ] Replace the empty Task 08A resolution input with five real reviewer approvals
 - [x] Add a server/script-only Preview import executor
 - [x] Require an approved snapshot, explicit matching digest, unchanged source/destination, and zero blockers

@@ -13,6 +13,10 @@ import {
   V1ImportExecutionError,
   type V1ImportExecutionBoundary,
 } from "../scripts/content-v1/executor.ts";
+import {
+  buildV1ApprovedMigrationSnapshot,
+  calculateV1ApprovedMigrationSnapshotDigest,
+} from "../scripts/content-v1/approved-snapshot.ts";
 import { buildV1MigrationPreview } from "../scripts/content-v1/preview.ts";
 import { V1_GROWTH_STAGE_BLOCKER_IDS } from "../scripts/content-v1/resolutions.ts";
 
@@ -44,13 +48,11 @@ function approvedInput() {
   return {
     resolutions,
     preview,
-    approval: {
-      schemaVersion: 1 as const,
-      approved: true as const,
-      previewDigest: preview.previewDigest,
-      sourceDigest: preview.sourceDigest,
-      destinationStateDigest: preview.destinationStateDigest,
-    },
+    approval: buildV1ApprovedMigrationSnapshot({
+      preview,
+      resolutionInput: resolutions,
+      createdAt: "2026-07-18T00:00:00.000Z",
+    }),
   };
 }
 
@@ -162,12 +164,34 @@ test("an explicit digest mismatch is rejected", async () => {
   assert.equal(boundary.atomicCalls, 0);
 });
 
+test("changed frozen snapshot content is rejected during import preparation", async () => {
+  const { approval, resolutions } = approvedInput();
+  const changed = structuredClone(approval);
+  changed.records[0].sourceRecord.summaryEn = "Changed after approval.";
+  changed.digests.snapshotDigest =
+    calculateV1ApprovedMigrationSnapshotDigest(changed);
+  const boundary = new MemoryImportBoundary();
+
+  await rejectsWithCode(
+    executeV1Import(
+      {
+        approvedSnapshot: changed,
+        matchingDigest: changed.digests.snapshotDigest,
+        resolutionInput: resolutions,
+      },
+      boundary,
+    ),
+    "snapshot_content_mismatch",
+  );
+  assert.equal(boundary.atomicCalls, 0);
+});
+
 test("duplicate execution returns the durable result without duplicate writes", async () => {
   const { approval, resolutions } = approvedInput();
   const boundary = new MemoryImportBoundary();
   const options = {
     approvedSnapshot: approval,
-    matchingDigest: approval.previewDigest,
+    matchingDigest: approval.digests.snapshotDigest,
     resolutionInput: resolutions,
   };
 
@@ -190,7 +214,7 @@ test("a transaction failure leaves no partial content or versions", async () => 
     executeV1Import(
       {
         approvedSnapshot: approval,
-        matchingDigest: approval.previewDigest,
+        matchingDigest: approval.digests.snapshotDigest,
         resolutionInput: resolutions,
       },
       boundary,
@@ -208,7 +232,7 @@ test("only resolvable, unique relations cross the execution boundary", async () 
   await executeV1Import(
     {
       approvedSnapshot: approval,
-      matchingDigest: approval.previewDigest,
+      matchingDigest: approval.digests.snapshotDigest,
       resolutionInput: resolutions,
     },
     boundary,
@@ -238,7 +262,7 @@ test("execution creates one immutable initial version per imported content", asy
   const result = await executeV1Import(
     {
       approvedSnapshot: approval,
-      matchingDigest: approval.previewDigest,
+      matchingDigest: approval.digests.snapshotDigest,
       resolutionInput: resolutions,
     },
     boundary,

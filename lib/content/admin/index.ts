@@ -8,6 +8,7 @@ export type * from "./review-workspace-contracts";
 export type * from "./lifecycle-management-contracts";
 export * from "./content-management-repository";
 export * from "./content-management-service";
+export * from "./content-management-presentation";
 export * from "./dashboard-repository";
 export * from "./dashboard-service";
 export * from "./review-workspace-service";

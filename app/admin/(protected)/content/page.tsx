@@ -1,15 +1,9 @@
 import Link from "next/link";
 
-import { listAdminContent } from "@/lib/content/admin";
-import type { GrowthStage } from "@/types";
-
-const growthMarkers: Record<GrowthStage, string> = {
-  Seed: "🌰",
-  Sprout: "🌱",
-  Growing: "🌿",
-  Bloom: "🌸",
-  Dormant: "🍂",
-};
+import {
+  getAdminGrowthPresentation,
+  listAdminContent,
+} from "@/lib/content/admin";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   year: "numeric",
@@ -55,60 +49,60 @@ export default async function AdminContentPage() {
           </div>
         ) : (
           <div className="admin-content-list" role="list">
-            {content.map((item) => (
-              <article className="admin-content-row" key={item.contentId} role="listitem">
-                <div className="admin-content-title">
-                  <span>{item.region}</span>
-                  <h3>{item.title}</h3>
-                </div>
-                <dl className="admin-content-meta">
-                  <div>
-                    <dt>Lifecycle</dt>
-                    <dd>
-                      <span
-                        className={`admin-lifecycle-marker admin-lifecycle-marker--${item.lifecycle.toLocaleLowerCase()}`}
-                        aria-hidden="true"
-                      />
-                      {item.lifecycle}
-                    </dd>
+            {content.map((item) => {
+              const growth = getAdminGrowthPresentation(item.growthStage);
+
+              return (
+                <article className="admin-content-row" key={item.contentId} role="listitem">
+                  <div className="admin-content-title">
+                    <span>{item.region}</span>
+                    <h3>{item.title}</h3>
                   </div>
-                  <div>
-                    <dt>Growth</dt>
-                    <dd>
-                      {item.growthStage ? (
-                        <>
-                          <span aria-hidden="true">{growthMarkers[item.growthStage]}</span>
-                          {item.growthStage}
-                        </>
-                      ) : (
-                        "Not growth-tracked"
-                      )}
-                    </dd>
+                  <dl className="admin-content-meta">
+                    <div>
+                      <dt>Lifecycle</dt>
+                      <dd>
+                        <span
+                          className={`admin-lifecycle-marker admin-lifecycle-marker--${item.lifecycle.toLocaleLowerCase()}`}
+                          aria-hidden="true"
+                        />
+                        {item.lifecycle}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Growth</dt>
+                      <dd>
+                        {growth.marker ? (
+                          <span aria-hidden="true">{growth.marker}</span>
+                        ) : null}
+                        {growth.label}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Updated</dt>
+                      <dd>
+                        <time dateTime={item.updatedAt}>
+                          {dateFormatter.format(new Date(item.updatedAt))}
+                        </time>
+                      </dd>
+                    </div>
+                  </dl>
+                  <div className="admin-content-row-action">
+                    {item.revisionLifecycle === "Draft" && item.revisionId ? (
+                      <Link href={`/admin/content/${item.revisionId}`}>
+                        Edit Draft <span aria-hidden="true">→</span>
+                      </Link>
+                    ) : item.revisionLifecycle === "Review" && item.revisionId ? (
+                      <Link href={`/admin/review/${item.revisionId}`}>
+                        Inspect Review <span aria-hidden="true">→</span>
+                      </Link>
+                    ) : (
+                      <span>No Draft open</span>
+                    )}
                   </div>
-                  <div>
-                    <dt>Updated</dt>
-                    <dd>
-                      <time dateTime={item.updatedAt}>
-                        {dateFormatter.format(new Date(item.updatedAt))}
-                      </time>
-                    </dd>
-                  </div>
-                </dl>
-                <div className="admin-content-row-action">
-                  {item.revisionLifecycle === "Draft" && item.revisionId ? (
-                    <Link href={`/admin/content/${item.revisionId}`}>
-                      Edit Draft <span aria-hidden="true">→</span>
-                    </Link>
-                  ) : item.revisionLifecycle === "Review" && item.revisionId ? (
-                    <Link href={`/admin/review/${item.revisionId}`}>
-                      Inspect Review <span aria-hidden="true">→</span>
-                    </Link>
-                  ) : (
-                    <span>No Draft open</span>
-                  )}
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

@@ -7,6 +7,7 @@ import type {
   V1MigrationResolutionInput,
 } from "../types/content.ts";
 import {
+  V1_POST_IMPORT_EXPECTED_CONTENT_COUNT,
   verifyV1Migration,
   type V1MigrationVerificationInput,
   type V1MigrationVerificationQueryResults,
@@ -242,6 +243,67 @@ test("a complete migration snapshot passes correctness checks and retains warnin
   assert.equal(report.sections.find((section) => section.name === "Versions")?.status, "PASS");
   assert.equal(report.sections.find((section) => section.name === "Metadata")?.status, "WARNING");
   assert.match(report.verificationDigest, /^sha256:[a-f0-9]{64}$/);
+});
+
+test("the 08D-1 post-import boundary passes all required invariants", () => {
+  const input = fixture();
+  const report = verifyV1Migration(input);
+  const requiredChecks = [
+    "post_import_legacy_identities",
+    "region_preserved",
+    "post_import_published_lifecycle",
+    "initial_version_count",
+    "relation_count",
+    "relation_targets",
+    "relation_orphans",
+    "post_import_lake_nullable_growth_stage",
+    "post_import_required_growth_stage",
+  ];
+
+  assert.equal(input.queryResults.contents.length, V1_POST_IMPORT_EXPECTED_CONTENT_COUNT);
+  assert.equal(input.queryResults.versions.length, V1_POST_IMPORT_EXPECTED_CONTENT_COUNT);
+  assert.equal(input.queryResults.relations.length, 4);
+  assert.equal(
+    input.queryResults.contents.filter((content) => content.region === "Lake").length,
+    5,
+  );
+  assert.ok(
+    input.queryResults.contents
+      .filter((content) => content.region === "Lake")
+      .every((content) => content.growth_stage === null),
+  );
+  assert.ok(
+    input.queryResults.contents
+      .filter((content) => content.region !== "Lake")
+      .every((content) => content.growth_stage !== null),
+  );
+  for (const id of requiredChecks) assert.equal(check(input, id)?.status, "PASS", id);
+  assert.equal(report.summary.failed, 0);
+});
+
+test("a Region or Published lifecycle mismatch fails the post-import boundary", () => {
+  const input = fixture();
+  const regionChanged = input.queryResults.contents[0];
+  const lifecycleChanged = input.queryResults.contents[1];
+  regionChanged.region = "Lake";
+  lifecycleChanged.lifecycle = "Draft";
+
+  assert.equal(check(input, "region_preserved")?.status, "FAIL");
+  assert.equal(check(input, "post_import_published_lifecycle")?.status, "FAIL");
+});
+
+test("Growth Stage applicability preserves Lake nulls and rejects non-Lake nulls", () => {
+  const input = fixture();
+  const nonLake = input.queryResults.contents.find(
+    (content) => content.region !== "Lake",
+  );
+  assert.ok(nonLake);
+  assert.equal(check(input, "post_import_lake_nullable_growth_stage")?.status, "PASS");
+
+  nonLake.growth_stage = null;
+  const finding = check(input, "post_import_required_growth_stage");
+  assert.equal(finding?.status, "FAIL");
+  assert.deepEqual(finding?.identities, [nonLake.legacy_id]);
 });
 
 test("missing content is detected", () => {

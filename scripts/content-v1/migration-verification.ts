@@ -109,6 +109,9 @@ export type V1MigrationVerificationInput = {
   queryResults: V1MigrationVerificationQueryResults;
 };
 
+/** Fixed legacy boundary for the completed V1 import. */
+export const V1_POST_IMPORT_EXPECTED_CONTENT_COUNT = 19;
+
 export function isV1ImportVerificationPassed(
   verification: V1ImportVerification | null | undefined,
 ): verification is V1ImportVerification {
@@ -378,6 +381,30 @@ export function verifyV1Migration(
     (content) => content.legacy_id !== null && expectedIds.has(content.legacy_id),
   );
 
+  const legacyIdentityBoundaryPassed =
+    expectedRecords.length === V1_POST_IMPORT_EXPECTED_CONTENT_COUNT &&
+    actualExpectedRows.length === V1_POST_IMPORT_EXPECTED_CONTENT_COUNT &&
+    missingIds.length === 0 &&
+    duplicateIds.length === 0 &&
+    unexpectedIds.length === 0;
+  addCheck(checks, {
+    id: "post_import_legacy_identities",
+    section: "Identity",
+    status: statusFor(legacyIdentityBoundaryPassed),
+    message: "Requires the exact approved set of 19 V1 legacy identities after import.",
+    expected: {
+      count: V1_POST_IMPORT_EXPECTED_CONTENT_COUNT,
+      identities: sorted(expectedIds),
+    },
+    actual: {
+      count: actualExpectedRows.length,
+      identities: sorted(
+        actualExpectedRows.flatMap((content) => content.legacy_id ?? []),
+      ),
+    },
+    identities: [...missingIds, ...duplicateIds, ...unexpectedIds],
+  });
+
   addCheck(checks, {
     id: "content_total_count",
     section: "Content",
@@ -449,6 +476,12 @@ export function verifyV1Migration(
   const lifecycleMismatches = comparablePairs
     .filter(({ expected, actual }) => actual.lifecycle !== expected.lifecycleTarget)
     .map(({ expected }) => expected.sourceIdentity.legacyId);
+  const unpublishedIds = expectedRecords
+    .filter((expected) => {
+      const rows = actualByLegacyId.get(expected.sourceIdentity.legacyId) ?? [];
+      return rows.length !== 1 || rows[0].lifecycle !== "Published";
+    })
+    .map((expected) => expected.sourceIdentity.legacyId);
   const blockedImported = queryResults.contents
     .filter((content) => content.legacy_id !== null && blockedIds.has(content.legacy_id))
     .map((content) => content.legacy_id as string);
@@ -469,6 +502,15 @@ export function verifyV1Migration(
       identities,
     });
   }
+  addCheck(checks, {
+    id: "post_import_published_lifecycle",
+    section: "Identity",
+    status: statusFor(unpublishedIds.length === 0),
+    message: "Requires every expected V1 identity to exist exactly once with Published lifecycle.",
+    expected: [],
+    actual: sorted(unpublishedIds),
+    identities: unpublishedIds,
+  });
 
   const structuredMismatches = comparablePairs
     .filter(({ expected, actual }) => actualRecordDigest(expected, actual) !== expected.recordDigest)
@@ -476,6 +518,26 @@ export function verifyV1Migration(
   const growthStageMismatches = comparablePairs
     .filter(({ expected, actual }) => actual.growth_stage !== expected.growthStage)
     .map(({ expected }) => expected.sourceIdentity.legacyId);
+  const lakeGrowthStageMismatches = expectedRecords
+    .filter(
+      (expected) =>
+        expected.region === "Lake" && expected.contentType === "Reflection",
+    )
+    .filter((expected) => {
+      const rows = actualByLegacyId.get(expected.sourceIdentity.legacyId) ?? [];
+      return rows.length !== 1 || rows[0].growth_stage !== null;
+    })
+    .map((expected) => expected.sourceIdentity.legacyId);
+  const missingRequiredGrowthStages = expectedRecords
+    .filter(
+      (expected) =>
+        expected.region !== "Lake" || expected.contentType !== "Reflection",
+    )
+    .filter((expected) => {
+      const rows = actualByLegacyId.get(expected.sourceIdentity.legacyId) ?? [];
+      return rows.length !== 1 || rows[0].growth_stage === null;
+    })
+    .map((expected) => expected.sourceIdentity.legacyId);
   addCheck(checks, {
     id: "structured_metadata",
     section: "Metadata",
@@ -493,6 +555,24 @@ export function verifyV1Migration(
     expected: "approved preview Growth Stages",
     actual: sorted(growthStageMismatches),
     identities: growthStageMismatches,
+  });
+  addCheck(checks, {
+    id: "post_import_lake_nullable_growth_stage",
+    section: "Metadata",
+    status: statusFor(lakeGrowthStageMismatches.length === 0),
+    message: "Accepts the imported Lake Reflection records with null Growth Stage as not applicable.",
+    expected: [],
+    actual: sorted(lakeGrowthStageMismatches),
+    identities: lakeGrowthStageMismatches,
+  });
+  addCheck(checks, {
+    id: "post_import_required_growth_stage",
+    section: "Metadata",
+    status: statusFor(missingRequiredGrowthStages.length === 0),
+    message: "Requires every non-Lake V1 record to retain a Growth Stage.",
+    expected: [],
+    actual: sorted(missingRequiredGrowthStages),
+    identities: missingRequiredGrowthStages,
   });
 
   const actualGrowthNoteIds = sorted(queryResults.growthNotes.map((note) => note.id));

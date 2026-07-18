@@ -276,6 +276,7 @@ Acceptance:
 - [x] Add the 08D-1 fixed 19-identity post-import verification boundary, including Lake-null and non-Lake Growth Stage applicability
 - [x] Add 08D-2 database-source read verification for all Region collections, 19 detail routes, metadata, relations, and Lake-null Growth Stages
 - [x] Add 08D-3 Keeper Admin verification for all 19 imported contents, Regions, and Growth Stage presentation
+- [x] Add 08D-4 controlled cutover preparation for the completed 19/19/4 migration, receipt, source modes, rollback path, and cache boundary without executing cutover
 - [x] Verify content counts by total, Region, and Content Type
 - [x] Verify source identity, slug, Region, lifecycle, duplicates, missing, and unexpected records
 - [x] Verify one immutable initial version and complete migration provenance per item
@@ -297,7 +298,7 @@ Acceptance:
 
 Acceptance:
 
-- [ ] exactly 19 initial items imported
+- [x] exactly 19 initial items imported
 - [ ] all old public URLs resolve in Preview
 - [x] no invented content in the migration bundle
 - [x] migration execution is repeatable by digest

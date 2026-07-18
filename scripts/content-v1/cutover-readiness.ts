@@ -356,3 +356,134 @@ export function evaluateRollbackConditions(
     triggered,
   };
 }
+
+export const COMPLETED_MIGRATION_EXPECTED_COUNTS = {
+  contents: 19,
+  versions: 19,
+  relations: 4,
+} as const;
+
+export const CUTOVER_ROLLBACK_SOURCE_MODE_PATH = [
+  "database",
+  "dual",
+  "legacy",
+] as const satisfies ReadonlyArray<ContentSourceMode>;
+
+export const CUTOVER_CACHE_SURFACES = [
+  "route-cache",
+  "metadata",
+  "sitemap",
+  "static-content",
+] as const;
+
+export type CutoverCacheSurface = (typeof CUTOVER_CACHE_SURFACES)[number];
+
+export type CompletedMigrationCutoverEvidence = {
+  database: {
+    contentCount: number;
+    versionCount: number;
+    relationCount: number;
+    relationsIntegrityVerified: boolean;
+    migrationReceiptExists: boolean;
+    lakeNullGrowthStageValid: boolean;
+  };
+  sourceModes: {
+    defaultMode: ContentSourceMode;
+    legacyBehaviorUnchanged: boolean;
+    dualBehaviorUnchanged: boolean;
+    databaseBehaviorVerified: boolean;
+    databaseFallbackReads: number;
+  };
+  rollbackPath: ReadonlyArray<ContentSourceMode>;
+  cacheSurfaces: ReadonlyArray<CutoverCacheSurface>;
+};
+
+export const COMPLETED_MIGRATION_CUTOVER_CHECK_IDS = [
+  "content_count",
+  "version_count",
+  "relation_count",
+  "relation_integrity",
+  "migration_receipt",
+  "lake_null_growth_stage",
+  "legacy_default",
+  "legacy_behavior",
+  "dual_behavior",
+  "database_behavior",
+  "database_no_fallback",
+  "rollback_path",
+  "cache_surfaces",
+] as const;
+
+export type CompletedMigrationCutoverCheckId =
+  (typeof COMPLETED_MIGRATION_CUTOVER_CHECK_IDS)[number];
+
+export type CompletedMigrationCutoverPreparationResult = {
+  schemaVersion: 1;
+  kind: "completed-migration-cutover-preparation";
+  status: "PREPARED" | "BLOCKED";
+  cutoverExecuted: false;
+  checks: ReadonlyArray<{
+    id: CompletedMigrationCutoverCheckId;
+    status: CutoverCheckStatus;
+  }>;
+  blockingCheckIds: CompletedMigrationCutoverCheckId[];
+};
+
+function exactSequence<T>(actual: ReadonlyArray<T>, expected: ReadonlyArray<T>) {
+  return (
+    actual.length === expected.length &&
+    actual.every((value, index) => value === expected[index])
+  );
+}
+
+/**
+ * Verifies the completed-import boundary only. A PREPARED result records that
+ * the supplied evidence is internally complete; it never changes source mode
+ * or authorizes/executes an operational cutover.
+ */
+export function evaluateCompletedMigrationCutoverPreparation(
+  evidence: CompletedMigrationCutoverEvidence,
+): CompletedMigrationCutoverPreparationResult {
+  const passed: Record<CompletedMigrationCutoverCheckId, boolean> = {
+    content_count:
+      evidence.database.contentCount ===
+      COMPLETED_MIGRATION_EXPECTED_COUNTS.contents,
+    version_count:
+      evidence.database.versionCount ===
+      COMPLETED_MIGRATION_EXPECTED_COUNTS.versions,
+    relation_count:
+      evidence.database.relationCount ===
+      COMPLETED_MIGRATION_EXPECTED_COUNTS.relations,
+    relation_integrity: evidence.database.relationsIntegrityVerified,
+    migration_receipt: evidence.database.migrationReceiptExists,
+    lake_null_growth_stage: evidence.database.lakeNullGrowthStageValid,
+    legacy_default: evidence.sourceModes.defaultMode === "legacy",
+    legacy_behavior: evidence.sourceModes.legacyBehaviorUnchanged,
+    dual_behavior: evidence.sourceModes.dualBehaviorUnchanged,
+    database_behavior: evidence.sourceModes.databaseBehaviorVerified,
+    database_no_fallback: evidence.sourceModes.databaseFallbackReads === 0,
+    rollback_path: exactSequence(
+      evidence.rollbackPath,
+      CUTOVER_ROLLBACK_SOURCE_MODE_PATH,
+    ),
+    cache_surfaces: CUTOVER_CACHE_SURFACES.every((surface) =>
+      evidence.cacheSurfaces.includes(surface),
+    ),
+  };
+  const checks = COMPLETED_MIGRATION_CUTOVER_CHECK_IDS.map((id) => ({
+    id,
+    status: passed[id] ? ("PASS" as const) : ("BLOCKED" as const),
+  }));
+  const blockingCheckIds = checks
+    .filter((check) => check.status === "BLOCKED")
+    .map((check) => check.id);
+
+  return {
+    schemaVersion: 1,
+    kind: "completed-migration-cutover-preparation",
+    status: blockingCheckIds.length === 0 ? "PREPARED" : "BLOCKED",
+    cutoverExecuted: false,
+    checks,
+    blockingCheckIds,
+  };
+}

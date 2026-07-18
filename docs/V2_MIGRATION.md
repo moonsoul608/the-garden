@@ -359,11 +359,15 @@ cache incoherence, or operator stop decision requires rollback. Rollback
 restores `legacy` mode, preserves imported V2 data and the V1 fallback, and
 invalidates public caches. Incident response must not delete V2 or V1 data.
 
-The current cutover assessment remains **BLOCKED** because a real approved
-preview, Preview import receipt, Phase 06D report, Production backup evidence,
-monitoring evidence, and cache-invalidation readiness have not been supplied.
-Existing resolver, lifecycle, and redirect contract tests are supporting
-evidence only; real Preview route and public-read probes remain required.
+Task 08D-4 supersedes the historical pre-import assessment above for the
+completed migration evidence. The controlled preparation boundary verifies 19
+contents, 19 versions, four valid relations, the migration receipt, Lake-null
+Growth Stage applicability, unchanged source-mode behavior, zero database-mode
+fallback, the adjacent `database -> dual -> legacy` rollback path, and the
+required route/metadata/sitemap/static-content cache surfaces. Its status is
+`PREPARED`, not cutover authorization: the default remains `legacy`, and a
+future approved deployment window and deployed probes are still required. See
+`docs/V2_PHASE_08D4_CUTOVER_PREPARATION.md`.
 
 ---
 

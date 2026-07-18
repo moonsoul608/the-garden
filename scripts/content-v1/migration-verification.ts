@@ -4,6 +4,7 @@ import type {
   Lifecycle,
   V1ImportDestinationContent,
   V1ImportResult,
+  V1ImportVerification,
   V1MigrationPreview,
   V1MigrationPreviewRecord,
 } from "../../types/content.ts";
@@ -107,6 +108,21 @@ export type V1MigrationVerificationInput = {
   expectedPreview: V1MigrationPreview;
   queryResults: V1MigrationVerificationQueryResults;
 };
+
+export function isV1ImportVerificationPassed(
+  verification: V1ImportVerification | null | undefined,
+): verification is V1ImportVerification {
+  return Boolean(
+    verification?.passed &&
+      verification.contentCount === verification.expectedContentCount &&
+      verification.slugUnique &&
+      verification.slugIdentityValid &&
+      verification.regionsValid &&
+      verification.relationIntegrity &&
+      verification.lifecycleValid &&
+      verification.versionsValid,
+  );
+}
 
 const SECTION_ORDER: readonly V1MigrationVerificationSection[] = [
   "Execution",
@@ -305,15 +321,14 @@ export function verifyV1Migration(
   const reportIdentityMatches =
     executionReport.schemaVersion === 1 &&
     executionReport.kind === "v1-import-result" &&
-    executionReport.importDigest === expectedPreview.previewDigest &&
+    executionReport.status === "SUCCESS" &&
+    executionReport.snapshotDigest === executionReport.importDigest &&
+    executionReport.previewDigest === expectedPreview.previewDigest &&
+    executionReport.importedCount === expectedRecords.length &&
     executionReport.sourceVersion.source === expectedPreview.source &&
     executionReport.sourceVersion.schemaVersion === 1 &&
-    executionReport.verification.passed &&
+    isV1ImportVerificationPassed(executionReport.verification) &&
     executionReport.verification.contentCount === expectedRecords.length &&
-    executionReport.verification.expectedContentCount === expectedRecords.length &&
-    executionReport.verification.slugUnique &&
-    executionReport.verification.relationIntegrity &&
-    executionReport.verification.lifecycleValid &&
     expectedPreview.readiness.importReady &&
     sameValues(executionReport.created.contents, expectedIds) &&
     executionReport.created.versions.length === expectedRecords.length &&
@@ -331,14 +346,14 @@ export function verifyV1Migration(
       ? "The verified execution receipt matches the approved preview and expected identities."
       : "The execution receipt, approved preview digest/readiness, or imported identity set does not match.",
     expected: {
-      importDigest: expectedPreview.previewDigest,
+      previewDigest: expectedPreview.previewDigest,
       source: expectedPreview.source,
       contents: sorted(expectedIds),
       skippedRecords: [],
       verificationPassed: true,
     },
     actual: {
-      importDigest: executionReport.importDigest,
+      previewDigest: executionReport.previewDigest,
       source: executionReport.sourceVersion.source,
       contents: sorted(executionReport.created.contents),
       skippedRecords: sorted(executionReport.skippedRecords),

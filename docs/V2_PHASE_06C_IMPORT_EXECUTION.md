@@ -74,15 +74,21 @@ history.
 
 ## Reports and verification
 
-The human report lists created contents, versions, relations, skipped records,
-warnings, and verification checks. The machine result includes:
+Task 08C strengthens the human report with explicit `SUCCESS` state and the
+snapshot, Preview, and resolution digests. The machine result includes:
 
-- import digest;
+- `SUCCESS` execution status;
+- snapshot, Preview, resolution, and import digests;
 - technical import timestamp;
+- imported count;
 - source and schema version;
 - created and skipped identities;
 - warnings;
-- content-count, slug, relation, lifecycle, and overall verification results.
+- content-count, exact slug, Region, relation, lifecycle, initial-version, and
+  overall verification results.
+
+Preflight reports `BLOCKED`, `READY`, or an existing `SUCCESS`; transaction
+rejection is surfaced as `FAILED`. The receipt is stored only for `SUCCESS`.
 
 No public cutover hook is called.
 
@@ -94,6 +100,8 @@ Application tests cover:
 - explicit digest mismatch rejection;
 - duplicate execution idempotency;
 - no partial in-memory boundary commit after an injected failure;
+- verification failure preventing `SUCCESS` and leaving no receipt;
+- explicit `BLOCKED`, `READY`, `SUCCESS`, and `FAILED` states;
 - unique, resolvable relation payloads;
 - one initial version per imported content;
 - service-role-only and transactional SQL structure.

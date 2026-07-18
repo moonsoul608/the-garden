@@ -70,8 +70,11 @@ declare
   expected_relation_count integer := 0;
   imported_relation_count integer := 0;
   slug_unique boolean := false;
+  slug_identity_valid boolean := false;
+  regions_valid boolean := false;
   relation_integrity boolean := false;
   lifecycle_valid boolean := false;
+  versions_valid boolean := false;
   verification_passed boolean := false;
   result jsonb;
 begin
@@ -83,6 +86,14 @@ begin
      or p_payload->>'schemaVersion' is distinct from '1'
      or coalesce(
        p_payload->>'importDigest' ~ '^sha256:[a-f0-9]{64}$',
+       false
+     ) is not true
+     or coalesce(
+       p_payload->>'previewDigest' ~ '^sha256:[a-f0-9]{64}$',
+       false
+     ) is not true
+     or coalesce(
+       p_payload->>'resolutionDigest' ~ '^sha256:[a-f0-9]{64}$',
        false
      ) is not true
      or coalesce(
@@ -684,6 +695,24 @@ begin
     having count(*) > 1
   ) into slug_unique;
 
+  select not exists (
+    select 1
+    from jsonb_array_elements(p_payload->'contents') as source(item)
+    left join public.contents as destination
+      on destination.legacy_id = source.item->>'legacyId'
+    where destination.id is null
+       or destination.slug is distinct from source.item->>'slug'
+  ) into slug_identity_valid;
+
+  select not exists (
+    select 1
+    from jsonb_array_elements(p_payload->'contents') as source(item)
+    left join public.contents as destination
+      on destination.legacy_id = source.item->>'legacyId'
+    where destination.id is null
+       or destination.region::text is distinct from source.item->>'region'
+  ) into regions_valid;
+
   expected_relation_count := jsonb_array_length(p_payload->'relations');
   select count(*)
   into imported_relation_count
@@ -719,12 +748,28 @@ begin
     and version.checkpoint_reason = 'V1 import'
     and version.snapshot->'migration'->>'importDigest' = p_payload->>'importDigest';
 
+  select not exists (
+    select 1
+    from jsonb_array_elements(p_payload->'contents') as source(item)
+    left join public.contents as destination
+      on destination.legacy_id = source.item->>'legacyId'
+    left join public.content_versions as version
+      on version.content_id = destination.id
+     and version.checkpoint_reason = 'V1 import'
+     and version.snapshot->'migration'->>'importDigest' = p_payload->>'importDigest'
+    group by source.item->>'legacyId'
+    having count(version.id) <> 1
+  ) into versions_valid;
+
   verification_passed :=
     imported_content_count = expected_content_count
     and imported_version_count = expected_content_count
     and slug_unique
+    and slug_identity_valid
+    and regions_valid
     and relation_integrity
-    and lifecycle_valid;
+    and lifecycle_valid
+    and versions_valid;
 
   if not verification_passed then
     raise check_violation using message = 'post_import_verification_failed';
@@ -733,8 +778,13 @@ begin
   result := jsonb_build_object(
     'schemaVersion', 1,
     'kind', 'v1-import-result',
+    'status', 'SUCCESS',
+    'snapshotDigest', p_payload->>'importDigest',
     'importDigest', p_payload->>'importDigest',
+    'previewDigest', p_payload->>'previewDigest',
+    'resolutionDigest', p_payload->>'resolutionDigest',
     'importedAt', import_time,
+    'importedCount', imported_content_count,
     'sourceVersion', p_payload->'sourceVersion',
     'idempotent', false,
     'created', jsonb_build_object(
@@ -751,8 +801,11 @@ begin
       'contentCount', imported_content_count,
       'expectedContentCount', expected_content_count,
       'slugUnique', slug_unique,
+      'slugIdentityValid', slug_identity_valid,
+      'regionsValid', regions_valid,
       'relationIntegrity', relation_integrity,
       'lifecycleValid', lifecycle_valid,
+      'versionsValid', versions_valid,
       'passed', verification_passed
     )
   );

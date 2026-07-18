@@ -2,7 +2,9 @@ import type {
   V1ApprovedMigrationSnapshot,
   V1ImportDestinationContent,
   V1ImportExecutionPayload,
+  V1ImportPreflightReport,
   V1ImportResult,
+  V1ImportSafetyState,
   V1MigrationResolutionInput,
 } from "../../types/content.ts";
 
@@ -14,14 +16,22 @@ import {
 } from "./approved-snapshot.ts";
 import { extractV1Content, type V1ExtractManifest } from "./extract.ts";
 import { buildV1MigrationPreview } from "./preview.ts";
+import { isV1ImportVerificationPassed } from "./migration-verification.ts";
+import { stableV1MigrationJson } from "./digest.ts";
 
 export class V1ImportExecutionError extends Error {
   readonly code: string;
+  readonly status: Extract<V1ImportSafetyState, "BLOCKED" | "FAILED">;
 
-  constructor(code: string, message: string) {
+  constructor(
+    code: string,
+    message: string,
+    status: Extract<V1ImportSafetyState, "BLOCKED" | "FAILED"> = "BLOCKED",
+  ) {
     super(message);
     this.name = "V1ImportExecutionError";
     this.code = code;
+    this.status = status;
   }
 }
 
@@ -152,6 +162,8 @@ function buildPayload(
     schemaVersion: 1,
     kind: "v1-import-execution",
     importDigest: approved.digests.snapshotDigest,
+    previewDigest: approved.digests.previewDigest,
+    resolutionDigest: approved.digests.resolutionDigest,
     sourceDigest: approved.digests.sourceDigest,
     destinationStateDigest: approved.digests.destinationStateDigest,
     sourceVersion: {
@@ -174,26 +186,66 @@ function buildPayload(
 
 function validateResult(
   result: V1ImportResult,
-  expectedDigest: string,
+  approved: V1ApprovedMigrationSnapshot,
 ): V1ImportResult {
+  const expectedContents = approved.records.map(
+    (record) => record.sourceRecord.legacyId,
+  );
+  const expectedRelations = approved.relations.map(
+    (relation) =>
+      `${relation.sourceLegacyId}:${relation.targetLegacyId}:${relation.relationType}`,
+  );
+  const expectedTags = approved.tags.map((tag) => tag.normalizedName);
+  const expectedContentTags = approved.contentTags.map(
+    (contentTag) =>
+      `${contentTag.contentLegacyId}:${contentTag.tagNormalizedName}`,
+  );
   if (
     result?.schemaVersion !== 1 ||
     result.kind !== "v1-import-result" ||
-    result.importDigest !== expectedDigest ||
-    !result.verification?.passed
+    result.status !== "SUCCESS" ||
+    result.snapshotDigest !== approved.digests.snapshotDigest ||
+    result.importDigest !== approved.digests.snapshotDigest ||
+    result.previewDigest !== approved.digests.previewDigest ||
+    result.resolutionDigest !== approved.digests.resolutionDigest ||
+    Number.isNaN(Date.parse(result.importedAt)) ||
+    result.importedCount !== result.created?.contents.length ||
+    result.importedCount !== approved.records.length ||
+    stableV1MigrationJson(result.created?.contents) !==
+      stableV1MigrationJson(expectedContents) ||
+    result.created?.versions.length !== approved.records.length ||
+    stableV1MigrationJson(result.created?.relations) !==
+      stableV1MigrationJson(expectedRelations) ||
+    stableV1MigrationJson(result.created?.tags) !==
+      stableV1MigrationJson(expectedTags) ||
+    stableV1MigrationJson(result.created?.contentTags) !==
+      stableV1MigrationJson(expectedContentTags) ||
+    result.skippedRecords?.length !== 0 ||
+    stableV1MigrationJson(result.warnings) !==
+      stableV1MigrationJson(approved.warnings) ||
+    !isV1ImportVerificationPassed(result.verification) ||
+    result.verification.contentCount !== approved.records.length ||
+    result.verification.expectedContentCount !== approved.records.length
   ) {
-    executionError(
-      "invalid_import_result",
-      "The transaction boundary returned an invalid or unverified import result.",
+    throw new V1ImportExecutionError(
+      "post_import_verification_failed",
+      "The transaction boundary returned an invalid or unverified import receipt.",
+      "FAILED",
     );
   }
   return result;
 }
 
-export async function executeV1Import(
+type PreparedV1Import = {
+  approved: V1ApprovedMigrationSnapshot;
+  existingResult: V1ImportResult | null;
+  payload: V1ImportExecutionPayload | null;
+};
+
+async function prepareV1Import(
   options: V1ImportExecutionOptions,
   boundary: V1ImportExecutionBoundary,
-): Promise<V1ImportResult> {
+): Promise<PreparedV1Import> {
   const approved = requireApprovedSnapshot(options.approvedSnapshot);
   if (options.matchingDigest !== approved.digests.snapshotDigest) {
     executionError(
@@ -227,28 +279,109 @@ export async function executeV1Import(
     approved.digests.snapshotDigest,
   );
   if (existingResult) {
-    return validateResult(
-      { ...structuredClone(existingResult), idempotent: true },
-      approved.digests.snapshotDigest,
-    );
+    return {
+      approved,
+      existingResult: validateResult(existingResult, approved),
+      payload: null,
+    };
   }
 
   const destinationContents = await boundary.readDestinationContents();
-  const payload = buildPayload(
+  return {
     approved,
-    destinationContents,
-    options.resolutionInput,
-    extract,
-  );
-  const result = await boundary.executeAtomicImport(payload);
-  return validateResult(result, approved.digests.snapshotDigest);
+    existingResult: null,
+    payload: buildPayload(
+      approved,
+      destinationContents,
+      options.resolutionInput,
+      extract,
+    ),
+  };
+}
+
+export async function preflightV1Import(
+  options: V1ImportExecutionOptions,
+  boundary: V1ImportExecutionBoundary,
+): Promise<V1ImportPreflightReport> {
+  try {
+    const prepared = await prepareV1Import(options, boundary);
+    return {
+      schemaVersion: 1,
+      kind: "v1-import-preflight",
+      status: prepared.existingResult ? "SUCCESS" : "READY",
+      snapshotDigest: prepared.approved.digests.snapshotDigest,
+      blockers: [],
+    };
+  } catch (error) {
+    const failure =
+      error instanceof V1ImportExecutionError
+        ? error
+        : new V1ImportExecutionError(
+            "preflight_failed",
+            error instanceof Error ? error.message : "Import preflight failed.",
+            "FAILED",
+          );
+    return {
+      schemaVersion: 1,
+      kind: "v1-import-preflight",
+      status: failure.status,
+      snapshotDigest: options.approvedSnapshot?.digests?.snapshotDigest ?? null,
+      blockers: [{ code: failure.code, message: failure.message }],
+    };
+  }
+}
+
+export async function executeV1Import(
+  options: V1ImportExecutionOptions,
+  boundary: V1ImportExecutionBoundary,
+): Promise<V1ImportResult> {
+  const prepared = await prepareV1Import(options, boundary);
+  if (prepared.existingResult) {
+    return validateResult(
+      { ...structuredClone(prepared.existingResult), idempotent: true },
+      prepared.approved,
+    );
+  }
+  if (!prepared.payload) {
+    throw new V1ImportExecutionError(
+      "import_payload_missing",
+      "Import preflight did not produce an execution payload.",
+      "FAILED",
+    );
+  }
+
+  try {
+    const result = await boundary.executeAtomicImport(prepared.payload);
+    return validateResult(result, prepared.approved);
+  } catch (error) {
+    if (
+      error instanceof V1ImportExecutionError &&
+      error.status === "FAILED"
+    ) {
+      throw error;
+    }
+    throw new V1ImportExecutionError(
+      error instanceof V1ImportExecutionError
+        ? error.code
+        : "atomic_import_failed",
+      error instanceof Error
+        ? error.message
+        : "The atomic import transaction failed and was rolled back.",
+      "FAILED",
+    );
+  }
 }
 
 export function formatV1ImportResult(result: V1ImportResult): string {
   const lines = [
     "V1 Import Execution Report",
+    `Status: ${result.status}`,
+    `Snapshot digest: ${result.snapshotDigest}`,
     `Import digest: ${result.importDigest}`,
+    `Preview digest: ${result.previewDigest}`,
+    `Resolution digest: ${result.resolutionDigest}`,
     `Timestamp: ${result.importedAt}`,
+    `Imported count: ${result.importedCount}`,
     `Source version: ${result.sourceVersion.source}@${result.sourceVersion.schemaVersion}`,
     `Idempotent replay: ${result.idempotent ? "yes" : "no"}`,
     "",
@@ -261,8 +394,11 @@ export function formatV1ImportResult(result: V1ImportResult): string {
     `Verification: ${result.verification.passed ? "passed" : "failed"}`,
     `Content count: ${result.verification.contentCount}/${result.verification.expectedContentCount}`,
     `Slug uniqueness: ${result.verification.slugUnique ? "passed" : "failed"}`,
+    `Slug identity: ${result.verification.slugIdentityValid ? "passed" : "failed"}`,
+    `Regions: ${result.verification.regionsValid ? "passed" : "failed"}`,
     `Relation integrity: ${result.verification.relationIntegrity ? "passed" : "failed"}`,
     `Lifecycle validity: ${result.verification.lifecycleValid ? "passed" : "failed"}`,
+    `Initial versions: ${result.verification.versionsValid ? "passed" : "failed"}`,
   ];
 
   if (result.created.contents.length > 0) {

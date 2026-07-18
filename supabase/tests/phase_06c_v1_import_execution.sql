@@ -160,6 +160,8 @@ begin
     'schemaVersion', 1,
     'kind', 'v1-import-execution',
     'importDigest', 'sha256:' || repeat('6', 64),
+    'previewDigest', 'sha256:' || repeat('5', 64),
+    'resolutionDigest', 'sha256:' || repeat('4', 64),
     'sourceDigest', 'sha256:' || repeat('7', 64),
     'destinationStateDigest', 'sha256:' || repeat('8', 64),
     'sourceVersion', jsonb_build_object(

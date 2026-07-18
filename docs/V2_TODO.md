@@ -258,6 +258,11 @@ Acceptance:
 - [x] Return an idempotent existing result for a completed import digest
 - [x] Run post-import count, slug, relation, lifecycle, and version verification before commit
 - [x] Add invalid approval, digest mismatch, idempotency, rollback, relation, and version tests
+- [x] Add explicit BLOCKED, READY, SUCCESS, and FAILED import execution states
+- [x] Bind the durable receipt to snapshot, Preview, and resolution digests
+- [x] Record imported count, warnings, timestamp, and SUCCESS status only after commit
+- [x] Reuse verification pass criteria for exact slug, Region, lifecycle, version, and relation checks
+- [x] Prevent a post-import verification failure from producing a success receipt
 - [x] Add deterministic read-only post-import migration verification tooling
 - [x] Verify content counts by total, Region, and Content Type
 - [x] Verify source identity, slug, Region, lifecycle, duplicates, missing, and unexpected records

@@ -152,8 +152,13 @@ function fixture(): V1MigrationVerificationInput {
   const executionReport: V1ImportResult = {
     schemaVersion: 1,
     kind: "v1-import-result",
+    status: "SUCCESS",
+    snapshotDigest: preview.previewDigest,
     importDigest: preview.previewDigest,
+    previewDigest: preview.previewDigest,
+    resolutionDigest: preview.resolutionReport.resolutionDigest,
     importedAt: "2026-07-17T12:00:00.000Z",
+    importedCount: contents.length,
     sourceVersion: { source: "v1-static-typescript", schemaVersion: 1 },
     idempotent: false,
     created: {
@@ -173,8 +178,11 @@ function fixture(): V1MigrationVerificationInput {
       contentCount: contents.length,
       expectedContentCount: contents.length,
       slugUnique: true,
+      slugIdentityValid: true,
+      regionsValid: true,
       relationIntegrity: true,
       lifecycleValid: true,
+      versionsValid: true,
       passed: true,
     },
   };

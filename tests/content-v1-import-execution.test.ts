@@ -10,6 +10,7 @@ import type {
 } from "../types/content.ts";
 import {
   executeV1Import,
+  preflightV1Import,
   V1ImportExecutionError,
   type V1ImportExecutionBoundary,
 } from "../scripts/content-v1/executor.ts";
@@ -63,6 +64,7 @@ class MemoryImportBoundary implements V1ImportExecutionBoundary {
   committedContents = 0;
   committedVersions = 0;
   failAfterStaging = false;
+  failVerification = false;
   lastPayload: V1ImportExecutionPayload | null = null;
 
   async findImportResult(importDigest: string) {
@@ -79,12 +81,20 @@ class MemoryImportBoundary implements V1ImportExecutionBoundary {
     const stagedContents = payload.contents.length;
     const stagedVersions = payload.contents.length;
     if (this.failAfterStaging) throw new Error("injected transaction failure");
+    if (this.failVerification) {
+      throw new Error("post_import_verification_failed");
+    }
 
     const result: V1ImportResult = {
       schemaVersion: 1,
       kind: "v1-import-result",
+      status: "SUCCESS",
+      snapshotDigest: payload.importDigest,
       importDigest: payload.importDigest,
+      previewDigest: payload.previewDigest,
+      resolutionDigest: payload.resolutionDigest,
       importedAt: "2026-07-17T12:00:00.000Z",
+      importedCount: stagedContents,
       sourceVersion: payload.sourceVersion,
       idempotent: false,
       created: {
@@ -107,8 +117,11 @@ class MemoryImportBoundary implements V1ImportExecutionBoundary {
         contentCount: stagedContents,
         expectedContentCount: stagedContents,
         slugUnique: true,
+        slugIdentityValid: true,
+        regionsValid: true,
         relationIntegrity: true,
         lifecycleValid: true,
+        versionsValid: true,
         passed: true,
       },
     };
@@ -126,6 +139,7 @@ async function rejectsWithCode(
   await assert.rejects(operation, (error: unknown) => {
     assert.ok(error instanceof V1ImportExecutionError);
     assert.equal(error.code, code);
+    assert.equal(error.status, "BLOCKED");
     return true;
   });
 }
@@ -144,6 +158,34 @@ test("invalid or missing approval is rejected before the migration boundary", as
     ),
     "approved_snapshot_missing",
   );
+  assert.equal(boundary.atomicCalls, 0);
+});
+
+test("preflight reports BLOCKED without approvals and READY for an approved snapshot", async () => {
+  const { approval, resolutions } = approvedInput();
+  const boundary = new MemoryImportBoundary();
+  const blocked = await preflightV1Import(
+    {
+      approvedSnapshot: null,
+      matchingDigest: approval.digests.snapshotDigest,
+      resolutionInput: resolutions,
+    },
+    boundary,
+  );
+  assert.equal(blocked.status, "BLOCKED");
+  assert.equal(blocked.blockers[0]?.code, "approved_snapshot_missing");
+
+  const ready = await preflightV1Import(
+    {
+      approvedSnapshot: approval,
+      matchingDigest: approval.digests.snapshotDigest,
+      resolutionInput: resolutions,
+    },
+    boundary,
+  );
+  assert.equal(ready.status, "READY");
+  assert.equal(ready.snapshotDigest, approval.digests.snapshotDigest);
+  assert.deepEqual(ready.blockers, []);
   assert.equal(boundary.atomicCalls, 0);
 });
 
@@ -186,6 +228,32 @@ test("changed frozen snapshot content is rejected during import preparation", as
   assert.equal(boundary.atomicCalls, 0);
 });
 
+test("a successful transaction imports the complete approved snapshot", async () => {
+  const { approval, resolutions } = approvedInput();
+  const boundary = new MemoryImportBoundary();
+  const result = await executeV1Import(
+    {
+      approvedSnapshot: approval,
+      matchingDigest: approval.digests.snapshotDigest,
+      resolutionInput: resolutions,
+    },
+    boundary,
+  );
+
+  assert.equal(result.status, "SUCCESS");
+  assert.equal(result.importedCount, approval.records.length);
+  assert.deepEqual(
+    result.created.contents,
+    approval.records.map((record) => record.sourceRecord.legacyId),
+  );
+  assert.equal(result.created.versions.length, approval.records.length);
+  assert.equal(result.created.relations.length, approval.relations.length);
+  assert.equal(result.created.tags.length, approval.tags.length);
+  assert.equal(result.created.contentTags.length, approval.contentTags.length);
+  assert.equal(result.verification.passed, true);
+  assert.equal(boundary.receipts.size, 1);
+});
+
 test("duplicate execution returns the durable result without duplicate writes", async () => {
   const { approval, resolutions } = approvedInput();
   const boundary = new MemoryImportBoundary();
@@ -198,6 +266,9 @@ test("duplicate execution returns the durable result without duplicate writes", 
   const first = await executeV1Import(options, boundary);
   const second = await executeV1Import(options, boundary);
 
+  assert.equal(first.status, "SUCCESS");
+  assert.equal(first.snapshotDigest, approval.digests.snapshotDigest);
+  assert.equal(first.importedCount, 19);
   assert.equal(first.idempotent, false);
   assert.equal(second.idempotent, true);
   assert.equal(boundary.atomicCalls, 1);
@@ -219,7 +290,39 @@ test("a transaction failure leaves no partial content or versions", async () => 
       },
       boundary,
     ),
-    /injected transaction failure/,
+    (error: unknown) => {
+      assert.ok(error instanceof V1ImportExecutionError);
+      assert.equal(error.status, "FAILED");
+      assert.match(error.message, /injected transaction failure/);
+      return true;
+    },
+  );
+  assert.equal(boundary.committedContents, 0);
+  assert.equal(boundary.committedVersions, 0);
+  assert.equal(boundary.receipts.size, 0);
+});
+
+test("post-import verification failure rolls back and cannot return SUCCESS", async () => {
+  const { approval, resolutions } = approvedInput();
+  const boundary = new MemoryImportBoundary();
+  boundary.failVerification = true;
+
+  await assert.rejects(
+    executeV1Import(
+      {
+        approvedSnapshot: approval,
+        matchingDigest: approval.digests.snapshotDigest,
+        resolutionInput: resolutions,
+      },
+      boundary,
+    ),
+    (error: unknown) => {
+      assert.ok(error instanceof V1ImportExecutionError);
+      assert.equal(error.status, "FAILED");
+      assert.equal(error.code, "atomic_import_failed");
+      assert.match(error.message, /post_import_verification_failed/);
+      return true;
+    },
   );
   assert.equal(boundary.committedContents, 0);
   assert.equal(boundary.committedVersions, 0);
@@ -287,5 +390,10 @@ test("SQL execution boundary is one transaction and service-role-only", async ()
   assert.match(sql, /grant execute[^;]+to service_role/i);
   assert.match(sql, /revoke all[^;]+from public, anon, authenticated/i);
   assert.match(sql, /post_import_verification_failed/);
+  assert.match(sql, /'status', 'SUCCESS'/);
+  assert.match(sql, /'snapshotDigest', p_payload->>'importDigest'/);
+  assert.match(sql, /slug_identity_valid/);
+  assert.match(sql, /regions_valid/);
+  assert.match(sql, /versions_valid/);
   assert.doesNotMatch(sql, /grant execute[^;]+to (?:anon|authenticated)/i);
 });

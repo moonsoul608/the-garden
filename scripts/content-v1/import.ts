@@ -139,6 +139,7 @@ export function createSupabaseImportBoundary(
         throw new V1ImportExecutionError(
           "import_receipt_read_failed",
           `Could not read the migration receipt: ${error.message}`,
+          "FAILED",
         );
       }
       return data ? asImportResult(data.result) : null;
@@ -153,6 +154,7 @@ export function createSupabaseImportBoundary(
         throw new V1ImportExecutionError(
           "destination_snapshot_failed",
           `Could not read the destination snapshot: ${error.message}`,
+          "FAILED",
         );
       }
       return (data ?? []) as unknown as V1ImportDestinationContent[];
@@ -166,6 +168,7 @@ export function createSupabaseImportBoundary(
         throw new V1ImportExecutionError(
           "atomic_import_failed",
           `The database transaction rejected the import: ${error.message}`,
+          "FAILED",
         );
       }
       return asImportResult(data);
@@ -224,8 +227,10 @@ if (isDirectRun()) {
   } catch (error) {
     const code =
       error instanceof V1ImportExecutionError ? error.code : "import_failed";
+    const status =
+      error instanceof V1ImportExecutionError ? error.status : "FAILED";
     const message = error instanceof Error ? error.message : "Import failed.";
-    process.stderr.write(`${code}: ${message}\n`);
+    process.stderr.write(`Status: ${status}\n${code}: ${message}\n`);
     process.exitCode = 1;
   }
 }

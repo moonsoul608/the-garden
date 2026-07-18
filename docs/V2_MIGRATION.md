@@ -927,6 +927,22 @@ digest and regenerates the approval boundary from current source, resolution,
 and destination state before any execution call. See
 `docs/V2_PHASE_08B_APPROVED_MIGRATION_SNAPSHOT.md`.
 
+### 8.11 Task 08C import execution boundary
+
+Task 08C completes the approved-snapshot execution contract without running an
+import. Preflight returns `BLOCKED` until all approvals and exact snapshot,
+Preview, resolution, source, destination, and schema checks pass; a valid
+unexecuted snapshot is `READY`. Only a committed and transaction-verified
+receipt is `SUCCESS`. A rejected or rolled-back transaction is `FAILED`.
+
+The atomic RPC verifies exact content count, approved slug and Region identity,
+Published lifecycle, one initial version per content, and relation integrity
+before inserting the durable receipt. The receipt records snapshot, Preview,
+and resolution digests, technical timestamp, imported count, warnings, created
+identities, and verification outcomes. Replaying the same snapshot digest
+returns that receipt without duplicate writes. See
+`docs/V2_PHASE_08C_IMPORT_EXECUTION.md`.
+
 ### 8.9 Home
 
 Convert Home items into curation references.

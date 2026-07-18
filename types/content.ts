@@ -591,6 +591,8 @@ export type V1ImportExecutionPayload = {
   schemaVersion: 1;
   kind: "v1-import-execution";
   importDigest: string;
+  previewDigest: string;
+  resolutionDigest: string;
   sourceDigest: string;
   destinationStateDigest: string;
   sourceVersion: {
@@ -623,16 +625,37 @@ export type V1ImportVerification = {
   contentCount: number;
   expectedContentCount: number;
   slugUnique: boolean;
+  slugIdentityValid: boolean;
+  regionsValid: boolean;
   relationIntegrity: boolean;
   lifecycleValid: boolean;
+  versionsValid: boolean;
   passed: boolean;
+};
+
+export type V1ImportSafetyState = "BLOCKED" | "READY" | "SUCCESS" | "FAILED";
+
+export type V1ImportPreflightReport = {
+  schemaVersion: 1;
+  kind: "v1-import-preflight";
+  status: V1ImportSafetyState;
+  snapshotDigest: string | null;
+  blockers: Array<{
+    code: string;
+    message: string;
+  }>;
 };
 
 export type V1ImportResult = {
   schemaVersion: 1;
   kind: "v1-import-result";
+  status: "SUCCESS";
+  snapshotDigest: string;
   importDigest: string;
+  previewDigest: string;
+  resolutionDigest: string;
   importedAt: string;
+  importedCount: number;
   sourceVersion: {
     source: "v1-static-typescript";
     schemaVersion: 1;

@@ -314,13 +314,16 @@ export type V1MigrationPreviewBlocker = {
 };
 
 export type V1GrowthStageApproval = {
+  source: "v1-static-typescript";
   legacyId: string;
+  route: string;
   growthStage: GrowthStage;
   decisionMethod: "manual";
   resolutionSource: string;
   approvedBy: string;
   approvedAt: string;
   approvalStatus: "Approved";
+  notes: string;
 };
 
 export type V1MigrationResolutionInput = {
@@ -330,13 +333,20 @@ export type V1MigrationResolutionInput = {
 };
 
 export type V1GrowthStageResolutionAudit = {
+  sourceIdentity: {
+    source: "v1-static-typescript";
+    legacyId: string;
+    route: string;
+  };
   legacyId: string;
   blockerReason: string;
   growthStage: GrowthStage | null;
+  decisionMethod: "manual" | null;
   resolutionSource: string | null;
   approvedBy: string | null;
   approvedAt: string | null;
   approvalStatus: "Approved" | "Pending" | "Invalid";
+  notes: string | null;
 };
 
 export type V1PublishedAtMigrationPolicy = {
@@ -453,6 +463,9 @@ export type V1MigrationPreview = {
     };
   };
   resolutionReport: {
+    resolutionDigest: string;
+    validationStatus: "Valid" | "Blocked" | "Invalid";
+    approvedRecords: V1GrowthStageResolutionAudit[];
     before: {
       blocked: number;
     };

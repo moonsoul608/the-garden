@@ -21,13 +21,16 @@ function resolutionInput(): V1MigrationResolutionInput {
     schemaVersion: 1,
     kind: "v1-migration-resolution-input",
     growthStages: V1_GROWTH_STAGE_BLOCKER_IDS.map((legacyId) => ({
+      source: "v1-static-typescript",
       legacyId,
+      route: `/lake/${legacyId}`,
       growthStage: "Seed",
       decisionMethod: "manual",
       resolutionSource: "06C test fixture",
       approvedBy: "test-garden-keeper",
       approvedAt: "2026-07-17T00:00:00.000Z",
       approvalStatus: "Approved",
+      notes: "Test-only approval; not an editorial decision.",
     })),
   };
 }

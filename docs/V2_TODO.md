@@ -238,6 +238,11 @@ Acceptance:
 - [x] Keep all five missing Growth Stage decisions explicitly Pending by default
 - [x] Require complete fields, passing validation, resolved blockers, and digests before approval readiness
 - [x] Add blocker-resolution, policy, digest-invalidation, and no-execution tests
+- [x] Add the Task 08A deterministic Growth Stage resolution file contract
+- [x] Reuse V2 Growth Stage runtime validation for migration resolutions
+- [x] Report resolution digest, approved records, validation status, and review notes
+- [x] Reject unknown stages, malformed source identities, and duplicate approvals
+- [ ] Replace the empty Task 08A resolution input with five real reviewer approvals
 - [x] Add a server/script-only Preview import executor
 - [x] Require an approved snapshot, explicit matching digest, unchanged source/destination, and zero blockers
 - [x] Add one service-role-only transactional import RPC and immutable import receipt

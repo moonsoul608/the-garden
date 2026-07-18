@@ -62,6 +62,21 @@ function digest(value: unknown): string {
   return `sha256:${createHash("sha256").update(stableJson(value)).digest("hex")}`;
 }
 
+function canonicalResolutionInput(
+  input: V1MigrationResolutionInput | null,
+): unknown {
+  if (!input) return null;
+  return {
+    schemaVersion: input.schemaVersion,
+    kind: input.kind,
+    growthStages: input.growthStages
+      .map((record) => canonicalize(record))
+      .sort((left, right) =>
+        stableJson(left).localeCompare(stableJson(right), "en-US"),
+      ),
+  };
+}
+
 function existingField(
   content: V1ExistingContent,
   camel: string,
@@ -260,9 +275,10 @@ export function buildV1MigrationPreview(
   const existingContents = [...(options.existingContents ?? [])];
   const sourceDigest = digest({
     extract,
-    resolutionInput,
+    resolutionInput: canonicalResolutionInput(resolutionInput),
     publishedAtPolicy,
   });
+  const resolutionDigest = digest(canonicalResolutionInput(resolutionInput));
   const destinationStateDigest = digest(
     existingContents.map((content) => stableJson(content)).sort(),
   );
@@ -575,6 +591,22 @@ export function buildV1MigrationPreview(
   const resolvedGrowthStages = resolution.growthStages.filter(
     (item) => item.approvalStatus === "Approved",
   ).length;
+  const approvedRecords = resolution.growthStages.filter(
+    (item) => item.approvalStatus === "Approved",
+  );
+  const invalidResolution =
+    resolution.growthStages.some(
+      (item) => item.approvalStatus === "Invalid",
+    ) ||
+    bundle.issues.some(
+      (issue) =>
+        issue.code === "invalid_value" && issue.field === "growthStage",
+    );
+  const resolutionValidationStatus = invalidResolution
+    ? ("Invalid" as const)
+    : resolvedGrowthStages === V1_GROWTH_STAGE_BLOCKER_IDS.length
+      ? ("Valid" as const)
+      : ("Blocked" as const);
 
   const previewCore = {
     schemaVersion: 1 as const,
@@ -614,6 +646,9 @@ export function buildV1MigrationPreview(
       },
     },
     resolutionReport: {
+      resolutionDigest,
+      validationStatus: resolutionValidationStatus,
+      approvedRecords,
       before: {
         blocked: V1_GROWTH_STAGE_BLOCKER_IDS.length,
       },
@@ -696,6 +731,8 @@ export function formatV1MigrationPreview(
     `Before blocked: ${preview.resolutionReport.before.blocked}`,
     `Resolved: ${preview.resolutionReport.after.resolved}`,
     `Remaining: ${preview.resolutionReport.after.remaining}`,
+    `Validation: ${preview.resolutionReport.validationStatus}`,
+    `Resolution digest: ${preview.resolutionReport.resolutionDigest}`,
     `Import ready: ${preview.readiness.importReady ? "yes" : "no"}`,
     "",
     `Planned operations: ${preview.summary.create} create, ${preview.summary.update} update, ${preview.summary.unchanged} unchanged, ${preview.summary.noOperation} none.`,
@@ -727,8 +764,22 @@ export function formatV1MigrationPreview(
       "",
       `Growth Stage resolution: ${item.legacyId}`,
       `- Blocker reason: ${item.blockerReason}`,
+      `  Source identity: ${item.sourceIdentity.source} ${item.sourceIdentity.route}`,
+      `  Approved stage: ${item.growthStage ?? "pending manual input"}`,
       `  Resolution source: ${item.resolutionSource ?? "pending manual input"}`,
+      `  Reviewer: ${item.approvedBy ?? "pending manual input"}`,
+      `  Approval time: ${item.approvedAt ?? "pending manual input"}`,
+      `  Notes/reason: ${item.notes ?? "pending manual input"}`,
       `  Approval status: ${item.approvalStatus}`,
+    );
+  }
+
+  if (preview.warnings.length > 0) {
+    lines.push("", "Warnings remain visible:");
+    lines.push(
+      ...preview.warnings.map(
+        (warning) => `- ${warning.code}: ${warning.message}`,
+      ),
     );
   }
 

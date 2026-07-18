@@ -185,10 +185,19 @@ validation.
 
 Growth Stage resolutions are accepted only from a separate JSON input passed
 with `--resolutions=<path>`. Each decision must name one of the five audited
-legacy IDs, contain one allowed Growth Stage, declare `decisionMethod:
-"manual"`, and include a non-empty resolution source, approver, approval time,
-and `approvalStatus: "Approved"`. Missing, duplicate, unknown, incomplete, or
-invalid decisions do not fill content and remain blocked with audit metadata.
+legacy IDs and its exact V1 source/route identity, contain one allowed Growth
+Stage, declare `decisionMethod: "manual"`, and include a non-empty resolution
+source, approver, approval time, `approvalStatus: "Approved"`, and review
+notes/reason. Missing, duplicate, unknown, incomplete, or invalid decisions do
+not fill content and remain blocked with audit metadata. The canonical empty
+input is `scripts/content-v1/resolution.json`; it deliberately records no
+editorial choice and therefore keeps all five decisions Pending.
+
+The machine preview exposes a dedicated `resolutionDigest`,
+`validationStatus`, and `approvedRecords` list. Resolution arrays are digested
+in canonical order, so equivalent reviewed files are deterministic while any
+stage or approval-metadata change changes the digest and invalidates the prior
+approved preview snapshot.
 
 The preview exposes record digests and `importReady` state. Whole-preview
 approval readiness requires complete required fields, passing verification,

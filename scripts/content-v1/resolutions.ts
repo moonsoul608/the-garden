@@ -1,5 +1,4 @@
 import type {
-  GrowthStage,
   V1GrowthStageApproval,
   V1GrowthStageResolutionAudit,
   V1MigrationBundle,
@@ -7,6 +6,7 @@ import type {
   V1MigrationResolutionInput,
   V1PublishedAtMigrationPolicy,
 } from "../../types/content.ts";
+import { isGrowthStage } from "../../lib/content/validation.ts";
 
 export const V1_GROWTH_STAGE_BLOCKER_IDS = [
   "reverse-1999",
@@ -15,14 +15,6 @@ export const V1_GROWTH_STAGE_BLOCKER_IDS = [
   "love-love-love",
   "summer-ghost",
 ] as const;
-
-const GROWTH_STAGES = new Set<GrowthStage>([
-  "Seed",
-  "Sprout",
-  "Growing",
-  "Bloom",
-  "Dormant",
-]);
 
 const GROWTH_STAGE_BLOCKER_REASON =
   "V1 supplies no Growth Stage; V2 requires a manually approved Growth Stage.";
@@ -53,14 +45,18 @@ function isIsoDate(value: unknown): value is string {
 function validateApproval(value: unknown): value is V1GrowthStageApproval {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const approval = value as Record<string, unknown>;
+  const legacyId = hasText(approval.legacyId) ? approval.legacyId : null;
   return (
-    hasText(approval.legacyId) &&
-    GROWTH_STAGES.has(approval.growthStage as GrowthStage) &&
+    approval.source === "v1-static-typescript" &&
+    legacyId !== null &&
+    approval.route === `/lake/${legacyId}` &&
+    isGrowthStage(approval.growthStage) &&
     approval.decisionMethod === "manual" &&
     hasText(approval.resolutionSource) &&
     hasText(approval.approvedBy) &&
     isIsoDate(approval.approvedAt) &&
-    approval.approvalStatus === "Approved"
+    approval.approvalStatus === "Approved" &&
+    hasText(approval.notes)
   );
 }
 
@@ -106,11 +102,27 @@ export function applyV1MigrationResolutions(
   const knownIds = new Set<string>(V1_GROWTH_STAGE_BLOCKER_IDS);
 
   for (const decision of decisions) {
+    if (!decision || typeof decision !== "object" || Array.isArray(decision)) {
+      issues.push(
+        invalidResolutionIssue(
+          null,
+          "A Growth Stage resolution record is malformed and has no valid source identity.",
+        ),
+      );
+      continue;
+    }
     const legacyId =
-      decision && typeof decision === "object" && hasText(decision.legacyId)
+      hasText(decision.legacyId)
         ? decision.legacyId
         : null;
-    if (legacyId && !knownIds.has(legacyId)) {
+    if (!legacyId) {
+      issues.push(
+        invalidResolutionIssue(
+          null,
+          "A Growth Stage resolution record is missing its legacy source identity.",
+        ),
+      );
+    } else if (!knownIds.has(legacyId)) {
       issues.push(
         invalidResolutionIssue(
           null,
@@ -129,6 +141,11 @@ export function applyV1MigrationResolutions(
     );
     const decision = matches[0];
     const base = {
+      sourceIdentity: {
+        source: "v1-static-typescript" as const,
+        legacyId,
+        route: `/lake/${legacyId}`,
+      },
       legacyId,
       blockerReason: GROWTH_STAGE_BLOCKER_REASON,
     };
@@ -137,10 +154,12 @@ export function applyV1MigrationResolutions(
       return {
         ...base,
         growthStage: null,
+        decisionMethod: null,
         resolutionSource: null,
         approvedBy: null,
         approvedAt: null,
         approvalStatus: "Pending" as const,
+        notes: null,
       };
     }
 
@@ -150,12 +169,16 @@ export function applyV1MigrationResolutions(
           legacyId,
           matches.length > 1
             ? `Multiple Growth Stage approvals were provided for ${legacyId}.`
-            : `Growth Stage approval for ${legacyId} is incomplete or invalid; a manual method, allowed value, source, approver, approval time, and Approved status are required.`,
+            : `Growth Stage approval for ${legacyId} is incomplete or invalid; the exact source identity, a manual method, allowed value, review source, approver, approval time, Approved status, and notes are required.`,
         ),
       );
       return {
         ...base,
         growthStage: null,
+        decisionMethod:
+          decision && decision.decisionMethod === "manual"
+            ? ("manual" as const)
+            : null,
         resolutionSource:
           decision && hasText(decision.resolutionSource)
             ? decision.resolutionSource
@@ -165,6 +188,7 @@ export function applyV1MigrationResolutions(
         approvedAt:
           decision && isIsoDate(decision.approvedAt) ? decision.approvedAt : null,
         approvalStatus: "Invalid" as const,
+        notes: decision && hasText(decision.notes) ? decision.notes : null,
       };
     }
 
@@ -179,10 +203,12 @@ export function applyV1MigrationResolutions(
       return {
         ...base,
         growthStage: null,
+        decisionMethod: decision.decisionMethod,
         resolutionSource: decision.resolutionSource,
         approvedBy: decision.approvedBy,
         approvedAt: decision.approvedAt,
         approvalStatus: "Invalid" as const,
+        notes: decision.notes,
       };
     }
 
@@ -197,10 +223,12 @@ export function applyV1MigrationResolutions(
     return {
       ...base,
       growthStage: decision.growthStage,
+      decisionMethod: decision.decisionMethod,
       resolutionSource: decision.resolutionSource,
       approvedBy: decision.approvedBy,
       approvedAt: decision.approvedAt,
       approvalStatus: "Approved" as const,
+      notes: decision.notes,
     };
   });
 

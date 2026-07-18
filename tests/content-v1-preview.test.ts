@@ -10,6 +10,7 @@ import {
 import { buildV1DryRunReport } from "../scripts/content-v1/apply.ts";
 import { extractV1Content } from "../scripts/content-v1/extract.ts";
 import {
+  parseV1MigrationResolutionInput,
   validateV1PublishedAtPolicy,
   V1_GROWTH_STAGE_BLOCKER_IDS,
 } from "../scripts/content-v1/resolutions.ts";
@@ -23,13 +24,16 @@ function testResolutionInput(
     schemaVersion: 1,
     kind: "v1-migration-resolution-input",
     growthStages: legacyIds.map((legacyId) => ({
+      source: "v1-static-typescript",
       legacyId,
+      route: `/lake/${legacyId}`,
       growthStage: "Seed",
       decisionMethod: "manual",
       resolutionSource: "test fixture only",
       approvedBy: "test-garden-keeper",
       approvedAt: "2026-07-17T00:00:00.000Z",
       approvalStatus: "Approved",
+      notes: "Test-only approval; not an editorial decision.",
     })),
   };
 }
@@ -62,6 +66,12 @@ test("blocked records include the exact field, requirement, and manual action", 
   assert.equal(preview.resolutionReport.before.blocked, 5);
   assert.equal(preview.resolutionReport.after.resolved, 0);
   assert.equal(preview.resolutionReport.after.remaining, 5);
+  assert.equal(preview.resolutionReport.validationStatus, "Blocked");
+  assert.equal(preview.resolutionReport.approvedRecords.length, 0);
+  assert.match(
+    preview.resolutionReport.resolutionDigest,
+    /^sha256:[a-f0-9]{64}$/,
+  );
   assert.equal(preview.resolutionReport.publishedAt.outcome, "preserve-null");
   assert.equal(preview.resolutionReport.publishedAt.approvalStatus, "Approved");
   for (const record of blocked) {
@@ -77,7 +87,10 @@ test("blocked records include the exact field, requirement, and manual action", 
   assert.match(human, /Blocked:\s+5/);
   assert.match(human, /Resolved:\s+0/);
   assert.match(human, /Remaining:\s+5/);
+  assert.match(human, /Validation: Blocked/);
+  assert.match(human, /Resolution digest: sha256:[a-f0-9]{64}/);
   assert.match(human, /Missing\/conflicting field: growthStage/);
+  assert.match(human, /Warnings remain visible:/);
 });
 
 test("unresolved blocker prevents approved snapshot readiness", () => {
@@ -100,6 +113,21 @@ test("unresolved blocker prevents approved snapshot readiness", () => {
     valid: false,
     reason: "preview_not_import_ready",
   });
+});
+
+test("the checked-in resolution file is reusable and safely blocks while empty", async () => {
+  const raw = await readFile(
+    new URL("../scripts/content-v1/resolution.json", import.meta.url),
+    "utf8",
+  );
+  const resolutionInput = parseV1MigrationResolutionInput(
+    JSON.parse(raw) as unknown,
+  );
+  const preview = buildV1MigrationPreview({ resolutionInput });
+
+  assert.equal(preview.summary.blocked, 5);
+  assert.equal(preview.readiness.importReady, false);
+  assert.equal(preview.resolutionReport.validationStatus, "Blocked");
 });
 
 test("a manually approved Growth Stage resolves its record and keeps the rest pending", () => {
@@ -140,6 +168,10 @@ test("approval digest changes after a Growth Stage resolution", () => {
   assert.notEqual(resolved.sourceDigest, pending.sourceDigest);
   assert.notEqual(resolved.previewDigest, pending.previewDigest);
   assert.notEqual(
+    resolved.resolutionReport.resolutionDigest,
+    pending.resolutionReport.resolutionDigest,
+  );
+  assert.notEqual(
     resolved.records.find(
       (record) =>
         record.sourceIdentity.legacyId === V1_GROWTH_STAGE_BLOCKER_IDS[0],
@@ -149,6 +181,111 @@ test("approval digest changes after a Growth Stage resolution", () => {
         record.sourceIdentity.legacyId === V1_GROWTH_STAGE_BLOCKER_IDS[0],
     )?.recordDigest,
   );
+});
+
+test("modifying resolution metadata invalidates the previous approval snapshot", () => {
+  const resolutionInput = testResolutionInput();
+  const approvedPreview = buildV1MigrationPreview({ resolutionInput });
+  const approval = {
+    schemaVersion: 1 as const,
+    approved: true as const,
+    previewDigest: approvedPreview.previewDigest,
+    sourceDigest: approvedPreview.sourceDigest,
+    destinationStateDigest: approvedPreview.destinationStateDigest,
+  };
+  const modifiedInput = structuredClone(resolutionInput);
+  modifiedInput.growthStages[0].notes = "Modified test-only review reason.";
+  const modifiedPreview = buildV1MigrationPreview({
+    resolutionInput: modifiedInput,
+  });
+
+  assert.notEqual(
+    modifiedPreview.resolutionReport.resolutionDigest,
+    approvedPreview.resolutionReport.resolutionDigest,
+  );
+  assert.notEqual(modifiedPreview.sourceDigest, approvedPreview.sourceDigest);
+  assert.notEqual(modifiedPreview.previewDigest, approvedPreview.previewDigest);
+  assert.deepEqual(validateV1ApprovedPreviewSnapshot(approval, modifiedPreview), {
+    valid: false,
+    reason: "source_state_changed",
+  });
+});
+
+test("unknown Growth Stages and malformed source identities are rejected", () => {
+  const invalidStage = testResolutionInput([V1_GROWTH_STAGE_BLOCKER_IDS[0]]);
+  invalidStage.growthStages[0].growthStage = "Unknown" as never;
+  const invalidStagePreview = buildV1MigrationPreview({
+    resolutionInput: invalidStage,
+  });
+
+  assert.equal(invalidStagePreview.resolutionReport.validationStatus, "Invalid");
+  assert.equal(invalidStagePreview.resolutionReport.after.resolved, 0);
+  assert.equal(invalidStagePreview.summary.blocked, 5);
+
+  const malformedIdentity = testResolutionInput([
+    V1_GROWTH_STAGE_BLOCKER_IDS[0],
+  ]);
+  malformedIdentity.growthStages[0].route = "/lake/not-the-source-route";
+  const malformedPreview = buildV1MigrationPreview({
+    resolutionInput: malformedIdentity,
+  });
+  assert.equal(malformedPreview.resolutionReport.validationStatus, "Invalid");
+  assert.equal(malformedPreview.resolutionReport.after.resolved, 0);
+
+  const malformedRecord = {
+    schemaVersion: 1 as const,
+    kind: "v1-migration-resolution-input" as const,
+    growthStages: [null],
+  } as unknown as V1MigrationResolutionInput;
+  const malformedRecordPreview = buildV1MigrationPreview({
+    resolutionInput: malformedRecord,
+  });
+  assert.equal(
+    malformedRecordPreview.resolutionReport.validationStatus,
+    "Invalid",
+  );
+  assert.ok(
+    malformedRecordPreview.blockers.some((blocker) =>
+      /malformed/.test(blocker.message),
+    ),
+  );
+});
+
+test("duplicate Growth Stage identities are rejected", () => {
+  const duplicate = testResolutionInput([V1_GROWTH_STAGE_BLOCKER_IDS[0]]);
+  duplicate.growthStages.push(structuredClone(duplicate.growthStages[0]));
+  const preview = buildV1MigrationPreview({ resolutionInput: duplicate });
+  const duplicateRecord = preview.records.find(
+    (record) =>
+      record.sourceIdentity.legacyId === V1_GROWTH_STAGE_BLOCKER_IDS[0],
+  );
+
+  assert.equal(preview.resolutionReport.validationStatus, "Invalid");
+  assert.equal(preview.resolutionReport.after.resolved, 0);
+  assert.equal(preview.summary.blocked, 5);
+  assert.ok(
+    duplicateRecord?.blockers.some((blocker) =>
+      /Multiple Growth Stage approvals/.test(blocker.message),
+    ),
+  );
+});
+
+test("resolution output is deterministic regardless of approved record order", () => {
+  const ordered = testResolutionInput();
+  const reversed = {
+    ...ordered,
+    growthStages: [...ordered.growthStages].reverse(),
+  };
+  const first = buildV1MigrationPreview({ resolutionInput: ordered });
+  const second = buildV1MigrationPreview({ resolutionInput: reversed });
+
+  assert.equal(
+    second.resolutionReport.resolutionDigest,
+    first.resolutionReport.resolutionDigest,
+  );
+  assert.equal(second.sourceDigest, first.sourceDigest);
+  assert.equal(second.previewDigest, first.previewDigest);
+  assert.deepEqual(second.records, first.records);
 });
 
 test("compatibility warnings are preserved without becoming invented values", () => {
@@ -236,6 +373,15 @@ test("approval contract generates matching source, destination, and preview dige
   );
   assert.equal(preview.approval.importReady, true);
   assert.equal(preview.summary.ready, 19);
+  assert.equal(preview.summary.blocked, 0);
+  assert.equal(preview.resolutionReport.after.resolved, 5);
+  assert.equal(preview.resolutionReport.after.remaining, 0);
+  assert.equal(preview.resolutionReport.validationStatus, "Valid");
+  assert.equal(preview.resolutionReport.approvedRecords.length, 5);
+  assert.match(
+    formatV1MigrationPreview(preview),
+    /Ready:\s+19[\s\S]+Blocked:\s+0/,
+  );
   assert.deepEqual(validateV1ApprovedPreviewSnapshot(approval, preview), {
     valid: true,
   });

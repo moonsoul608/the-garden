@@ -79,13 +79,16 @@ Shape (placeholders must be replaced by the human approver):
   "kind": "v1-migration-resolution-input",
   "growthStages": [
     {
+      "source": "v1-static-typescript",
       "legacyId": "<blocked legacy ID>",
+      "route": "/lake/<blocked legacy ID>",
       "growthStage": "<manually chosen allowed value>",
       "decisionMethod": "manual",
       "resolutionSource": "<review record>",
       "approvedBy": "<approver>",
       "approvedAt": "<ISO timestamp>",
-      "approvalStatus": "Approved"
+      "approvalStatus": "Approved",
+      "notes": "<review reason>"
     }
   ]
 }
@@ -94,12 +97,14 @@ Shape (placeholders must be replaced by the human approver):
 Each approved entry must provide:
 
 - the exact blocked `legacyId`;
+- `source: "v1-static-typescript"` and the exact `/lake/<legacyId>` route;
 - one allowed value: `Seed`, `Sprout`, `Growing`, `Bloom`, or `Dormant`;
 - `decisionMethod: "manual"`;
 - a non-empty `resolutionSource`;
 - a non-empty `approvedBy`;
 - a valid `approvedAt` timestamp;
-- `approvalStatus: "Approved"`.
+- `approvalStatus: "Approved"`;
+- non-empty review notes/reason.
 
 The mechanism never proposes a value. Missing inputs are Pending. Duplicate,
 unknown, incomplete, or invalid inputs are Invalid and remain blocked. Approved

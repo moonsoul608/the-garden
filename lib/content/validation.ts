@@ -18,6 +18,19 @@ import type {
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+const GROWTH_STAGES: ReadonlySet<GrowthStage> = new Set([
+  "Seed",
+  "Sprout",
+  "Growing",
+  "Bloom",
+  "Dormant",
+]);
+
+/** Runtime counterpart to the canonical V2 GrowthStage type. */
+export function isGrowthStage(value: unknown): value is GrowthStage {
+  return typeof value === "string" && GROWTH_STAGES.has(value as GrowthStage);
+}
+
 const fixedTaxonomy: Record<
   RegionName,
   { contentType: ContentType; categories: ReadonlySet<string> }

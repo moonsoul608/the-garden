@@ -252,6 +252,19 @@ test("a successful transaction imports the complete approved snapshot", async ()
   assert.equal(result.created.contentTags.length, approval.contentTags.length);
   assert.equal(result.verification.passed, true);
   assert.equal(boundary.receipts.size, 1);
+
+  const lakeContents = boundary.lastPayload?.contents.filter(
+    (content) => content.region === "Lake",
+  );
+  assert.equal(lakeContents?.length, 5);
+  assert.ok(
+    lakeContents?.every(
+      (content) =>
+        content.contentType === "Reflection" &&
+        content.growthStage === null &&
+        content.growthStageResolution === null,
+    ),
+  );
 });
 
 test("duplicate execution returns the durable result without duplicate writes", async () => {
@@ -396,4 +409,108 @@ test("SQL execution boundary is one transaction and service-role-only", async ()
   assert.match(sql, /regions_valid/);
   assert.match(sql, /versions_valid/);
   assert.doesNotMatch(sql, /grant execute[^;]+to (?:anon|authenticated)/i);
+});
+
+test("Lake import policy replacement preserves the 06C RPC boundary", async () => {
+  const sql = await readFile(
+    new URL(
+      "../supabase/migrations/20260718230000_fix_lake_growth_stage_import_policy.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(sql, /^begin;/);
+  assert.match(sql, /commit;\s*$/);
+  assert.match(
+    sql,
+    /create or replace function public\.execute_v1_import\(p_payload jsonb\)/i,
+  );
+  assert.match(sql, /volatile\s+security definer\s+set search_path = pg_catalog/i);
+  assert.match(sql, /pg_advisory_xact_lock/i);
+  assert.match(sql, /if found then\s+return existing_result/i);
+  assert.match(sql, /post_import_verification_failed/i);
+  assert.match(sql, /comment on function public\.execute_v1_import\(jsonb\)/i);
+  assert.match(
+    sql,
+    /revoke all on function public\.execute_v1_import\(jsonb\)\s+from public, anon, authenticated, service_role/i,
+  );
+  assert.match(
+    sql,
+    /grant execute on function public\.execute_v1_import\(jsonb\) to service_role/i,
+  );
+  assert.doesNotMatch(sql, /grant execute[^;]+to (?:anon|authenticated)/i);
+});
+
+test("SQL import policy allows only null-stage Lake Reflections", async () => {
+  const sql = await readFile(
+    new URL(
+      "../supabase/migrations/20260718230000_fix_lake_growth_stage_import_policy.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const validationStart = sql.indexOf(
+    "where nullif(btrim(item->>'legacyId'), '') is null",
+  );
+  const validationEnd = sql.indexOf(
+    "raise check_violation using message = 'invalid_content_value'",
+    validationStart,
+  );
+
+  assert.notEqual(validationStart, -1);
+  assert.ok(validationEnd > validationStart);
+  const validation = sql.slice(validationStart, validationEnd);
+  assert.match(
+    validation,
+    /item->>'growthStage' is null\s+and not \(\s*item->>'region' = 'Lake'\s+and item->>'contentType' = 'Reflection'\s*\)/i,
+  );
+  assert.match(
+    validation,
+    /item->>'growthStage' is not null\s+and item->>'growthStage' not in \('Seed', 'Sprout', 'Growing', 'Bloom', 'Dormant'\)/i,
+  );
+});
+
+test("legacy Growth Stage approvals are skipped only for null-stage Lake Reflections", async () => {
+  const sql = await readFile(
+    new URL(
+      "../supabase/migrations/20260718230000_fix_lake_growth_stage_import_policy.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const approvalStart = sql.indexOf("where item->>'legacyId' in (");
+  const approvalEnd = sql.indexOf(
+    "raise check_violation using message = 'growth_stage_approval_required'",
+    approvalStart,
+  );
+
+  assert.notEqual(approvalStart, -1);
+  assert.ok(approvalEnd > approvalStart);
+  const approval = sql.slice(approvalStart, approvalEnd);
+  for (const legacyId of [
+    "reverse-1999",
+    "jung-and-mandala",
+    "the-garden",
+    "love-love-love",
+    "summer-ghost",
+  ]) {
+    assert.match(approval, new RegExp(`'${legacyId}'`));
+  }
+  assert.match(
+    approval,
+    /and not \(\s*item->>'region' = 'Lake'\s+and item->>'contentType' = 'Reflection'\s+and item->>'growthStage' is null\s*\)\s+and \(/i,
+  );
+  assert.match(approval, /item->'growthStageResolution' is null/i);
+  assert.match(
+    approval,
+    /item->'growthStageResolution'->>'approvalStatus' <> 'Approved'/i,
+  );
+  assert.match(
+    approval,
+    /item->'growthStageResolution'->>'growthStage' <> item->>'growthStage'/i,
+  );
+  assert.match(approval, /resolutionSource/i);
+  assert.match(approval, /approvedBy/i);
+  assert.match(approval, /approvedAt/i);
 });

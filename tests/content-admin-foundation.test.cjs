@@ -49,6 +49,10 @@ const growthStageApplicabilityMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260718190000_phase_08a2_growth_stage_applicability.sql",
 );
+const growthStageApplicabilitySyncMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260718235551_growth_stage_schema_applicability_sync.sql",
+);
 const archiveFoundationMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260715235900_phase_04d_archive_foundation.sql",
@@ -1318,6 +1322,55 @@ test("Growth Stage schema migration permits only nullable Lake Reflections", () 
   );
   assert.match(migration, /revision\.growth_stage is not null/i);
   assert.match(migration, /execute_v1_import Lake resolution patch/i);
+  assert.doesNotMatch(migration, /alter type public\.growth_stage/i);
+});
+
+test("Growth Stage schema sync safely reapplies nullable Lake Reflection constraints", () => {
+  const migration = fs.readFileSync(
+    growthStageApplicabilitySyncMigrationPath,
+    "utf8",
+  );
+  assert.match(migration, /^begin;/i);
+  assert.match(migration, /commit;\s*$/i);
+  assert.match(
+    migration,
+    /alter table public\.contents\s+alter column growth_stage drop not null/i,
+  );
+  assert.match(
+    migration,
+    /alter table public\.content_revisions\s+alter column growth_stage drop not null/i,
+  );
+  assert.match(
+    migration,
+    /drop constraint if exists contents_growth_stage_applicability/i,
+  );
+  assert.match(
+    migration,
+    /drop constraint if exists content_revisions_growth_stage_applicability/i,
+  );
+  assert.equal(
+    migration.match(
+      /growth_stage is not null\s+or \(region = 'Lake' and content_type = 'Reflection'\)/gi,
+    )?.length,
+    2,
+  );
+  assert.match(
+    migration,
+    /add constraint contents_growth_stage_applicability check[\s\S]*?not valid/i,
+  );
+  assert.match(
+    migration,
+    /add constraint content_revisions_growth_stage_applicability check[\s\S]*?not valid/i,
+  );
+  assert.match(
+    migration,
+    /validate constraint contents_growth_stage_applicability/i,
+  );
+  assert.match(
+    migration,
+    /validate constraint content_revisions_growth_stage_applicability/i,
+  );
+  assert.doesNotMatch(migration, /growth_notes|from_stage|to_stage/i);
   assert.doesNotMatch(migration, /alter type public\.growth_stage/i);
 });
 

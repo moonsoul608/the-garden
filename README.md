@@ -12,6 +12,15 @@ DEEPSEEK_API_KEY=your_key_here
 
 The server uses `deepseek-v4-flash` with thinking mode disabled. Before making a real API call, create a key on the DeepSeek platform and make sure the account has available balance. Never commit `.env.local` or any real secret; `.gitignore` excludes local environment files. Without the variable, the Greenhouse UI remains usable and the API returns a safe configuration error instead of a simulated AI result.
 
+## Public content source
+
+Public content remains in `legacy` mode when `CONTENT_SOURCE_MODE` is absent.
+Do not enable Dual or Database reads by setting a single flag. Controlled
+forward transitions, database validation probes, rollback values, and cache
+refresh requirements are defined in
+`docs/V2_PHASE_07D_SOURCE_CUTOVER.md`. No repository setup step executes a
+cutover automatically.
+
 ## Documentation
 
 - `AGENTS.md` — instructions for Codex

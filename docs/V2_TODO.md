@@ -185,6 +185,12 @@ Acceptance:
 - [x] Harden the public read adapter for legacy, dual, and database source modes
 - [x] Keep public DTOs free of internal IDs, admin metadata, and migration fields
 - [x] Make dual-read collection merging database-first and route-deduplicated
+- [x] Require explicit adjacent source-mode transition configuration
+- [x] Validate database public reads and lifecycle controls before database-only mode
+- [x] Fail closed when database fallback eligibility cannot be verified
+- [x] Preserve adjacent database-to-dual-to-legacy rollback controls
+- [x] Document route, metadata, sitemap, search, and deployment cache refresh requirements
+- [x] Add all-Region source-cutover route smoke contracts
 - [ ] `getAdminContent`
 - [x] `createDraft`
 - [x] `updateDraft`

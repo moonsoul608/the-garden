@@ -349,6 +349,9 @@ export function createContentRepository(
       ascending: query.direction === "asc",
       nullsFirst: false,
     });
+    request = request
+      .order("region", { ascending: true })
+      .order("slug", { ascending: true });
 
     if (query.limit !== undefined) {
       const start = query.offset ?? 0;

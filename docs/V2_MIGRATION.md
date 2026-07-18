@@ -334,6 +334,14 @@ an accepted stability period, zero legacy fallback use, healthy monitoring,
 reverified parity, and explicit final approval. These rules prepare a future
 operator decision only; Phase 06E performs neither transition.
 
+Phase 07D implements the deployment guard for those decisions. Every change
+must declare `CONTENT_SOURCE_MODE`, `CONTENT_SOURCE_PREVIOUS_MODE`, and a
+matching `CONTENT_SOURCE_MODE_CONFIRM`. Only adjacent forward or rollback
+changes are accepted. Environment-driven database mode additionally requires
+Published, Draft, Review, and Archived control-route probes and validates the
+complete public boundary before returning a database result. See
+`docs/V2_PHASE_07D_SOURCE_CUTOVER.md`. No cutover was executed in Phase 07D.
+
 Any verification regression, public-read failure, redirect/404 regression,
 duplicate or discovery mismatch, private/Archived exposure, database outage,
 cache incoherence, or operator stop decision requires rollback. Rollback
@@ -955,6 +963,13 @@ Rollback:
 - preserve Production database snapshot;
 - do not delete content during incident response.
 
+After database-only entry, the controlled configuration rollback is
+`database -> dual -> legacy`. Each step requires a fresh deployment, complete
+route/metadata/sitemap/search cache refresh, and the public smoke matrix. If
+the database cannot authorize safe Dual fallback, Dual fails closed and the
+operator proceeds immediately to the prepared Legacy deployment; the
+application never silently resurrects all V1 routes.
+
 ### 10.3 After fallback retirement
 
 Rollback source:
@@ -965,7 +980,8 @@ Rollback source:
 - Git repository;
 - Vercel deployment history.
 
-Document the exact feature flag or deployment procedure before Production cutover.
+The exact source variables, validation probes, cache surfaces, and adjacent
+deployment procedure are documented in `docs/V2_PHASE_07D_SOURCE_CUTOVER.md`.
 
 ---
 

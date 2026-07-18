@@ -30,8 +30,16 @@ import {
   type RepositoryContent,
   type RepositoryContentDetail,
 } from "./repository";
+import {
+  getDatabaseModeValidationProbes,
+  resolveContentSourceConfiguration,
+  validateDatabaseMode,
+  type ContentSourceMode,
+  type DatabaseModeValidationProbes,
+  type SourceCutoverEnvironment,
+} from "./source-cutover";
 
-export type ContentSourceMode = "legacy" | "dual" | "database";
+export type { ContentSourceMode } from "./source-cutover";
 
 export interface PublicContentService {
   getPublishedContent(query?: ContentQuery): Promise<PublicContentCard[]>;
@@ -51,21 +59,30 @@ export type ContentServiceDependencies = {
   repository?: ContentRepository;
   repositoryFactory?: () => Promise<ContentRepository>;
   legacySource?: LegacyContentSource;
+  /** Injected modes opt into validation explicitly; environment database mode always validates. */
+  databaseModeValidation?: DatabaseModeValidationProbes | false;
 };
 
 export function getContentSourceMode(
-  value = process.env.CONTENT_SOURCE_MODE,
+  environment:
+    | SourceCutoverEnvironment
+    | string = process.env as unknown as SourceCutoverEnvironment,
 ): ContentSourceMode {
-  if (!value) return "legacy";
-  if (value === "legacy" || value === "dual" || value === "database") {
-    return value;
+  if (typeof environment === "string") {
+    if (
+      environment === "legacy" ||
+      environment === "dual" ||
+      environment === "database"
+    ) {
+      return environment;
+    }
+    throw new ContentServiceError(
+      "invalid_source_mode",
+      "CONTENT_SOURCE_MODE must be legacy, dual, or database.",
+      "resolveContentSourceMode",
+    );
   }
-
-  throw new ContentServiceError(
-    "invalid_source_mode",
-    "CONTENT_SOURCE_MODE must be legacy, dual, or database.",
-    "resolveContentSourceMode",
-  );
+  return resolveContentSourceConfiguration(environment).mode;
 }
 
 function mapRepositoryContent(item: RepositoryContent): PublicContentCard {
@@ -137,6 +154,11 @@ export function createContentService(
   dependencies: ContentServiceDependencies = {},
 ): PublicContentService {
   const mode = dependencies.mode ?? getContentSourceMode();
+  const databaseModeValidation =
+    dependencies.databaseModeValidation ??
+    (dependencies.mode === undefined && mode === "database"
+      ? getDatabaseModeValidationProbes()
+      : false);
   const legacySource =
     dependencies.legacySource ?? createLegacyContentSource();
   let repositoryPromise: Promise<ContentRepository> | null =
@@ -150,6 +172,34 @@ export function createContentService(
     return repositoryPromise;
   }
 
+  let databaseValidationPromise: Promise<void> | null = null;
+
+  async function getValidatedRepository(): Promise<ContentRepository> {
+    try {
+      const repository = await getRepository();
+      if (mode === "database" && databaseModeValidation) {
+        databaseValidationPromise ??= validateDatabaseMode(
+          repository,
+          databaseModeValidation,
+        );
+        await databaseValidationPromise;
+      }
+      return repository;
+    } catch (error) {
+      if (
+        error instanceof ContentServiceError &&
+        error.code === "database_validation_failed"
+      ) {
+        throw error;
+      }
+      throw new ContentServiceError(
+        "database_validation_failed",
+        "The database public content source is not ready.",
+        "validateDatabaseAdapter",
+      );
+    }
+  }
+
   async function getPublishedContent(
     query: ContentQuery = {},
   ): Promise<PublicContentCard[]> {
@@ -161,7 +211,10 @@ export function createContentService(
       return legacySource.getPublishedContent(query);
     }
 
-    const repository = await getRepository();
+    const repository =
+      mode === "database"
+        ? await getValidatedRepository()
+        : await getRepository();
     if (mode === "database") {
       const items = await repository.getPublishedContent(query);
       return items
@@ -174,10 +227,10 @@ export function createContentService(
       limit: undefined,
       offset: undefined,
     };
-    const [databaseItems, legacyItems] = await Promise.all([
-      repository.getPublishedContent(unboundedQuery),
-      legacySource.getPublishedContent(unboundedQuery),
-    ]);
+    // The database must first authorize which identities are safe to fall
+    // back. If it is unavailable, do not read or resurrect legacy records.
+    const databaseItems = await repository.getPublishedContent(unboundedQuery);
+    const legacyItems = await legacySource.getPublishedContent(unboundedQuery);
     const mappedDatabaseItems = deduplicateByRoute(
       databaseItems
         .filter(isPublishedRepositoryContent)
@@ -222,7 +275,10 @@ export function createContentService(
         : { kind: "not_found" };
     }
 
-    const repository = await getRepository();
+    const repository =
+      mode === "database"
+        ? await getValidatedRepository()
+        : await getRepository();
     const disposition = await repository.resolvePublicContentRoute(
       region,
       slug,
@@ -258,7 +314,10 @@ export function createContentService(
       return legacySource.getPublishedHomeCuration();
     }
 
-    const repository = await getRepository();
+    const repository =
+      mode === "database"
+        ? await getValidatedRepository()
+        : await getRepository();
     const rows = await repository.getPublishedHomeCuration();
 
     // Dual mode deliberately has no legacy Home fallback while its conflicts

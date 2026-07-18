@@ -55,6 +55,8 @@ export class ContentValidationError extends Error {
 
 export type ContentServiceErrorCode =
   | "invalid_source_mode"
+  | "invalid_source_configuration"
+  | "database_validation_failed"
   | "repository_failure"
   | "mapping_failure"
   | "not_found";

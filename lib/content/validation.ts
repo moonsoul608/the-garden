@@ -81,6 +81,8 @@ export type PublicationCandidate = Pick<
   ContentRecord,
   | "id"
   | "slug"
+  | "region"
+  | "contentType"
   | "titleZh"
   | "titleEn"
   | "summaryZh"
@@ -179,9 +181,11 @@ export function validateDraftLifecycleMutation(): ContentValidationResult {
 
 export function validateRequiredGrowthStage(
   growthStage: GrowthStage | null | undefined,
+  region: RegionName,
+  contentType: ContentType,
   context: { contentId?: string; legacyId?: string } = {},
 ): ContentValidationResult {
-  if (growthStage) {
+  if (growthStage || !requiresGrowthStage(region, contentType)) {
     return { valid: true, issues: [] };
   }
 
@@ -193,6 +197,14 @@ export function validateRequiredGrowthStage(
       "blocked",
     ),
   ]);
+}
+
+/** Central applicability rule shared by content, Admin, and migration flows. */
+export function requiresGrowthStage(
+  region: RegionName,
+  contentType: ContentType,
+): boolean {
+  return !(region === "Lake" && contentType === "Reflection");
 }
 
 export function validateStableSlug(
@@ -431,7 +443,12 @@ export function validatePublicationRequirements(
 
   return mergeResults(
     finish(issues),
-    validateRequiredGrowthStage(content.growthStage, context),
+    validateRequiredGrowthStage(
+      content.growthStage,
+      content.region,
+      content.contentType,
+      context,
+    ),
     validateCoverRequirements(
       content.cover,
       "Published",
@@ -480,9 +497,12 @@ export function validateLifecycleRequirements(
 
   return mergeResults(
     finish(issues),
-    validateRequiredGrowthStage(content.growthStage, {
-      contentId: content.id,
-    }),
+    validateRequiredGrowthStage(
+      content.growthStage,
+      content.region,
+      content.contentType,
+      { contentId: content.id },
+    ),
     validateCoverRequirements(
       content.cover,
       lifecycle,
@@ -610,11 +630,15 @@ export function validateGrowthNote(
 
 export function validateGrowthStageConsistency(
   currentStage: GrowthStage | null,
-  candidateStage: GrowthStage,
+  candidateStage: GrowthStage | null,
   growthNotes: readonly GrowthNoteCandidate[],
   contentId: string,
 ): ContentValidationResult {
-  if (currentStage === null || currentStage === candidateStage) {
+  if (
+    currentStage === null ||
+    candidateStage === null ||
+    currentStage === candidateStage
+  ) {
     return { valid: true, issues: [] };
   }
 
@@ -675,6 +699,8 @@ export function validateV1MigrationBundle(
     const candidate: PublicationCandidate = {
       id: content.legacyId,
       slug: content.slug,
+      region: content.region,
+      contentType: content.contentType,
       titleZh: content.titleZh,
       titleEn: content.titleEn,
       summaryZh: content.summaryZh,

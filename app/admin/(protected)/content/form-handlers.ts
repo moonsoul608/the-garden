@@ -45,7 +45,7 @@ function editableFields(formData: FormData): CreateDraftInput {
       formData,
       "detailLevel",
     ) as CreateDraftInput["detailLevel"],
-    growthStage: requiredText(
+    growthStage: optionalText(
       formData,
       "growthStage",
     ) as CreateDraftInput["growthStage"],

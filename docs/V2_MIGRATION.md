@@ -74,7 +74,7 @@ Arrays retain source order. No timestamp, filesystem metadata, or random identif
 {
   "schemaVersion": 1,
   "source": "v1-static-typescript",
-  "status": "blocked",
+  "status": "ready",
   "contents": [],
   "relations": [],
   "tags": [],
@@ -86,7 +86,7 @@ Arrays retain source order. No timestamp, filesystem metadata, or random identif
 }
 ```
 
-The current V1 bundle contains all 19 source records but is `blocked` because all five Lake records have no confirmed Growth Stage. Those records remain visible in the manifest with `growthStage: null`; they are excluded from the dry-run importable set. Growth Stages are never guessed. Task 06B-1 adds a separate manual resolution input; absent approvals remain explicitly Pending.
+The current V1 bundle contains all 19 source records and accepts the five Lake Reflections with `growthStage: null`. For Lake Reflections, null intentionally means "not growth-tracked / not applicable" under Task 08A-2; no manual Growth Stage resolution is required or synthesized. Garden, Forest, and Ruins records remain blocked if Growth Stage is absent.
 
 Current intentional empty collections:
 
@@ -98,7 +98,7 @@ Only the four explicit Ruins `grewInto` values become relations. `details.relate
 
 ### Verification and report format
 
-Verification checks exactly 19 records; Region counts of Garden 5, Forest 5, Lake 5, and Ruins 4; unique `legacy_id`; unique Region/slug; relation resolution; and exclusion of blocked content. Known blocked records do not make structural verification fail. Unexpected counts, duplicates, or unresolved relations do.
+Verification checks exactly 19 records; Region counts of Garden 5, Forest 5, Lake 5, and Ruins 4; unique `legacy_id`; unique Region/slug; relation resolution; Growth Stage applicability; and exclusion of genuinely blocked content. Unexpected counts, missing required Growth Stages, duplicates, or unresolved relations fail verification.
 
 The dry-run report is JSON and always includes:
 
@@ -161,10 +161,11 @@ generated or inferred.
 
 The dry-run writes the human report to stderr and machine-readable JSON to
 stdout. `--output=<path>` writes only the JSON snapshot to the requested file.
-The default audited summary remains 14 planned creates, five blocked Lake
-records, and four compatibility warnings. Its resolution report states Before:
-Blocked 5; After: Resolved 0, Remaining 5. A manually supplied, valid approval
-changes only its named record and the digest-covered preview state.
+After Task 08A-2, the default audited summary is 19 planned creates, zero
+blocked records, and four compatibility warnings. Its resolution report states
+Before: Blocked 0; After: Resolved 0, Remaining 0. The five Lake Reflections
+retain null Growth Stages as an applicable source state and require no manual
+resolution.
 
 Every preview contains SHA-256 digests for the source state, normalized
 destination state, and complete preview. The future execution input contract
@@ -248,8 +249,9 @@ structured Growth Notes when present, and exactly one immutable initial
 version per content. Current V1 supplies no structured Growth Note rows; its
 sections named “Growth notes” remain in the preserved Markdown body, and no
 note text or historical timestamp is invented. Initial version snapshots
-retain the V1 `legacyId`, source version, source/import digests, and manual
-Growth Stage resolution provenance.
+retain the V1 `legacyId`, source version, and source/import digests. Manual
+Growth Stage resolution provenance is retained only when an actual approved
+resolution exists; none is synthesized for a Lake Reflection with a null stage.
 
 The transaction verifies content count, Region/slug uniqueness, relation
 integrity, Published lifecycle validity, and initial-version count before it
@@ -265,10 +267,10 @@ counts, skipped records, warnings, and verification status. Neither path
 performs public cutover.
 
 Implementation and rollback-only tests exist, but no Preview import was run in
-Phase 06C because the five real Lake Growth Stage approvals and an approved
-snapshot were not supplied. The migration and SQL integration test must be
-applied and run against the real Preview database before execution evidence is
-claimed.
+Phase 06C. Task 08A-2 later superseded the historical five-Lake-approval
+assumption: those null stages are valid without resolutions. The migration and
+SQL integration test must still be applied and run against the real Preview
+database before execution evidence is claimed.
 
 ### Phase 06D migration verification contract
 
@@ -915,16 +917,19 @@ Version 1 detail `relatedPaths` remain presentation navigation and are not migra
 ### 8.10 Approved migration snapshot
 
 Final approval uses the complete `v1-approved-migration-snapshot` format from
-Task 08B. The artifact freezes all 19 source records, their destination
-mappings, resolved Growth Stage audit records, relations, supported child
-metadata, warnings, and source, destination, resolution, preview, and snapshot
-digests.
+Task 08B, regenerated as snapshot format version 2 in Task 08B-1. The artifact
+freezes all 19 source records, their destination mappings, nullable Lake state,
+actual Growth Stage audit records, relations, supported child metadata,
+warnings, validation policy, provenance metadata, and source, destination,
+resolution, preview, schema, and snapshot digests.
 
 Approval is rejected when records are incomplete, blockers remain, a required
-Growth Stage is unresolved, schema versions differ, or any reviewed digest is
-stale. Import preparation requires the full artifact plus its explicit snapshot
-digest and regenerates the approval boundary from current source, resolution,
-and destination state before any execution call. See
+Growth Stage is unresolved, applicability or schema compatibility fails,
+validation policy changes, or any reviewed digest is stale. Lake Reflection
+null means not growth-tracked / not applicable and needs no resolution. Import
+preparation requires the full artifact plus its explicit snapshot digest and
+regenerates the approval boundary from current source, resolution, policy, and
+destination state before any execution call. See
 `docs/V2_PHASE_08B_APPROVED_MIGRATION_SNAPSHOT.md`.
 
 ### 8.11 Task 08C import execution boundary

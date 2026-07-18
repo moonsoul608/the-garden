@@ -13,6 +13,7 @@ import type {
   V1MigrationRelation,
 } from "../../types/content.ts";
 import type { DetailBlock, DetailContent } from "../../content/details.ts";
+import { requiresGrowthStage } from "../../lib/content/validation.ts";
 
 import {
   extractV1Content,
@@ -181,7 +182,10 @@ export function transformV1Content(
   const issues: V1MigrationIssue[] = [];
 
   for (const content of contents) {
-    if (!content.growthStage) {
+    if (
+      requiresGrowthStage(content.region, content.contentType) &&
+      !content.growthStage
+    ) {
       issues.push({
         code: "missing_growth_stage",
         severity: "blocked",

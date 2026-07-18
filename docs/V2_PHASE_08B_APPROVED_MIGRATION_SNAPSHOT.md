@@ -1,94 +1,104 @@
-# The Garden V2 — 08B Approved Migration Snapshot
+# The Garden V2 — 08B-1 Regenerated Approved Migration Snapshot
 
-Task: `08B. Approved Migration Snapshot`  
-Implementation date: `2026-07-18`  
-Scope: approval artifact generation, validation, reporting, and import preflight  
-Import executed: **no**  
-Database or Storage writes: **none**  
+Task: `08B-1 Regenerate Approved Migration Snapshot`
+Implementation date: `2026-07-18`
+Scope: migration preview and approval artifacts only
+Import executed: **no**
+Database or Storage writes: **none**
 Public source mode changed: **no**
 
 ## Outcome
 
-Migration approval now has a complete machine-readable boundary instead of a
-digest-only marker. An approved snapshot freezes the exact source records,
-destination mappings, resolved Growth Stages and audit metadata, relations,
-child metadata, warnings, and all source, destination, resolution, preview, and
-snapshot digests required by import preparation.
+The migration preview and approved snapshot were regenerated after the 08A-2
+Growth Stage applicability correction.
 
-The checked-in Growth Stage resolution input is still intentionally empty, so
-the current real snapshot status is `BLOCKED`. This task did not create a false
-`Approved` artifact and did not choose any editorial Growth Stage. The approval
-path is covered with explicit test-only resolutions.
+- Preview: 19 ready, 0 blocked, 4 existing compatibility warnings.
+- Approved snapshot: `READY` / `Approved`, 19 records, 0 blockers.
+- Five Lake Reflections preserve `growthStage: null`.
+- The checked-in resolution input remains empty; no Growth Stage resolution was
+  created or required.
+- Four explicit Ruins `grewInto` relations remain frozen in the snapshot.
 
-## Snapshot command
+Generated artifacts:
 
-First generate the exact Preview report to be reviewed:
+- `tmp/v1-preview-08b1.json`
+- `tmp/v1-approved-snapshot-08b1.json`
+
+## Lake Reflection exception
+
+Growth Stage is required for Garden Seeds, Forest Questions, and Ruins Traces.
+It is optional for Lake Reflections. A null Lake Reflection Growth Stage means
+`not growth-tracked / not applicable`; it is not missing editorial data and is
+not a new Growth Stage enum value.
+
+Therefore the five Lake nulls need no manual resolution. Creating Seed or any
+other stage for them would invent an editorial decision and would destroy the
+meaning of the source state. The snapshot preserves both
+`sourceRecord.growthStage: null` and `resolvedGrowthStage: null`, with
+`growthStageResolution: null`.
+
+## Validation policy and invalidation
+
+Snapshot format version 2 binds the approval to validation policy
+`v1-migration-validation-08b1` and applicability policy
+`v1-growth-stage-applicability-08a2`. The schema digest covers source schema
+version 1, preview schema version 1, approved-snapshot version 2, and the full
+validation-policy descriptor.
+
+An artifact is `READY` only when all five frozen checks are true:
+
+- blockers are zero;
+- Preview validation and import readiness pass;
+- schema compatibility passes;
+- Growth Stage applicability passes;
+- preview, resolution, source, destination-state, and schema digests match.
+
+Old snapshot-format artifacts are rejected. A policy version change,
+applicability declaration change, validation-rule change, schema-digest change,
+or preview-digest change invalidates approval even when source records are
+otherwise unchanged.
+
+## Migration provenance
+
+The snapshot records:
+
+- migration task `08B-1` and generator `content:v1:approve-snapshot`;
+- source mode `v1-static-typescript`, source schema version 1, and all 19 source
+  records;
+- deterministic destination identity and planned operation per record;
+- nullable Lake state and its explicit non-applicability meaning;
+- relations, child metadata collections, published-at policy, and warnings;
+- approval timestamp `2026-07-18T08:00:00.000Z`;
+- preview, resolution, source, destination-state, schema, and snapshot digests.
+
+Regenerated digests:
+
+- Preview: `sha256:a7562655a6448f6716c830cfc1ad582c6b13b76f686db8b4136fe730707b0a81`
+- Schema: `sha256:ace8b82a1fc1cea8e5792c761f047567e0d2cd3eed6299b27d820c10414b18bb`
+- Snapshot: `sha256:8351754863f97bdfb4bb92c3359cad14bbf621dc229d5941b37cabe5f6baec0f`
+
+## Regeneration commands
 
 ```bash
 npm run content:v1:dry-run -- \
   --preview \
   --resolutions=scripts/content-v1/resolution.json \
-  --output=tmp/v1-preview.json
-```
+  --output=tmp/v1-preview-08b1.json
 
-After review, generate the approval artifact with an explicit ISO approval
-timestamp:
-
-```bash
 npm run content:v1:approve-snapshot -- \
-  --preview=tmp/v1-preview.json \
+  --preview=tmp/v1-preview-08b1.json \
   --resolutions=scripts/content-v1/resolution.json \
   --created-at=2026-07-18T08:00:00.000Z \
-  --output=tmp/approved-snapshot.json
+  --output=tmp/v1-approved-snapshot-08b1.json
 ```
 
-If the preview used an existing destination snapshot, pass the same file with
-`--existing=<path>` to both commands. The explicit timestamp is part of the
-approval event and snapshot digest; using the same timestamp and inputs
-produces byte-identical formatted JSON.
-
-## Approval requirements
-
-The artifact becomes `Approved` only when:
-
-- the snapshot, preview, and source schema versions match;
-- the supplied preview digest matches a freshly regenerated preview;
-- the resolution digest matches the supplied resolution input;
-- the source and destination-state digests match;
-- all 19 records are present and complete;
-- every required Growth Stage has a valid manual approval;
-- record, global, child, and safeguard blockers are zero;
-- preview import readiness has passed.
-
-A blocked candidate remains useful as a machine-readable report, but the
-parser and import executor reject it. The human report is headed `Migration
-Approval Snapshot`, uses `READY` or `BLOCKED`, and lists record count, resolved
-records, warnings, blockers, and digests.
-
-## Invalidation and import preflight
-
-Changing source content, destination state, a Growth Stage decision or any of
-its audit metadata, or the reviewed preview invalidates the snapshot. Import
-preparation now requires the full approved artifact and its snapshot digest.
-Before a database boundary can be called, the executor:
-
-1. validates the artifact structure and its self-digest;
-2. checks the explicit command digest;
-3. regenerates source and resolution digests;
-4. reads and digests the current destination state;
-5. regenerates the complete snapshot using the original approval timestamp;
-6. requires an exact snapshot match;
-7. builds the payload from the frozen approved records and relations.
-
-No import command was run while implementing or validating this phase.
+If a reviewed destination snapshot is later supplied, the same `--existing`
+file must be passed to both commands; that produces a different
+destination-state, preview, and approved-snapshot digest.
 
 ## Safety boundary
 
-- no database schema or migration file was added;
-- no database or Storage write was performed;
-- no public route, frontend, Admin UI, lifecycle service, or source-mode
-  configuration changed;
-- the generator reads migration inputs and writes only the explicitly requested
-  local JSON artifact;
-- the current empty real resolution input remains unchanged and blocked.
-
+- no import command was run;
+- no database, Storage, public UI, Admin UI, or source-mode change was made;
+- no Growth Stage value or resolution was synthesized;
+- no migration file was created for 08B-1.

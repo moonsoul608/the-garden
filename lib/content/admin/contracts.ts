@@ -16,7 +16,7 @@ export type DraftContentFields = {
   region: RegionName;
   contentType: ContentType;
   detailLevel: DetailLevel;
-  growthStage: GrowthStage;
+  growthStage: GrowthStage | null;
   titleZh: string | null;
   titleEn: string | null;
   summaryZh: string | null;
@@ -241,7 +241,7 @@ export type ReviewCoverStatus = {
 
 export type ReviewGrowthStageConsistency = {
   publishedStage: GrowthStage | null;
-  candidateStage: GrowthStage;
+  candidateStage: GrowthStage | null;
   changed: boolean;
   hasMatchingGrowthNote: boolean;
 };

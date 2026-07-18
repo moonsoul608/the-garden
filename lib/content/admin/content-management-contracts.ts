@@ -9,7 +9,7 @@ export type AdminContentRevisionSummary = Readonly<{
   titleZh: string | null;
   titleEn: string | null;
   region: RegionName;
-  growthStage: GrowthStage;
+  growthStage: GrowthStage | null;
   updatedAt: string;
 }>;
 
@@ -19,7 +19,7 @@ export type AdminContentListRecord = Readonly<{
   titleZh: string | null;
   titleEn: string | null;
   region: RegionName;
-  growthStage: GrowthStage;
+  growthStage: GrowthStage | null;
   updatedAt: string;
   activeRevision: AdminContentRevisionSummary | null;
 }>;
@@ -29,7 +29,7 @@ export type AdminContentListItem = Readonly<{
   title: string;
   region: RegionName;
   lifecycle: Lifecycle;
-  growthStage: GrowthStage;
+  growthStage: GrowthStage | null;
   updatedAt: string;
   revisionId: string | null;
   revisionLifecycle: "Draft" | "Review" | null;

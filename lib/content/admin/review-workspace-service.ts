@@ -155,7 +155,9 @@ export function mapReviewChecklist(
       key: "growth-notes",
       label: "Growth Notes",
       hasIssue: growthNoteIssues.length > 0,
-      summary: report.growthStageConsistency.changed
+      summary: candidate.growthStage === null
+        ? "Growth tracking does not apply to this content."
+        : report.growthStageConsistency.changed
         ? report.growthStageConsistency.hasMatchingGrowthNote
           ? "The growth-stage change has a matching Growth Note."
           : "The growth-stage change needs a matching Growth Note."

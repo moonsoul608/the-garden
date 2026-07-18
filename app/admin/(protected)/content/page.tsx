@@ -75,8 +75,14 @@ export default async function AdminContentPage() {
                   <div>
                     <dt>Growth</dt>
                     <dd>
-                      <span aria-hidden="true">{growthMarkers[item.growthStage]}</span>
-                      {item.growthStage}
+                      {item.growthStage ? (
+                        <>
+                          <span aria-hidden="true">{growthMarkers[item.growthStage]}</span>
+                          {item.growthStage}
+                        </>
+                      ) : (
+                        "Not growth-tracked"
+                      )}
                     </dd>
                   </div>
                   <div>

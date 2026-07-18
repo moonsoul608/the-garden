@@ -339,6 +339,29 @@ test("Archived payload excludes private and editorial fields", async () => {
   }
 });
 
+test("Archived Lake payload safely preserves intentional null Growth Stage", async () => {
+  const resting = archivedContent();
+  resting.title = "Resting reflection";
+  resting.region = "Lake";
+  resting.growthStage = null;
+  resting.relations[0].target.region = "Lake";
+  resting.relations[0].target.growthStage = null;
+  const repository = createContentRepository({
+    rpc: async () => ({
+      data: { disposition: "archived", content: resting },
+      error: null,
+    }),
+  });
+
+  const disposition = await repository.resolvePublicContentRoute(
+    "Lake",
+    "resting-reflection",
+  );
+  assert.equal(disposition.kind, "archived");
+  assert.equal(disposition.content.growthStage, null);
+  assert.equal(disposition.content.relations[0].target.growthStage, null);
+});
+
 test("Published response contract drops internal, admin, and migration fields", async () => {
   const row = databaseRow({
     legacy_id: "legacy-seed",

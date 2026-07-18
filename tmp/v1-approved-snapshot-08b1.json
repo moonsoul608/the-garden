@@ -1,0 +1,987 @@
+{
+  "snapshotVersion": 2,
+  "schemaVersion": 1,
+  "kind": "v1-approved-migration-snapshot",
+  "createdAt": "2026-07-18T08:00:00.000Z",
+  "approvalStatus": "Approved",
+  "source": {
+    "name": "v1-static-typescript",
+    "schemaVersion": 1,
+    "recordCount": 19
+  },
+  "metadata": {
+    "migrationTask": "08B-1",
+    "generatedBy": "content:v1:approve-snapshot",
+    "sourceMode": "v1-static-typescript",
+    "nullableLakeGrowthStage": {
+      "recordCount": 5,
+      "meaning": "not growth-tracked / not applicable",
+      "resolutionRequired": false
+    }
+  },
+  "validationPolicy": {
+    "version": "v1-migration-validation-08b1",
+    "growthStageApplicability": {
+      "policyId": "v1-growth-stage-applicability-08a2",
+      "required": [
+        {
+          "region": "Garden",
+          "contentType": "Seed"
+        },
+        {
+          "region": "Forest",
+          "contentType": "Question"
+        },
+        {
+          "region": "Ruins",
+          "contentType": "Trace"
+        }
+      ],
+      "optional": [
+        {
+          "region": "Lake",
+          "contentType": "Reflection"
+        }
+      ],
+      "nullMeaning": "not growth-tracked / not applicable"
+    },
+    "rules": [
+      "complete-source-records",
+      "schema-compatibility",
+      "growth-stage-applicability",
+      "zero-preview-blockers",
+      "preview-import-readiness",
+      "matching-approval-digests"
+    ]
+  },
+  "records": [
+    {
+      "sourceRecord": {
+        "legacyId": "building-the-garden",
+        "slug": "building-the-garden",
+        "region": "Garden",
+        "contentType": "Seed",
+        "detailLevel": "full",
+        "lifecycle": "Published",
+        "growthStage": "Growing",
+        "titleZh": null,
+        "titleEn": "Building The Garden",
+        "summaryZh": "设计并搭建一座可以自由探索的个人数字花园。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "## Why it was planted\n\n最初，这是一份个人网站制作作业。\n\n在确定网站方向时，我不希望它只是一个普通的自我介绍页面，也不想假装自己已经拥有很多成熟项目。\n\n于是，我开始把它想象成一座数字花园。\n\n这里不只展示完成的结果，也保存仍在成长的问题、学习和尝试。\n\n## What has grown so far\n\n- 数字花园的整体世界观\n- Home、Garden、Forest、Lake、Ruins 和 Greenhouse 六个 Regions\n- Seed 生命周期\n- Home 页面结构\n- Garden 页面结构\n- AI Seed Gardener 的基本方向\n\n## Growth notes\n\n### The idea took root\n\n确定网站的数字花园定位。\n\n### The paths became clearer\n\n完成 Home 页面结构精简，并开始设计 Garden Region。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Coding",
+          "Design & Making"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "building-the-garden",
+          "deterministicId": "contents:legacy_id:building-the-garden",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/garden/building-the-garden"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:b520359c07618ef5ac9d365b0dd69bf647d792f07224113aef9148ffe77d79cc"
+      },
+      "resolvedGrowthStage": "Growing",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "learning-psychological-statistics",
+        "slug": "learning-psychological-statistics",
+        "region": "Garden",
+        "contentType": "Seed",
+        "detailLevel": "full",
+        "lifecycle": "Published",
+        "growthStage": "Growing",
+        "titleZh": null,
+        "titleEn": "Learning Psychological Statistics",
+        "summaryZh": "整理心理统计学中的检验方向、置信区间和常见题型。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "## Why it was planted\n\n心理统计学中，真正困难的往往不只是记住一个公式，而是判断题目正在问什么。\n\n同样是 t 检验，题目可能要求判断差异、方向、显著性或置信区间。如果没有先理解问题，查表和计算就很容易混在一起。\n\n因此，我开始把常见概念和题型重新整理，希望形成一套在考试中也能快速使用的判断顺序。\n\n## What has grown so far\n\n- 怎样根据研究假设判断单侧检验和双侧检验\n- “显著高于”和“显著低于”分别对应什么方向\n- 如何确定自由度并查阅临界值\n- 置信区间和置信度之间的关系\n- 判断题和选择题中容易混淆的表述\n- 做统计题时应当先判断什么、再计算什么\n\n## Growth notes\n\n### Finding the direction\n\n先根据题目中的“不同”“高于”或“低于”判断检验方向。\n\n### Reading the table\n\n结合显著性水平、自由度和单侧或双侧要求查找临界值。\n\n### Connecting the ideas\n\n把假设检验、显著性和置信区间放在同一套逻辑中理解，而不是分别死记。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Psychology"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "learning-psychological-statistics",
+          "deterministicId": "contents:legacy_id:learning-psychological-statistics",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/garden/learning-psychological-statistics"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:d06341c6cb9884ac37d6e99b5058b02d753b3ce5993bec15e3009b79f045b3ef"
+      },
+      "resolvedGrowthStage": "Growing",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "exploring-ai-tools",
+        "slug": "exploring-ai-tools",
+        "region": "Garden",
+        "contentType": "Seed",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Sprout",
+        "titleZh": null,
+        "titleEn": "Exploring AI Tools",
+        "summaryZh": "尝试理解 AI 如何帮助学习、创作和表达。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "这颗 Seed 记录我对 AI 学习辅助、创作支持和工具使用方式的持续尝试。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "AI"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "exploring-ai-tools",
+          "deterministicId": "contents:legacy_id:exploring-ai-tools",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/garden/exploring-ai-tools"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:7eeeaa4368d418d671f15dfffcb0d7bda8ce71a12999d5ffa142d6d9d9b9fb7d"
+      },
+      "resolvedGrowthStage": "Sprout",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "python-starting-from-the-basics",
+        "slug": "python-starting-from-the-basics",
+        "region": "Garden",
+        "contentType": "Seed",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Sprout",
+        "titleZh": null,
+        "titleEn": "Python: Starting from the Basics",
+        "summaryZh": "记录从环境配置、基础语法到简单练习的学习过程。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "这颗 Seed 保存从环境配置、基础语法到简单练习的学习起点。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Coding"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "python-starting-from-the-basics",
+          "deterministicId": "contents:legacy_id:python-starting-from-the-basics",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/garden/python-starting-from-the-basics"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:32f8431e1dff072222f0e84cfdaacaea6e05fa6533d76d3e3689dcbaef70f8de"
+      },
+      "resolvedGrowthStage": "Sprout",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "designing-better-slides-and-documents",
+        "slug": "designing-better-slides-and-documents",
+        "region": "Garden",
+        "contentType": "Seed",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Sprout",
+        "titleZh": null,
+        "titleEn": "Designing Better Slides and Documents",
+        "summaryZh": "整理自己在 PPT、Word、排版和信息表达中的实践。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "这颗 Seed 记录如何通过排版、层级和信息组织，让内容更容易阅读和理解。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Design & Making"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "designing-better-slides-and-documents",
+          "deterministicId": "contents:legacy_id:designing-better-slides-and-documents",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/garden/designing-better-slides-and-documents"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:497db51418688b0b3f4af3c2553f44d21f61c2c0ee0f822901f799f73b47172f"
+      },
+      "resolvedGrowthStage": "Sprout",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "why-exploratory-websites-invite-more-clicks",
+        "slug": "why-exploratory-websites-invite-more-clicks",
+        "region": "Forest",
+        "contentType": "Question",
+        "detailLevel": "full",
+        "lifecycle": "Published",
+        "growthStage": "Sprout",
+        "titleZh": "为什么探索式网站会让人更愿意继续点击？",
+        "titleEn": null,
+        "summaryZh": "关于好奇心、信息隐藏和交互节奏的思考。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "## Why I started thinking about it\n\n在设计 The Garden 时，我发现自己不希望访客只是快速看完一份个人介绍。\n\n相比一次展示所有内容，我更想让人产生一种感觉：\n\n“我想再点一下，看看会发生什么。”\n\n这让我开始思考，探索式交互为什么会比普通导航更容易激发继续浏览的欲望。\n\n## What I think so far\n\n目前我觉得，探索欲可能来自三个方面：\n\n- 页面没有一次展示全部信息\n- 每次点击都会带来新的内容\n- 访客能够自己选择下一条路径\n\n但隐藏信息也可能降低可用性。\n\n所以真正重要的并不是把导航藏起来，而是在清晰和未知之间保持平衡。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Design & Experience"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "why-exploratory-websites-invite-more-clicks",
+          "deterministicId": "contents:legacy_id:why-exploratory-websites-invite-more-clicks",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/forest/why-exploratory-websites-invite-more-clicks"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:10976ee9e9e34816b2946f27bbd0ba00df199ae00b0b0acc7598bdf3fa4fc9a7"
+      },
+      "resolvedGrowthStage": "Sprout",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "does-ai-help-thinking-or-organize-answers",
+        "slug": "does-ai-help-thinking-or-organize-answers",
+        "region": "Forest",
+        "contentType": "Question",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Seed",
+        "titleZh": "AI 可以帮助人思考，还是只是在替人组织答案？",
+        "titleEn": null,
+        "summaryZh": "关于辅助、依赖与思考边界的问题。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "这个问题关注使用 AI 时，辅助思考与替代思考之间的界限。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Humans & AI"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "does-ai-help-thinking-or-organize-answers",
+          "deterministicId": "contents:legacy_id:does-ai-help-thinking-or-organize-answers",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/forest/does-ai-help-thinking-or-organize-answers"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:35792b356e4ac7f12c2048518792d852972986a67b24273d947ebf1fdd95bf30"
+      },
+      "resolvedGrowthStage": "Seed",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "why-people-fear-forgetting",
+        "slug": "why-people-fear-forgetting",
+        "region": "Forest",
+        "contentType": "Question",
+        "detailLevel": "full",
+        "lifecycle": "Published",
+        "growthStage": "Sprout",
+        "titleZh": "人为什么会害怕遗忘？",
+        "titleEn": null,
+        "summaryZh": "关于记忆、自我与记录欲望的思考。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "## Why I started thinking about it\n\n在构思《继续吗》时，我为主角设置了一个特点：他不完全相信自己的记忆，也害怕重要的事情在没有被记录时慢慢消失。\n\n这让我开始思考，人害怕遗忘的究竟是什么。\n\n我们担心的也许不只是忘记一个名字或一件事，而是害怕某段经历失去证明，甚至害怕过去的自己也随之变得模糊。\n\n## What I think so far\n\n目前我觉得，记忆和自我之间存在很深的联系。\n\n人会通过记忆理解“我是谁”“我经历过什么”，也会通过记录为过去留下可以重新找到的痕迹。\n\n因此，写日记、拍照、保存文字或反复讲述一个故事，可能不只是为了保存信息，也是在确认某些经历确实发生过。\n\n但记录并不能完整替代记忆。\n\n它留下的是片段，而每次重新阅读这些片段时，人也可能用现在的自己重新理解过去。\n\n这个问题也成为故事《继续吗》的起点之一。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Stories & Memory",
+          "Mind & Behavior"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "why-people-fear-forgetting",
+          "deterministicId": "contents:legacy_id:why-people-fear-forgetting",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/forest/why-people-fear-forgetting"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:1114291689baef91efc271bb4ea1dc5a8541ccada49336bec199f74128bdc5fd"
+      },
+      "resolvedGrowthStage": "Sprout",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "how-psychology-shapes-product-and-web-design",
+        "slug": "how-psychology-shapes-product-and-web-design",
+        "region": "Forest",
+        "contentType": "Question",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Sprout",
+        "titleZh": "心理学如何影响产品和网页设计？",
+        "titleEn": null,
+        "summaryZh": "关于行为、注意和用户体验之间关系的探索。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "这个问题关注注意、行为和心理规律怎样影响界面与用户体验。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Mind & Behavior",
+          "Design & Experience"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "how-psychology-shapes-product-and-web-design",
+          "deterministicId": "contents:legacy_id:how-psychology-shapes-product-and-web-design",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/forest/how-psychology-shapes-product-and-web-design"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:f7019aa7e6035b44851145bb0e22d0a52b0606c1486ef3d80cdbd8c5b31f289c"
+      },
+      "resolvedGrowthStage": "Sprout",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "when-a-question-moves-from-forest-to-garden",
+        "slug": "when-a-question-moves-from-forest-to-garden",
+        "region": "Forest",
+        "contentType": "Question",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Seed",
+        "titleZh": "一个问题什么时候应该从 Forest 移到 Garden？",
+        "titleEn": null,
+        "summaryZh": "关于思考如何变成行动的自我观察。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "当一个问题已经能够转化为练习、项目或下一步行动时，它可能正在从思考走向生长。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Mind & Behavior"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "when-a-question-moves-from-forest-to-garden",
+          "deterministicId": "contents:legacy_id:when-a-question-moves-from-forest-to-garden",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/forest/when-a-question-moves-from-forest-to-garden"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:a9f1852ca3aa406b6a1313dafe3e379e70b8a1151ca464afdc15edd4225682d6"
+      },
+      "resolvedGrowthStage": "Seed",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "reverse-1999",
+        "slug": "reverse-1999",
+        "region": "Lake",
+        "contentType": "Reflection",
+        "detailLevel": "full",
+        "lifecycle": "Published",
+        "growthStage": null,
+        "titleZh": null,
+        "titleEn": "Reverse: 1999",
+        "summaryZh": "它的美术、时代感和叙事方式，让游戏世界像一段被重新拼起的记忆。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "## What it is\n\n一款以时间、历史与失序为重要叙事元素的角色扮演游戏。\n\n## Why it stayed\n\n它的美术、时代感和叙事方式，让游戏世界像一段被重新拼起的记忆。\n\n## What it reflects\n\n我喜欢那些不急着解释全部背景，而是让人通过细节、氛围和碎片逐渐理解世界的作品。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Games"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "reverse-1999",
+          "deterministicId": "contents:legacy_id:reverse-1999",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/lake/reverse-1999"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:ae59bb54d61bfcc9bbf569c5af2fd11cabd7f2659adf508efbd6679b63194ffd"
+      },
+      "resolvedGrowthStage": null,
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "jung-and-mandala",
+        "slug": "jung-and-mandala",
+        "region": "Lake",
+        "contentType": "Reflection",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": null,
+        "titleZh": "荣格与曼陀罗",
+        "titleEn": null,
+        "summaryZh": "我感兴趣的不是图案本身，而是它如何被用来理解心灵的完整性。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "这项 Reflection 关注曼陀罗如何被荣格用来理解心灵的秩序与完整性。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Books & Words"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "jung-and-mandala",
+          "deterministicId": "contents:legacy_id:jung-and-mandala",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/lake/jung-and-mandala"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:86ddd33d32a27c908c97a3526c40675f148177b6dd8afe5ef5cf4f1c83e5634d"
+      },
+      "resolvedGrowthStage": null,
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "the-garden",
+        "slug": "the-garden",
+        "region": "Lake",
+        "contentType": "Reflection",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": null,
+        "titleZh": null,
+        "titleEn": "The Garden",
+        "summaryZh": "它从一次普通作业开始，慢慢变成了一座记录学习、思考和尝试的数字花园。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "这项 Reflection 保存 The Garden 作为一个网络空间所形成的氛围与意义。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Internet"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "the-garden",
+          "deterministicId": "contents:legacy_id:the-garden",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/lake/the-garden"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:70fcfd0c2dab74872cf4235ee6083f99ba97f8f210d7d9f25f3ffd4cdb7416ac"
+      },
+      "resolvedGrowthStage": null,
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "love-love-love",
+        "slug": "love-love-love",
+        "region": "Lake",
+        "contentType": "Reflection",
+        "detailLevel": "full",
+        "lifecycle": "Published",
+        "growthStage": null,
+        "titleZh": "《爱爱爱》— 方大同",
+        "titleEn": null,
+        "summaryZh": "它把感情写得轻盈又真诚，旋律结束以后，情绪仍然会停留一会儿。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "## What it is\n\n方大同演唱的一首歌曲。\n\n## Why it stayed\n\n它把感情写得轻盈又真诚，旋律结束以后，情绪仍然会停留一会儿。\n\n## What it reflects\n\n我喜欢不需要过度用力，却能留下长久情绪的表达。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Music"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "love-love-love",
+          "deterministicId": "contents:legacy_id:love-love-love",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/lake/love-love-love"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:858f83e4a7d138e7a5dcb3fa123ce7be9a973b21b9a5c05f38a4c05d78499101"
+      },
+      "resolvedGrowthStage": null,
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "summer-ghost",
+        "slug": "summer-ghost",
+        "region": "Lake",
+        "contentType": "Reflection",
+        "detailLevel": "full",
+        "lifecycle": "Published",
+        "growthStage": null,
+        "titleZh": "《夏日幽灵》",
+        "titleEn": null,
+        "summaryZh": "它用短暂的夏日相遇讨论死亡、孤独与继续生活，安静却留下了很深的余韵。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "## What it is\n\n一部围绕三名少年、传说中的幽灵与短暂夏日相遇展开的动画作品。\n\n## Why it stayed\n\n它用短暂的夏日相遇讨论死亡、孤独与继续生活，安静却留下了很深的余韵。\n\n## What it reflects\n\n我会被那些节奏克制、篇幅不长，却能认真触碰记忆、孤独与生命意义的故事吸引。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Films"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "summer-ghost",
+          "deterministicId": "contents:legacy_id:summer-ghost",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/lake/summer-ghost"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:9190dab26159047419d13dcb1a1673cabaaa2ea81258351dc0ec48a7a9766036"
+      },
+      "resolvedGrowthStage": null,
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "first-version-of-home",
+        "slug": "first-version-of-home",
+        "region": "Ruins",
+        "contentType": "Trace",
+        "detailLevel": "full",
+        "lifecycle": "Published",
+        "growthStage": "Dormant",
+        "titleZh": null,
+        "titleEn": "The first version of Home",
+        "summaryZh": "最初的 Home 设计包含过多模块和重复入口，后来被压缩成更清晰的结构。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "## What it was\n\n最初的 Home 被设计为七个部分，包括独立的 Welcome、About、Currently Growing、完整路径入口、Recently Planted、指南针和页脚。\n\n每个部分单独看都合理，但放在一起后，页面开始出现重复。\n\n## Why it stopped\n\nWelcome 和 About 都在介绍网站与个人。\n\n首页前半部分和 Garden Map 都在引导访客选择路径。\n\nCurrently Growing 和多个状态模块也重复表达“最近在做什么”。\n\n这会让首页过长，也会增加开发和维护成本。\n\n## What it left behind\n\n它帮助我们确认：\n\n- 美学不等于堆叠内容\n- 同一种信息只需要出现一次\n- 探索感必须建立在清晰结构上\n- 开发说明需要区分内部名称与展示名称",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Drafts"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "first-version-of-home",
+          "deterministicId": "contents:legacy_id:first-version-of-home",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/ruins/first-version-of-home"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:9c550f771fc76321d8a625f16575b615fc02e1aaab760d4581ed787a91a98294"
+      },
+      "resolvedGrowthStage": "Dormant",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "portfolio-never-built",
+        "slug": "portfolio-never-built",
+        "region": "Ruins",
+        "contentType": "Trace",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Dormant",
+        "titleZh": null,
+        "titleEn": "A portfolio that was never built",
+        "summaryZh": "网站最初曾被设想为传统作品集，但因为不符合当前用途，最终转向数字花园。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "传统作品集的方向被放弃后，留下了“怎样真实展示尚未成熟的自己”这个问题。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Attempts"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "portfolio-never-built",
+          "deterministicId": "contents:legacy_id:portfolio-never-built",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/ruins/portfolio-never-built"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:733e324e8a752a1baccb8fb154aa2e1aac68237f31317b6c55f3f90b748e73e4"
+      },
+      "resolvedGrowthStage": "Dormant",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "too-much-interaction",
+        "slug": "too-much-interaction",
+        "region": "Ruins",
+        "contentType": "Trace",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Dormant",
+        "titleZh": null,
+        "titleEn": "Too much interaction",
+        "summaryZh": "早期曾设想大量动画、隐藏导航和复杂点击效果，后来发现探索感不能以牺牲可用性为代价。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "这次尝试留下的经验是：探索感不能以清晰度和可用性为代价。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "mixed",
+        "primaryCategories": [
+          "Mistakes"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "too-much-interaction",
+          "deterministicId": "contents:legacy_id:too-much-interaction",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/ruins/too-much-interaction"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:1f892224acb4262319d0690b0cce410e4d12cf53f0f13a21ed2b803b39eeccee"
+      },
+      "resolvedGrowthStage": "Dormant",
+      "growthStageResolution": null,
+      "warnings": []
+    },
+    {
+      "sourceRecord": {
+        "legacyId": "unfinished-continue",
+        "slug": "unfinished-continue",
+        "region": "Ruins",
+        "contentType": "Trace",
+        "detailLevel": "short",
+        "lifecycle": "Published",
+        "growthStage": "Dormant",
+        "titleZh": "An unfinished version of “继续吗”",
+        "titleEn": null,
+        "summaryZh": "一段没有继续写下去，或后来被新版本替代的小说片段。",
+        "summaryEn": null,
+        "bodyZhMarkdown": "虽然这段版本没有继续完成，但其中关于记忆和遗忘的主题被保留了下来。",
+        "bodyEnMarkdown": null,
+        "contentLanguage": "zh",
+        "primaryCategories": [
+          "Drafts"
+        ],
+        "tags": [],
+        "cover": null,
+        "featured": false,
+        "manualOrder": null,
+        "publishedAt": null,
+        "archivedAt": null,
+        "lastTendedAt": null
+      },
+      "destinationMapping": {
+        "identity": {
+          "collection": "contents",
+          "keyField": "legacy_id",
+          "keyValue": "unfinished-continue",
+          "deterministicId": "contents:legacy_id:unfinished-continue",
+          "existingContentId": null,
+          "exists": false,
+          "route": "/ruins/unfinished-continue"
+        },
+        "plannedOperation": "Create",
+        "recordDigest": "sha256:381bb1b116aa4b1f7c98eae20c3329997304653d6d531c5cf917d1ea97ab6f6f"
+      },
+      "resolvedGrowthStage": "Dormant",
+      "growthStageResolution": null,
+      "warnings": []
+    }
+  ],
+  "relations": [
+    {
+      "sourceLegacyId": "first-version-of-home",
+      "targetLegacyId": "building-the-garden",
+      "relationType": "grewInto",
+      "noteZh": null,
+      "noteEn": null
+    },
+    {
+      "sourceLegacyId": "portfolio-never-built",
+      "targetLegacyId": "the-garden",
+      "relationType": "grewInto",
+      "noteZh": null,
+      "noteEn": null
+    },
+    {
+      "sourceLegacyId": "too-much-interaction",
+      "targetLegacyId": "why-exploratory-websites-invite-more-clicks",
+      "relationType": "grewInto",
+      "noteZh": null,
+      "noteEn": null
+    },
+    {
+      "sourceLegacyId": "unfinished-continue",
+      "targetLegacyId": "why-people-fear-forgetting",
+      "relationType": "grewInto",
+      "noteZh": null,
+      "noteEn": null
+    }
+  ],
+  "tags": [],
+  "contentTags": [],
+  "homeCuration": [],
+  "siteCopy": [],
+  "warnings": [
+    {
+      "code": "home_curation_deferred",
+      "field": null,
+      "message": "Home curation is empty because the known V1 curation conflicts are deferred."
+    },
+    {
+      "code": "site_copy_deferred",
+      "field": null,
+      "message": "Site copy is empty because this phase extracts content modules only."
+    },
+    {
+      "code": "display_overrides_deferred",
+      "field": null,
+      "message": "V1 display overrides are deferred and are not migration records."
+    },
+    {
+      "code": "related_paths_not_migrated",
+      "field": null,
+      "message": "V1 detail relatedPaths remain presentation navigation; only Ruins grewInto becomes a relation."
+    }
+  ],
+  "resolution": {
+    "validationStatus": "Valid",
+    "growthStages": [],
+    "publishedAt": {
+      "policyId": "v1-published-at-preserve-null",
+      "outcome": "preserve-null",
+      "approvalStatus": "Approved",
+      "resolutionSource": "docs/V2_PHASE_06B1_MIGRATION_BLOCKER_RESOLUTION.md",
+      "rationale": "No V1 record contains confirmed plantedOn metadata. Preserve null for the legacy Published migration candidates instead of inventing editorial history; normal V2 publication continues to create a timestamp.",
+      "prohibitsDerivedDates": true
+    }
+  },
+  "preview": {
+    "environment": "preview",
+    "status": "Warning",
+    "recordCount": 19
+  },
+  "checks": {
+    "blockersClear": true,
+    "previewPassed": true,
+    "schemaCompatible": true,
+    "applicabilityPassed": true,
+    "digestsMatch": true
+  },
+  "blockers": [],
+  "digests": {
+    "snapshotDigest": "sha256:8351754863f97bdfb4bb92c3359cad14bbf621dc229d5941b37cabe5f6baec0f",
+    "previewDigest": "sha256:a7562655a6448f6716c830cfc1ad582c6b13b76f686db8b4136fe730707b0a81",
+    "resolutionDigest": "sha256:6117b89e69cc95995bb6a13409c1d1043d9cd118f4d6413659a32bb781d4451b",
+    "sourceDigest": "sha256:6aaa0e340a398ba7c936dd012f9c856fba518885e91ed17e8aaf53e0d18950b8",
+    "destinationStateDigest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "schemaDigest": "sha256:ace8b82a1fc1cea8e5792c761f047567e0d2cd3eed6299b27d820c10414b18bb"
+  }
+}

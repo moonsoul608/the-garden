@@ -342,14 +342,16 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
                 <dd>{item.primaryCategories.join(" · ")}</dd>
               </div>
             ) : null}
-            {item.growthStage ? (
-              <div>
-                <dt>Status</dt>
-                <dd>
+            <div>
+              <dt>Status</dt>
+              <dd>
+                {item.growthStage ? (
                   <StatusBadge status={item.growthStage} />
-                </dd>
-              </div>
-            ) : null}
+                ) : (
+                  "Not growth-tracked"
+                )}
+              </dd>
+            </div>
             {publishedAt ? (
               <div>
                 <dt>Published</dt>
@@ -430,7 +432,7 @@ export function ArchivedDetailPage({ item }: { item: PublicArchivedContent }) {
   const paths = item.relations.map(({ target }) => ({
     label: target.title,
     href: `/${target.region.toLowerCase()}/${target.slug}`,
-    context: `${target.region} · ${target.growthStage}`,
+    context: `${target.region} · ${target.growthStage ?? "Not growth-tracked"}`,
     relationship: "Related path",
   }));
 
@@ -451,7 +453,11 @@ export function ArchivedDetailPage({ item }: { item: PublicArchivedContent }) {
             <div>
               <dt>Status</dt>
               <dd>
-                <StatusBadge status={item.growthStage} />
+                {item.growthStage ? (
+                  <StatusBadge status={item.growthStage} />
+                ) : (
+                  "Not growth-tracked"
+                )}
               </dd>
             </div>
           </dl>

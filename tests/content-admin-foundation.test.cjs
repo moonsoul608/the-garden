@@ -45,6 +45,10 @@ const atomicPublishingMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260715234500_phase_04d_atomic_publishing.sql",
 );
+const growthStageApplicabilityMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260718190000_phase_08a2_growth_stage_applicability.sql",
+);
 const archiveFoundationMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260715235900_phase_04d_archive_foundation.sql",
@@ -530,6 +534,69 @@ test("allows a Keeper to create a normalized Draft", async () => {
   assert.deepEqual(received.tags, ["ai", "Notes"]);
   assert.equal("createdBy" in received, false);
   assert.equal("updatedAt" in received, false);
+});
+
+test("enforces Growth Stage applicability for every content domain", async () => {
+  const created = [];
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      createDraft: async (fields) => {
+        created.push(fields);
+        return draftRevision(fields);
+      },
+    }),
+  });
+
+  const lake = await service.createDraft({
+    ...validDraftInput(),
+    region: "Lake",
+    contentType: "Reflection",
+    growthStage: null,
+  });
+  assert.equal(lake.growthStage, null);
+  assert.equal(created[0].growthStage, null);
+
+  for (const [region, contentType] of [
+    ["Garden", "Seed"],
+    ["Forest", "Question"],
+    ["Ruins", "Trace"],
+  ]) {
+    await assert.rejects(
+      service.createDraft({
+        ...validDraftInput(),
+        region,
+        contentType,
+        growthStage: null,
+      }),
+      (error) => {
+        assert.ok(error instanceof ContentValidationError);
+        assert.ok(
+          error.issues.some((issue) => issue.code === "missing_growth_stage"),
+        );
+        return true;
+      },
+    );
+  }
+});
+
+test("keeps every existing Growth Stage enum value valid", async () => {
+  const stages = ["Seed", "Sprout", "Growing", "Bloom", "Dormant"];
+  const received = [];
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      createDraft: async (fields) => {
+        received.push(fields.growthStage);
+        return draftRevision(fields);
+      },
+    }),
+  });
+
+  for (const growthStage of stages) {
+    await service.createDraft({ ...validDraftInput(), growthStage });
+  }
+  assert.deepEqual(received, stages);
 });
 
 test("updates only the active Draft with the expected lock version", async () => {
@@ -1225,6 +1292,33 @@ test("Atomic publishing migration uses one locked, narrow publish function", () 
     migration,
     /grant\s+execute\s+on\s+function\s+public\.publish_review_revision[\s\S]*?to\s+authenticated/i,
   );
+});
+
+test("Growth Stage schema migration permits only nullable Lake Reflections", () => {
+  const migration = fs.readFileSync(
+    growthStageApplicabilityMigrationPath,
+    "utf8",
+  );
+  assert.match(
+    migration,
+    /alter table public\.contents\s+alter column growth_stage drop not null/i,
+  );
+  assert.match(
+    migration,
+    /alter table public\.content_revisions\s+alter column growth_stage drop not null/i,
+  );
+  assert.match(
+    migration,
+    /growth_stage is not null\s+or \(region = 'Lake' and content_type = 'Reflection'\)/i,
+  );
+  assert.match(migration, /validate constraint contents_growth_stage_applicability/i);
+  assert.match(
+    migration,
+    /validate constraint content_revisions_growth_stage_applicability/i,
+  );
+  assert.match(migration, /revision\.growth_stage is not null/i);
+  assert.match(migration, /execute_v1_import Lake resolution patch/i);
+  assert.doesNotMatch(migration, /alter type public\.growth_stage/i);
 });
 
 test("Draft clone migration preserves source history and never writes Published data", () => {

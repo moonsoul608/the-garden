@@ -77,7 +77,7 @@ export default async function AdminReviewQueuePage() {
                 <dl>
                   <div>
                     <dt>Growth</dt>
-                    <dd>{item.growthStage}</dd>
+                    <dd>{item.growthStage ?? "Not growth-tracked"}</dd>
                   </div>
                   <div>
                     <dt>Submitted</dt>

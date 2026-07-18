@@ -1,0 +1,681 @@
+{
+  "schemaVersion": 1,
+  "kind": "v1-import-preview",
+  "environment": "preview",
+  "status": "Warning",
+  "source": "v1-static-typescript",
+  "validationPolicy": {
+    "version": "v1-migration-validation-08b1",
+    "growthStageApplicability": {
+      "policyId": "v1-growth-stage-applicability-08a2",
+      "required": [
+        {
+          "region": "Garden",
+          "contentType": "Seed"
+        },
+        {
+          "region": "Forest",
+          "contentType": "Question"
+        },
+        {
+          "region": "Ruins",
+          "contentType": "Trace"
+        }
+      ],
+      "optional": [
+        {
+          "region": "Lake",
+          "contentType": "Reflection"
+        }
+      ],
+      "nullMeaning": "not growth-tracked / not applicable"
+    },
+    "rules": [
+      "complete-source-records",
+      "schema-compatibility",
+      "growth-stage-applicability",
+      "zero-preview-blockers",
+      "preview-import-readiness",
+      "matching-approval-digests"
+    ]
+  },
+  "schemaDigest": "sha256:ace8b82a1fc1cea8e5792c761f047567e0d2cd3eed6299b27d820c10414b18bb",
+  "sourceDigest": "sha256:6aaa0e340a398ba7c936dd012f9c856fba518885e91ed17e8aaf53e0d18950b8",
+  "destinationStateDigest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "records": [
+    {
+      "previewRecordId": "sha256:83d8ce7df42a6d6ed1cf5a1826c8692116db759cd4b02987dcbb7f85abf8368f",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "building-the-garden",
+        "route": "/garden/building-the-garden"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "building-the-garden",
+        "deterministicId": "contents:legacy_id:building-the-garden",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/garden/building-the-garden"
+      },
+      "region": "Garden",
+      "contentType": "Seed",
+      "lifecycleTarget": "Published",
+      "growthStage": "Growing",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:b520359c07618ef5ac9d365b0dd69bf647d792f07224113aef9148ffe77d79cc",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:89b1cdc3773e0dc0f7b47a48832b41d14f519c4fc929bbbc37dbb4211563c722",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "learning-psychological-statistics",
+        "route": "/garden/learning-psychological-statistics"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "learning-psychological-statistics",
+        "deterministicId": "contents:legacy_id:learning-psychological-statistics",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/garden/learning-psychological-statistics"
+      },
+      "region": "Garden",
+      "contentType": "Seed",
+      "lifecycleTarget": "Published",
+      "growthStage": "Growing",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:d06341c6cb9884ac37d6e99b5058b02d753b3ce5993bec15e3009b79f045b3ef",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:f5e5f462bed19e03028a55c13205004bb8d8f78179cd4dcc83f5922c305b5e8e",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "exploring-ai-tools",
+        "route": "/garden/exploring-ai-tools"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "exploring-ai-tools",
+        "deterministicId": "contents:legacy_id:exploring-ai-tools",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/garden/exploring-ai-tools"
+      },
+      "region": "Garden",
+      "contentType": "Seed",
+      "lifecycleTarget": "Published",
+      "growthStage": "Sprout",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:7eeeaa4368d418d671f15dfffcb0d7bda8ce71a12999d5ffa142d6d9d9b9fb7d",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:f9f525d1a50405516024a90ecc140d9a81cc9563a44d15f0fd56810d7a28fc19",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "python-starting-from-the-basics",
+        "route": "/garden/python-starting-from-the-basics"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "python-starting-from-the-basics",
+        "deterministicId": "contents:legacy_id:python-starting-from-the-basics",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/garden/python-starting-from-the-basics"
+      },
+      "region": "Garden",
+      "contentType": "Seed",
+      "lifecycleTarget": "Published",
+      "growthStage": "Sprout",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:32f8431e1dff072222f0e84cfdaacaea6e05fa6533d76d3e3689dcbaef70f8de",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:8d8931f24af4b16d7104d79d1a0b7f7337e687b9ff3a6a16077a9b9461299a9a",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "designing-better-slides-and-documents",
+        "route": "/garden/designing-better-slides-and-documents"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "designing-better-slides-and-documents",
+        "deterministicId": "contents:legacy_id:designing-better-slides-and-documents",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/garden/designing-better-slides-and-documents"
+      },
+      "region": "Garden",
+      "contentType": "Seed",
+      "lifecycleTarget": "Published",
+      "growthStage": "Sprout",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:497db51418688b0b3f4af3c2553f44d21f61c2c0ee0f822901f799f73b47172f",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:20bd16e3025f15c2bb0ec2baa14e61ace94f4466515670a75dfb4ee2adfac659",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "why-exploratory-websites-invite-more-clicks",
+        "route": "/forest/why-exploratory-websites-invite-more-clicks"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "why-exploratory-websites-invite-more-clicks",
+        "deterministicId": "contents:legacy_id:why-exploratory-websites-invite-more-clicks",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/forest/why-exploratory-websites-invite-more-clicks"
+      },
+      "region": "Forest",
+      "contentType": "Question",
+      "lifecycleTarget": "Published",
+      "growthStage": "Sprout",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:10976ee9e9e34816b2946f27bbd0ba00df199ae00b0b0acc7598bdf3fa4fc9a7",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:9ac67201d36db6c722cfe2a9ca15938e171ea4775d179348a8789f3f609c1dd3",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "does-ai-help-thinking-or-organize-answers",
+        "route": "/forest/does-ai-help-thinking-or-organize-answers"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "does-ai-help-thinking-or-organize-answers",
+        "deterministicId": "contents:legacy_id:does-ai-help-thinking-or-organize-answers",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/forest/does-ai-help-thinking-or-organize-answers"
+      },
+      "region": "Forest",
+      "contentType": "Question",
+      "lifecycleTarget": "Published",
+      "growthStage": "Seed",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:35792b356e4ac7f12c2048518792d852972986a67b24273d947ebf1fdd95bf30",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:d71eb5dd438ff6e20c8e8f0d6325e15bb43d619450b6eac445144f5f02946fb7",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "why-people-fear-forgetting",
+        "route": "/forest/why-people-fear-forgetting"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "why-people-fear-forgetting",
+        "deterministicId": "contents:legacy_id:why-people-fear-forgetting",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/forest/why-people-fear-forgetting"
+      },
+      "region": "Forest",
+      "contentType": "Question",
+      "lifecycleTarget": "Published",
+      "growthStage": "Sprout",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:1114291689baef91efc271bb4ea1dc5a8541ccada49336bec199f74128bdc5fd",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:c0b74356b8037a37f2f74a51133d830753a097763f381b8d46bca257808626fe",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "how-psychology-shapes-product-and-web-design",
+        "route": "/forest/how-psychology-shapes-product-and-web-design"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "how-psychology-shapes-product-and-web-design",
+        "deterministicId": "contents:legacy_id:how-psychology-shapes-product-and-web-design",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/forest/how-psychology-shapes-product-and-web-design"
+      },
+      "region": "Forest",
+      "contentType": "Question",
+      "lifecycleTarget": "Published",
+      "growthStage": "Sprout",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:f7019aa7e6035b44851145bb0e22d0a52b0606c1486ef3d80cdbd8c5b31f289c",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:1951d22e8507e73c86317867f34425ed0d034de799a4d0cfc325a9eead3897cc",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "when-a-question-moves-from-forest-to-garden",
+        "route": "/forest/when-a-question-moves-from-forest-to-garden"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "when-a-question-moves-from-forest-to-garden",
+        "deterministicId": "contents:legacy_id:when-a-question-moves-from-forest-to-garden",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/forest/when-a-question-moves-from-forest-to-garden"
+      },
+      "region": "Forest",
+      "contentType": "Question",
+      "lifecycleTarget": "Published",
+      "growthStage": "Seed",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:a9f1852ca3aa406b6a1313dafe3e379e70b8a1151ca464afdc15edd4225682d6",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:0577b3d27f33a33be5c4e864484dcf0d8ff91a9613238444d4fb05baf0ed777c",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "reverse-1999",
+        "route": "/lake/reverse-1999"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "reverse-1999",
+        "deterministicId": "contents:legacy_id:reverse-1999",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/lake/reverse-1999"
+      },
+      "region": "Lake",
+      "contentType": "Reflection",
+      "lifecycleTarget": "Published",
+      "growthStage": null,
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:ae59bb54d61bfcc9bbf569c5af2fd11cabd7f2659adf508efbd6679b63194ffd",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:5c0965e490c8e1ba81eebe45999818468bbeb24f17e675bcbdea58fe877f45f0",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "jung-and-mandala",
+        "route": "/lake/jung-and-mandala"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "jung-and-mandala",
+        "deterministicId": "contents:legacy_id:jung-and-mandala",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/lake/jung-and-mandala"
+      },
+      "region": "Lake",
+      "contentType": "Reflection",
+      "lifecycleTarget": "Published",
+      "growthStage": null,
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:86ddd33d32a27c908c97a3526c40675f148177b6dd8afe5ef5cf4f1c83e5634d",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:747d6fb7aa0281896394c86a2a079a4d1551ab596952530243fbe32b33c0be7d",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "the-garden",
+        "route": "/lake/the-garden"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "the-garden",
+        "deterministicId": "contents:legacy_id:the-garden",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/lake/the-garden"
+      },
+      "region": "Lake",
+      "contentType": "Reflection",
+      "lifecycleTarget": "Published",
+      "growthStage": null,
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:70fcfd0c2dab74872cf4235ee6083f99ba97f8f210d7d9f25f3ffd4cdb7416ac",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:a6f5c76c652a8b93dfaa65954a5bb1234dccff49b0a424ac8b0e87e5f861715f",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "love-love-love",
+        "route": "/lake/love-love-love"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "love-love-love",
+        "deterministicId": "contents:legacy_id:love-love-love",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/lake/love-love-love"
+      },
+      "region": "Lake",
+      "contentType": "Reflection",
+      "lifecycleTarget": "Published",
+      "growthStage": null,
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:858f83e4a7d138e7a5dcb3fa123ce7be9a973b21b9a5c05f38a4c05d78499101",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:423910ce55bc3b0d40ceb59badddce4e9ec8e0bb1fc475751c4e06df293f060c",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "summer-ghost",
+        "route": "/lake/summer-ghost"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "summer-ghost",
+        "deterministicId": "contents:legacy_id:summer-ghost",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/lake/summer-ghost"
+      },
+      "region": "Lake",
+      "contentType": "Reflection",
+      "lifecycleTarget": "Published",
+      "growthStage": null,
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:9190dab26159047419d13dcb1a1673cabaaa2ea81258351dc0ec48a7a9766036",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:827e1e750f4ad08eb6a953c90ca8e00a0cc7e7cd9a5a7ca4ce8cd9207b15c421",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "first-version-of-home",
+        "route": "/ruins/first-version-of-home"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "first-version-of-home",
+        "deterministicId": "contents:legacy_id:first-version-of-home",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/ruins/first-version-of-home"
+      },
+      "region": "Ruins",
+      "contentType": "Trace",
+      "lifecycleTarget": "Published",
+      "growthStage": "Dormant",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:9c550f771fc76321d8a625f16575b615fc02e1aaab760d4581ed787a91a98294",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:d3baabc7e53cf5010b71e4003fed466762284b42e2a9d0037992fc283c3c7ec5",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "portfolio-never-built",
+        "route": "/ruins/portfolio-never-built"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "portfolio-never-built",
+        "deterministicId": "contents:legacy_id:portfolio-never-built",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/ruins/portfolio-never-built"
+      },
+      "region": "Ruins",
+      "contentType": "Trace",
+      "lifecycleTarget": "Published",
+      "growthStage": "Dormant",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:733e324e8a752a1baccb8fb154aa2e1aac68237f31317b6c55f3f90b748e73e4",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:3ad3239c613a3d5bfa0a159180b11079fbef84b24c4cc981d630a6ed7f75b17d",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "too-much-interaction",
+        "route": "/ruins/too-much-interaction"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "too-much-interaction",
+        "deterministicId": "contents:legacy_id:too-much-interaction",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/ruins/too-much-interaction"
+      },
+      "region": "Ruins",
+      "contentType": "Trace",
+      "lifecycleTarget": "Published",
+      "growthStage": "Dormant",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:1f892224acb4262319d0690b0cce410e4d12cf53f0f13a21ed2b803b39eeccee",
+      "importReady": true
+    },
+    {
+      "previewRecordId": "sha256:dfbfee45a3f3411fdf78e9754736f6b38e77b40a1bc3b30c73f6e89e179e4701",
+      "sourceIdentity": {
+        "source": "v1-static-typescript",
+        "legacyId": "unfinished-continue",
+        "route": "/ruins/unfinished-continue"
+      },
+      "destinationIdentity": {
+        "collection": "contents",
+        "keyField": "legacy_id",
+        "keyValue": "unfinished-continue",
+        "deterministicId": "contents:legacy_id:unfinished-continue",
+        "existingContentId": null,
+        "exists": false,
+        "route": "/ruins/unfinished-continue"
+      },
+      "region": "Ruins",
+      "contentType": "Trace",
+      "lifecycleTarget": "Published",
+      "growthStage": "Dormant",
+      "growthStageResolution": null,
+      "plannedOperation": "Create",
+      "validationStatus": "Ready",
+      "blockers": [],
+      "warnings": [],
+      "recordDigest": "sha256:381bb1b116aa4b1f7c98eae20c3329997304653d6d531c5cf917d1ea97ab6f6f",
+      "importReady": true
+    }
+  ],
+  "blockers": [],
+  "warnings": [
+    {
+      "code": "home_curation_deferred",
+      "field": null,
+      "message": "Home curation is empty because the known V1 curation conflicts are deferred."
+    },
+    {
+      "code": "site_copy_deferred",
+      "field": null,
+      "message": "Site copy is empty because this phase extracts content modules only."
+    },
+    {
+      "code": "display_overrides_deferred",
+      "field": null,
+      "message": "V1 display overrides are deferred and are not migration records."
+    },
+    {
+      "code": "related_paths_not_migrated",
+      "field": null,
+      "message": "V1 detail relatedPaths remain presentation navigation; only Ruins grewInto becomes a relation."
+    }
+  ],
+  "failures": [],
+  "childReadiness": {
+    "relations": {
+      "ready": 4,
+      "blocked": 0,
+      "duplicates": 0,
+      "blockedItems": []
+    },
+    "tags": {
+      "ready": 0,
+      "blocked": 0,
+      "duplicates": 0,
+      "blockedItems": []
+    },
+    "contentTags": {
+      "ready": 0,
+      "blocked": 0,
+      "duplicates": 0,
+      "blockedItems": []
+    }
+  },
+  "resolutionReport": {
+    "resolutionDigest": "sha256:6117b89e69cc95995bb6a13409c1d1043d9cd118f4d6413659a32bb781d4451b",
+    "validationStatus": "Valid",
+    "approvedRecords": [],
+    "before": {
+      "blocked": 0
+    },
+    "after": {
+      "resolved": 0,
+      "remaining": 0
+    },
+    "growthStages": [],
+    "publishedAt": {
+      "policyId": "v1-published-at-preserve-null",
+      "outcome": "preserve-null",
+      "approvalStatus": "Approved",
+      "resolutionSource": "docs/V2_PHASE_06B1_MIGRATION_BLOCKER_RESOLUTION.md",
+      "rationale": "No V1 record contains confirmed plantedOn metadata. Preserve null for the legacy Published migration candidates instead of inventing editorial history; normal V2 publication continues to create a timestamp.",
+      "prohibitsDerivedDates": true
+    }
+  },
+  "readiness": {
+    "importReady": true,
+    "requiredFieldsComplete": true,
+    "validationPassed": true,
+    "blockersResolved": true,
+    "digestGenerated": true,
+    "schemaCompatible": true,
+    "applicabilityPassed": true
+  },
+  "summary": {
+    "total": 19,
+    "ready": 19,
+    "blocked": 0,
+    "warningRecords": 0,
+    "warnings": 4,
+    "create": 19,
+    "update": 0,
+    "unchanged": 0,
+    "noOperation": 0,
+    "existing": 0,
+    "duplicateConflicts": 0
+  },
+  "previewDigest": "sha256:a7562655a6448f6716c830cfc1ad582c6b13b76f686db8b4136fe730707b0a81",
+  "approval": {
+    "approvedPreviewSnapshotRequired": true,
+    "matchingDigestRequired": true,
+    "unchangedSourceStateRequired": true,
+    "unchangedDestinationStateRequired": true,
+    "importReady": true,
+    "requiredFieldsComplete": true,
+    "validationPassed": true,
+    "blockersResolved": true,
+    "digestGenerated": true,
+    "previewDigest": "sha256:a7562655a6448f6716c830cfc1ad582c6b13b76f686db8b4136fe730707b0a81",
+    "sourceDigest": "sha256:6aaa0e340a398ba7c936dd012f9c856fba518885e91ed17e8aaf53e0d18950b8",
+    "destinationStateDigest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  }
+}

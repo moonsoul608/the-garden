@@ -218,7 +218,7 @@ Acceptance:
 - [x] Preserve Region
 - [x] Preserve Content Type
 - [x] Preserve summaries
-- [x] Preserve confirmed statuses; block missing Lake Growth Stages
+- [x] Preserve confirmed statuses; originally report missing Lake Growth Stages (superseded by Task 08A-2)
 - [x] Preserve full/short detail level
 - [x] Preserve detail body
 - [x] Convert only Ruins `grewInto`
@@ -235,7 +235,12 @@ Acceptance:
 - [x] Add deterministic, blocker, warning, write-safety, invalidation, and digest tests
 - [x] Adopt the legacy Published `publishedAt: null` exception without derived dates
 - [x] Add manual Growth Stage resolution input and per-record audit metadata
-- [x] Keep all five missing Growth Stage decisions explicitly Pending by default
+- [x] Retire the five historical Pending Growth Stage decisions under Task 08A-2
+- [x] Supersede the five Lake decisions: Lake Reflection null means not growth-tracked / not applicable
+- [x] Centralize Growth Stage applicability across content, migration, Admin, Draft, and Review validation
+- [x] Make `contents` and `content_revisions` nullable with database applicability constraints
+- [x] Remove the five-record Lake blocker from preview, snapshot validation, and import preflight
+- [x] Harden Admin and public null display without inventing an enum value or resolution
 - [x] Require complete fields, passing validation, resolved blockers, and digests before approval readiness
 - [x] Add blocker-resolution, policy, digest-invalidation, and no-execution tests
 - [x] Add the Task 08A deterministic Growth Stage resolution file contract
@@ -249,7 +254,11 @@ Acceptance:
 - [x] Invalidate approved snapshots when content, resolution, preview, or destination state changes
 - [x] Require the full approved snapshot and snapshot digest at import preparation
 - [x] Add unresolved-blocker, valid-approval, digest, stale-state, incomplete-record, and determinism tests
-- [ ] Replace the empty Task 08A resolution input with five real reviewer approvals
+- [x] Retire the obsolete requirement for five Lake reviewer approvals under Task 08A-2
+- [x] Regenerate the 08B-1 preview at 19 ready, 0 blocked with all five Lake nulls preserved
+- [x] Bind approved snapshots to validation-policy version and schema digest
+- [x] Reject old snapshots after applicability, preview, schema, or validation-rule changes
+- [x] Generate the deterministic 08B-1 READY artifact without resolutions or import execution
 - [x] Add a server/script-only Preview import executor
 - [x] Require an approved snapshot, explicit matching digest, unchanged source/destination, and zero blockers
 - [x] Add one service-role-only transactional import RPC and immutable import receipt

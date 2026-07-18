@@ -64,7 +64,7 @@ export default async function AdminReviewDetailPage({
           <dl>
             <div><dt>Region</dt><dd>{revision.region}</dd></div>
             <div><dt>Content type</dt><dd>{revision.contentType}</dd></div>
-            <div><dt>Growth stage</dt><dd>{revision.growthStage}</dd></div>
+            <div><dt>Growth stage</dt><dd>{revision.growthStage ?? "Not growth-tracked"}</dd></div>
             <div><dt>Detail level</dt><dd>{revision.detailLevel}</dd></div>
             <div><dt>Language</dt><dd>{revision.contentLanguage}</dd></div>
             <div><dt>Slug</dt><dd>{revision.slug ?? "Not set"}</dd></div>

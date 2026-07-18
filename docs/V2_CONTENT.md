@@ -75,7 +75,11 @@ Allowed values:
 - `Bloom`
 - `Dormant`
 
-Growth Stage is manually selected.
+Growth Stage is manually selected where it applies:
+
+- Garden Seeds, Forest Questions, and Ruins Traces require a Growth Stage.
+- Lake Reflections may use `null`, meaning "not growth-tracked / not applicable."
+- `null` is not a new enum value; the existing enum remains unchanged.
 
 ### 3.4 Lifecycle
 
@@ -138,7 +142,7 @@ type ContentItem = {
   detailLevel: DetailLevel;
 
   lifecycle: Lifecycle;
-  growthStage: GrowthStage;
+  growthStage: GrowthStage | null;
 
   titleZh?: string;
   titleEn?: string;
@@ -181,7 +185,7 @@ Minimum:
 - one title field;
 - Region;
 - Content Type;
-- Growth Stage;
+- Growth Stage where applicable;
 - lifecycle = Draft.
 
 Draft may have incomplete summary or body.
@@ -194,7 +198,7 @@ Required:
 - one summary field;
 - Region;
 - Content Type;
-- Growth Stage;
+- Growth Stage where applicable;
 - valid slug proposal;
 - selected primary category where required;
 - valid Markdown body or a confirmed short-detail explanation;
@@ -220,7 +224,7 @@ Archived content retains:
 - slug;
 - Region;
 - title;
-- final Growth Stage;
+- final Growth Stage, where applicable;
 - Growth Notes;
 - relations;
 - version history;
@@ -793,7 +797,7 @@ Direct access to an Archived route may show:
 
 - original title;
 - owning Region;
-- final Growth Stage;
+- final Growth Stage, or an intentional not-growth-tracked state for Lake Reflections;
 - resting-state explanation;
 - return path;
 - approved related paths.

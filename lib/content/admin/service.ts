@@ -161,6 +161,8 @@ function toValidationCandidate(
   return {
     id: contentId,
     slug: fields.slug,
+    region: fields.region,
+    contentType: fields.contentType,
     titleZh: fields.titleZh,
     titleEn: fields.titleEn,
     summaryZh: fields.summaryZh,

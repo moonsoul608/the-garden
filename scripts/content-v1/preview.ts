@@ -10,6 +10,7 @@ import type {
   V1MigrationResolutionInput,
   V1MigrationPreviewWarning,
   V1PublishedAtMigrationPolicy,
+  V1MigrationValidationPolicy,
 } from "../../types/content.ts";
 
 import {
@@ -30,6 +31,12 @@ import {
   V1_GROWTH_STAGE_BLOCKER_IDS,
   V1_PUBLISHED_AT_POLICY,
 } from "./resolutions.ts";
+import {
+  calculateV1MigrationSchemaDigest,
+  doesV1GrowthStageApplicabilityPolicyPass,
+  isCurrentV1MigrationValidationPolicy,
+  V1_MIGRATION_VALIDATION_POLICY,
+} from "./validation-policy.ts";
 
 export type V1ExistingContent = Record<string, unknown>;
 
@@ -38,6 +45,7 @@ export type V1MigrationPreviewOptions = {
   existingContents?: readonly V1ExistingContent[];
   resolutionInput?: V1MigrationResolutionInput | null;
   publishedAtPolicy?: V1PublishedAtMigrationPolicy;
+  validationPolicy?: V1MigrationValidationPolicy;
   environment?: "none" | "preview";
   safeguardFailures?: readonly {
     code: string;
@@ -160,8 +168,8 @@ function blockerGuidance(field: string): {
   switch (field) {
     case "growthStage":
       return {
-        whyRequired: "Every V2 content record and every Published candidate requires a manually assigned Growth Stage.",
-        manualAction: "The Garden Keeper must choose and approve Seed, Sprout, Growing, Bloom, or Dormant, then regenerate the preview.",
+        whyRequired: "Growth-tracked Garden, Forest, and Ruins records require a manually assigned Growth Stage.",
+        manualAction: "For a growth-tracked record, the Garden Keeper must choose an existing Growth Stage and regenerate the preview.",
       };
     case "slug":
       return {
@@ -253,17 +261,28 @@ export function buildV1MigrationPreview(
   const extract = options.extract ?? extractV1Content();
   const resolutionInput = options.resolutionInput ?? null;
   const publishedAtPolicy = options.publishedAtPolicy ?? V1_PUBLISHED_AT_POLICY;
+  const validationPolicy = structuredClone(
+    options.validationPolicy ?? V1_MIGRATION_VALIDATION_POLICY,
+  );
   const resolution = applyV1MigrationResolutions(
     transformV1Content(extract),
     resolutionInput,
   );
   const bundle = resolution.bundle;
   const verification = verifyV1MigrationBundle(bundle);
+  const schemaDigest = calculateV1MigrationSchemaDigest(validationPolicy);
+  const schemaCompatible = isCurrentV1MigrationValidationPolicy(validationPolicy);
+  const applicabilityPassed = doesV1GrowthStageApplicabilityPolicyPass(
+    validationPolicy,
+    bundle.contents,
+  );
   const existingContents = [...(options.existingContents ?? [])];
   const sourceDigest = digestV1MigrationValue({
     extract,
     resolutionInput: canonicalResolutionInput(resolutionInput),
     publishedAtPolicy,
+    validationPolicy,
+    schemaDigest,
   });
   const resolutionDigest = digestV1MigrationValue(
     canonicalResolutionInput(resolutionInput),
@@ -297,6 +316,26 @@ export function buildV1MigrationPreview(
   const globalBlockers = verification.blocked
     .filter((issue) => issue.legacyId === null)
     .map(toBlocker);
+  if (!schemaCompatible) {
+    addBlocker(
+      globalBlockers,
+      makeBlocker(
+        "validation_policy_mismatch",
+        "validationPolicy",
+        "The preview validation policy does not match the current migration approval policy.",
+      ),
+    );
+  }
+  if (!applicabilityPassed) {
+    addBlocker(
+      globalBlockers,
+      makeBlocker(
+        "growth_stage_applicability_mismatch",
+        "growthStage",
+        "The Growth Stage applicability declaration does not match the shared content validation rule or the source records.",
+      ),
+    );
+  }
   const publishedAtIssues = validateV1PublishedAtPolicy(
     bundle,
     publishedAtPolicy,
@@ -571,11 +610,15 @@ export function buildV1MigrationPreview(
       validationPassed &&
       blockersResolved &&
       digestGenerated &&
+      schemaCompatible &&
+      applicabilityPassed &&
       records.every((record) => record.importReady),
     requiredFieldsComplete,
     validationPassed,
     blockersResolved,
     digestGenerated,
+    schemaCompatible,
+    applicabilityPassed,
   };
   const resolvedGrowthStages = resolution.growthStages.filter(
     (item) => item.approvalStatus === "Approved",
@@ -608,6 +651,8 @@ export function buildV1MigrationPreview(
           ? ("Warning" as const)
           : ("Ready" as const),
     source: "v1-static-typescript" as const,
+    validationPolicy,
+    schemaDigest,
     sourceDigest,
     destinationStateDigest,
     records,
@@ -716,11 +761,15 @@ export function formatV1MigrationPreview(
     "Warnings:",
     String(preview.summary.warnings),
     "",
-    "Growth Stage blocker resolution:",
+    "Growth Stage applicability/resolution:",
     `Before blocked: ${preview.resolutionReport.before.blocked}`,
     `Resolved: ${preview.resolutionReport.after.resolved}`,
     `Remaining: ${preview.resolutionReport.after.remaining}`,
     `Validation: ${preview.resolutionReport.validationStatus}`,
+    `Validation policy: ${preview.validationPolicy.version}`,
+    `Schema compatibility: ${preview.readiness.schemaCompatible ? "passed" : "failed"}`,
+    `Applicability rules: ${preview.readiness.applicabilityPassed ? "passed" : "failed"}`,
+    `Schema digest: ${preview.schemaDigest}`,
     `Resolution digest: ${preview.resolutionReport.resolutionDigest}`,
     `Import ready: ${preview.readiness.importReady ? "yes" : "no"}`,
     "",

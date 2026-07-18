@@ -8,16 +8,11 @@ import type {
 } from "../../types/content.ts";
 import { isGrowthStage } from "../../lib/content/validation.ts";
 
-export const V1_GROWTH_STAGE_BLOCKER_IDS = [
-  "reverse-1999",
-  "jung-and-mandala",
-  "the-garden",
-  "love-love-love",
-  "summer-ghost",
-] as const;
+/** No V1 record currently needs a manual Growth Stage resolution. */
+export const V1_GROWTH_STAGE_BLOCKER_IDS: readonly string[] = [];
 
 const GROWTH_STAGE_BLOCKER_REASON =
-  "V1 supplies no Growth Stage; V2 requires a manually approved Growth Stage.";
+  "A growth-tracked V1 record is missing a required Growth Stage.";
 
 export const V1_PUBLISHED_AT_POLICY: V1PublishedAtMigrationPolicy = Object.freeze({
   policyId: "v1-published-at-preserve-null",

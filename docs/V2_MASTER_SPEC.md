@@ -522,9 +522,13 @@ Allowed Growth Stages:
 
 Rules:
 
-- Growth Stage is manually assigned;
+- Growth Stage is required for Garden, Forest, and Ruins content;
+- Growth Stage is optional only for Lake Reflection content, where `null` means
+  "not growth-tracked / not applicable";
+- no new enum value represents non-applicability;
+- when applicable, Growth Stage is manually assigned;
 - it must never be inferred automatically from age, views, or word count;
-- changing Growth Stage requires a Growth Note;
+- changing an applicable Growth Stage requires a Growth Note;
 - Growth Notes may be private or public;
 - selected public Growth Notes form the concise Growth Timeline;
 - ordinary text edits do not automatically create Growth Notes;

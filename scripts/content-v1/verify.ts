@@ -7,7 +7,10 @@ import type {
   V1MigrationCompatibilityWarning,
   V1MigrationIssue,
 } from "../../types/content.ts";
-import { validateV1MigrationBundle } from "../../lib/content/validation.ts";
+import {
+  requiresGrowthStage,
+  validateV1MigrationBundle,
+} from "../../lib/content/validation.ts";
 
 import { transformV1Content } from "./transform.ts";
 
@@ -177,7 +180,12 @@ export function verifyV1MigrationBundle(
       .map((issue) => issue.legacyId as string),
   );
   const importableLegacyIds = bundle.contents
-    .filter((content) => content.growthStage && !blockedIds.has(content.legacyId))
+    .filter(
+      (content) =>
+        (content.growthStage !== null ||
+          !requiresGrowthStage(content.region, content.contentType)) &&
+        !blockedIds.has(content.legacyId),
+    )
     .map((content) => content.legacyId);
   const blockedContentExcluded = importableLegacyIds.every(
     (legacyId) => !blockedIds.has(legacyId),

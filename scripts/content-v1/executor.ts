@@ -18,6 +18,7 @@ import { extractV1Content, type V1ExtractManifest } from "./extract.ts";
 import { buildV1MigrationPreview } from "./preview.ts";
 import { isV1ImportVerificationPassed } from "./migration-verification.ts";
 import { stableV1MigrationJson } from "./digest.ts";
+import { requiresGrowthStage } from "../../lib/content/validation.ts";
 
 export class V1ImportExecutionError extends Error {
   readonly code: string;
@@ -145,7 +146,13 @@ function buildPayload(
   }
 
   const contents = approved.records.map((record) => {
-    if (!record.sourceRecord.growthStage) {
+    if (
+      !record.sourceRecord.growthStage &&
+      requiresGrowthStage(
+        record.sourceRecord.region,
+        record.sourceRecord.contentType,
+      )
+    ) {
       return executionError(
         "unresolved_growth_stage",
         `Growth Stage remains unresolved for ${record.sourceRecord.legacyId}.`,

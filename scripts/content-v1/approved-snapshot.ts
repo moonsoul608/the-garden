@@ -18,6 +18,13 @@ import {
 } from "./preview.ts";
 import { applyV1MigrationResolutions } from "./resolutions.ts";
 import { transformV1Content } from "./transform.ts";
+import { requiresGrowthStage } from "../../lib/content/validation.ts";
+import {
+  calculateV1MigrationSchemaDigest,
+  doesV1GrowthStageApplicabilityPolicyPass,
+  isCurrentV1MigrationValidationPolicy,
+  V1_APPROVED_SNAPSHOT_VERSION,
+} from "./validation-policy.ts";
 
 export type V1ApprovedMigrationSnapshotOptions = {
   preview: V1MigrationPreview;
@@ -73,7 +80,8 @@ function completeSourceRecord(record: V1MigrationContentRecord): boolean {
   return Boolean(
     record.legacyId &&
       record.slug &&
-      record.growthStage &&
+      (record.growthStage !== null ||
+        !requiresGrowthStage(record.region, record.contentType)) &&
       (record.titleZh || record.titleEn) &&
       (record.summaryZh || record.summaryEn) &&
       (record.bodyZhMarkdown || record.bodyEnMarkdown) &&
@@ -87,6 +95,7 @@ function snapshotDigestInput(snapshot: V1ApprovedMigrationSnapshot): unknown {
     resolutionDigest: snapshot.digests.resolutionDigest,
     sourceDigest: snapshot.digests.sourceDigest,
     destinationStateDigest: snapshot.digests.destinationStateDigest,
+    schemaDigest: snapshot.digests.schemaDigest,
   };
   return { ...snapshot, digests: boundDigests };
 }
@@ -118,6 +127,23 @@ export function buildV1ApprovedMigrationSnapshot(
       code: "schema_version_mismatch",
       legacyId: null,
       message: "The preview schema version does not match the migration source schema.",
+    });
+  }
+  if (
+    !options.preview.validationPolicy ||
+    !isCurrentV1MigrationValidationPolicy(options.preview.validationPolicy)
+  ) {
+    pushBlocker(blockers, {
+      code: "validation_policy_mismatch",
+      legacyId: null,
+      message: "The supplied preview uses a different migration validation policy.",
+    });
+  }
+  if (options.preview.schemaDigest !== currentPreview.schemaDigest) {
+    pushBlocker(blockers, {
+      code: "schema_digest_mismatch",
+      legacyId: null,
+      message: "The supplied preview schema digest does not match the current approval schema.",
     });
   }
   if (options.preview.environment !== "preview") {
@@ -178,12 +204,27 @@ export function buildV1ApprovedMigrationSnapshot(
       message: "The current preview still has unresolved import blockers.",
     });
   }
+  if (!currentPreview.readiness.schemaCompatible) {
+    pushBlocker(blockers, {
+      code: "schema_compatibility_failed",
+      legacyId: null,
+      message: "The migration snapshot schema is not compatible with the current validation policy.",
+    });
+  }
+  if (!currentPreview.readiness.applicabilityPassed) {
+    pushBlocker(blockers, {
+      code: "growth_stage_applicability_failed",
+      legacyId: null,
+      message: "Growth Stage applicability validation did not pass.",
+    });
+  }
   if (
     currentPreview.resolutionReport.validationStatus !== "Valid" ||
     currentPreview.resolutionReport.after.remaining !== 0 ||
-    currentPreview.resolutionReport.growthStages.some(
+    currentPreview.records.some(
       (record) =>
-        record.approvalStatus !== "Approved" || record.growthStage === null,
+        requiresGrowthStage(record.region, record.contentType) &&
+        record.growthStage === null,
     )
   ) {
     pushBlocker(blockers, {
@@ -261,17 +302,72 @@ export function buildV1ApprovedMigrationSnapshot(
     ];
   });
 
+  const applicabilityPassed = doesV1GrowthStageApplicabilityPolicyPass(
+    currentPreview.validationPolicy,
+    records.map((record) => record.sourceRecord),
+  );
+  if (!applicabilityPassed) {
+    pushBlocker(blockers, {
+      code: "growth_stage_applicability_failed",
+      legacyId: null,
+      message: "The frozen source records do not pass the approved Growth Stage applicability policy.",
+    });
+  }
+
+  const schemaCompatible =
+    currentPreview.readiness.schemaCompatible &&
+    currentPreview.schemaDigest ===
+      calculateV1MigrationSchemaDigest(currentPreview.validationPolicy);
+  const digestsMatch =
+    options.preview.previewDigest === currentPreview.previewDigest &&
+    options.preview.resolutionReport.resolutionDigest ===
+      currentPreview.resolutionReport.resolutionDigest &&
+    options.preview.sourceDigest === currentPreview.sourceDigest &&
+    options.preview.destinationStateDigest ===
+      currentPreview.destinationStateDigest &&
+    options.preview.schemaDigest === currentPreview.schemaDigest;
+  const previewPassed =
+    currentPreview.readiness.importReady &&
+    currentPreview.readiness.validationPassed;
+  const blockersClear = blockers.length === 0;
+  const checks = {
+    blockersClear,
+    previewPassed,
+    schemaCompatible,
+    applicabilityPassed,
+    digestsMatch,
+  };
+  const approvalReady = Object.values(checks).every(Boolean);
+
+  const nullableLakeGrowthStageCount = records.filter(
+    (record) =>
+      record.sourceRecord.region === "Lake" &&
+      record.sourceRecord.contentType === "Reflection" &&
+      record.sourceRecord.growthStage === null,
+  ).length;
+
   const snapshot: V1ApprovedMigrationSnapshot = {
-    snapshotVersion: 1,
+    snapshotVersion: V1_APPROVED_SNAPSHOT_VERSION,
     schemaVersion: 1,
     kind: "v1-approved-migration-snapshot",
     createdAt: options.createdAt,
-    approvalStatus: blockers.length === 0 ? "Approved" : "Blocked",
+    approvalStatus: approvalReady ? "Approved" : "Blocked",
     source: {
       name: "v1-static-typescript",
       schemaVersion: extract.schemaVersion,
       recordCount: resolution.bundle.contents.length,
     },
+    metadata: {
+      migrationTask: "08B-1",
+      generatedBy: "content:v1:approve-snapshot",
+      sourceMode: "v1-static-typescript",
+      nullableLakeGrowthStage: {
+        recordCount: nullableLakeGrowthStageCount,
+        meaning: "not growth-tracked / not applicable",
+        resolutionRequired: false,
+      },
+    },
+    validationPolicy: structuredClone(currentPreview.validationPolicy),
     records,
     relations: structuredClone(resolution.bundle.relations),
     tags: structuredClone(resolution.bundle.tags),
@@ -293,6 +389,7 @@ export function buildV1ApprovedMigrationSnapshot(
       status: currentPreview.status,
       recordCount: currentPreview.summary.total,
     },
+    checks,
     blockers,
     digests: {
       snapshotDigest: "",
@@ -300,6 +397,7 @@ export function buildV1ApprovedMigrationSnapshot(
       resolutionDigest: currentPreview.resolutionReport.resolutionDigest,
       sourceDigest: currentPreview.sourceDigest,
       destinationStateDigest: currentPreview.destinationStateDigest,
+      schemaDigest: currentPreview.schemaDigest,
     },
   };
   snapshot.digests.snapshotDigest =
@@ -311,12 +409,24 @@ function validateSnapshotStructure(
   snapshot: V1ApprovedMigrationSnapshot,
 ): V1ApprovedMigrationSnapshotValidation {
   if (
-    snapshot.snapshotVersion !== 1 ||
+    snapshot.snapshotVersion !== V1_APPROVED_SNAPSHOT_VERSION ||
     snapshot.schemaVersion !== 1 ||
     snapshot.kind !== "v1-approved-migration-snapshot" ||
     snapshot.source?.schemaVersion !== 1
   ) {
     return { valid: false, reason: "snapshot_schema_mismatch" };
+  }
+  if (
+    !snapshot.validationPolicy ||
+    !isCurrentV1MigrationValidationPolicy(snapshot.validationPolicy)
+  ) {
+    return { valid: false, reason: "validation_policy_mismatch" };
+  }
+  if (
+    snapshot.digests?.schemaDigest !==
+    calculateV1MigrationSchemaDigest(snapshot.validationPolicy)
+  ) {
+    return { valid: false, reason: "schema_digest_mismatch" };
   }
   if (snapshot.approvalStatus !== "Approved" || snapshot.blockers.length > 0) {
     return { valid: false, reason: "snapshot_not_approved" };
@@ -336,6 +446,20 @@ function validateSnapshotStructure(
     calculateV1ApprovedMigrationSnapshotDigest(snapshot)
   ) {
     return { valid: false, reason: "snapshot_digest_mismatch" };
+  }
+  if (
+    !snapshot.checks ||
+    snapshot.checks.blockersClear !== true ||
+    snapshot.checks.previewPassed !== true ||
+    snapshot.checks.schemaCompatible !== true ||
+    snapshot.checks.applicabilityPassed !== true ||
+    snapshot.checks.digestsMatch !== true ||
+    snapshot.metadata?.migrationTask !== "08B-1" ||
+    snapshot.metadata?.generatedBy !== "content:v1:approve-snapshot" ||
+    snapshot.metadata?.sourceMode !== "v1-static-typescript" ||
+    !isObject(snapshot.metadata?.nullableLakeGrowthStage)
+  ) {
+    return { valid: false, reason: "snapshot_readiness_checks_failed" };
   }
   if (
     snapshot.records.length !== snapshot.source.recordCount ||
@@ -361,6 +485,24 @@ function validateSnapshotStructure(
     return { valid: false, reason: "snapshot_records_incomplete" };
   }
   if (
+    !doesV1GrowthStageApplicabilityPolicyPass(
+      snapshot.validationPolicy,
+      snapshot.records.map((record) => record.sourceRecord),
+    ) ||
+    snapshot.metadata.nullableLakeGrowthStage.recordCount !==
+      snapshot.records.filter(
+        (record) =>
+          record.sourceRecord.region === "Lake" &&
+          record.sourceRecord.contentType === "Reflection" &&
+          record.sourceRecord.growthStage === null,
+      ).length ||
+    snapshot.metadata.nullableLakeGrowthStage.meaning !==
+      "not growth-tracked / not applicable" ||
+    snapshot.metadata.nullableLakeGrowthStage.resolutionRequired !== false
+  ) {
+    return { valid: false, reason: "snapshot_applicability_mismatch" };
+  }
+  if (
     snapshot.resolution.validationStatus !== "Valid" ||
     snapshot.resolution.growthStages.some(
       (record) =>
@@ -380,6 +522,19 @@ export function validateV1ApprovedMigrationSnapshot(
   if (!structure.valid) return structure;
   if (!currentPreview.readiness.importReady) {
     return { valid: false, reason: "preview_not_import_ready" };
+  }
+  if (
+    !currentPreview.readiness.schemaCompatible ||
+    snapshot.digests.schemaDigest !== currentPreview.schemaDigest
+  ) {
+    return { valid: false, reason: "schema_state_changed" };
+  }
+  if (
+    !currentPreview.readiness.applicabilityPassed ||
+    stableV1MigrationJson(snapshot.validationPolicy) !==
+      stableV1MigrationJson(currentPreview.validationPolicy)
+  ) {
+    return { valid: false, reason: "validation_policy_changed" };
   }
   if (snapshot.schemaVersion !== currentPreview.schemaVersion) {
     return { valid: false, reason: "snapshot_schema_mismatch" };
@@ -447,7 +602,10 @@ export function parseV1ApprovedMigrationSnapshot(
     !Array.isArray(snapshot.resolution?.growthStages) ||
     !snapshot.digests ||
     !snapshot.source ||
-    !snapshot.preview
+    !snapshot.preview ||
+    !snapshot.metadata ||
+    !snapshot.validationPolicy ||
+    !snapshot.checks
   ) {
     throw new V1ApprovedMigrationSnapshotError(
       "incomplete_approval",
@@ -484,10 +642,15 @@ export function formatV1ApprovedMigrationSnapshot(
     "",
     `Record count: ${snapshot.records.length}`,
     `Resolved records: ${resolved}`,
+    `Nullable Lake Growth Stages: ${snapshot.metadata.nullableLakeGrowthStage.recordCount}`,
+    `Validation policy: ${snapshot.validationPolicy.version}`,
+    `Schema compatibility: ${snapshot.checks.schemaCompatible ? "passed" : "failed"}`,
+    `Applicability rules: ${snapshot.checks.applicabilityPassed ? "passed" : "failed"}`,
     `Warnings: ${snapshot.warnings.length}`,
     `Blockers: ${snapshot.blockers.length}`,
     `Digest: ${snapshot.digests.snapshotDigest}`,
     `Preview digest: ${snapshot.digests.previewDigest}`,
     `Resolution digest: ${snapshot.digests.resolutionDigest}`,
+    `Schema digest: ${snapshot.digests.schemaDigest}`,
   ].join("\n") + "\n";
 }

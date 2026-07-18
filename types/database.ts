@@ -26,7 +26,7 @@ export type ContentDatabaseRow = {
   content_type: ContentType;
   detail_level: DetailLevel;
   lifecycle: Lifecycle;
-  growth_stage: GrowthStage;
+  growth_stage: GrowthStage | null;
   title_zh: string | null;
   title_en: string | null;
   summary_zh: string | null;
@@ -64,7 +64,7 @@ export type ContentDatabaseInsert = {
   content_type: ContentType;
   detail_level: DetailLevel;
   lifecycle?: Lifecycle;
-  growth_stage: GrowthStage;
+  growth_stage: GrowthStage | null;
   title_zh?: string | null;
   title_en?: string | null;
   summary_zh?: string | null;
@@ -98,7 +98,7 @@ export type ContentRevisionDatabaseRow = {
   region: RegionName;
   content_type: ContentType;
   detail_level: DetailLevel;
-  growth_stage: GrowthStage;
+  growth_stage: GrowthStage | null;
   title_zh: string | null;
   title_en: string | null;
   summary_zh: string | null;
@@ -137,7 +137,7 @@ export type ContentRevisionDatabaseInsert = {
   region: RegionName;
   content_type: ContentType;
   detail_level: DetailLevel;
-  growth_stage: GrowthStage;
+  growth_stage: GrowthStage | null;
   title_zh?: string | null;
   title_en?: string | null;
   summary_zh?: string | null;

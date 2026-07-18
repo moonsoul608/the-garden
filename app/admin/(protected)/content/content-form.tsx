@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+
+import { requiresGrowthStage } from "@/lib/content/validation";
 
 import type {
   ContentLanguage,
@@ -23,7 +25,7 @@ type EditableDraft = Readonly<{
   region: RegionName;
   contentType: ContentType;
   detailLevel: DetailLevel;
-  growthStage: GrowthStage;
+  growthStage: GrowthStage | null;
   titleZh: string | null;
   titleEn: string | null;
   summaryZh: string | null;
@@ -106,6 +108,28 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
   const bodyErrors = state.fieldErrors.bodyMarkdown;
   const categoryErrors = state.fieldErrors.primaryCategories;
   const tagErrors = state.fieldErrors.tags;
+  const growthStageErrors = state.fieldErrors.growthStage;
+  const [region, setRegion] = useState<RegionName>(draft?.region ?? "Garden");
+  const [contentType, setContentType] = useState<ContentType>(
+    draft?.contentType ?? "Seed",
+  );
+  const [growthStage, setGrowthStage] = useState<GrowthStage | null>(
+    draft ? draft.growthStage : "Seed",
+  );
+  const growthStageRequired = requiresGrowthStage(region, contentType);
+
+  function updatePlacement(
+    nextRegion: RegionName,
+    nextContentType: ContentType,
+  ) {
+    setRegion(nextRegion);
+    setContentType(nextContentType);
+    if (!requiresGrowthStage(nextRegion, nextContentType)) {
+      setGrowthStage(null);
+    } else if (growthStage === null) {
+      setGrowthStage("Seed");
+    }
+  }
   const lockVersion =
     state.status === "success" && state.lockVersion
       ? state.lockVersion
@@ -203,7 +227,13 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
         <div className="admin-form-grid admin-form-grid--four">
           <label className="admin-form-field">
             <span>Region</span>
-            <select name="region" defaultValue={draft?.region ?? "Garden"}>
+            <select
+              name="region"
+              value={region}
+              onChange={(event) =>
+                updatePlacement(event.target.value as RegionName, contentType)
+              }
+            >
               {REGIONS.map((region) => (
                 <option key={region}>{region}</option>
               ))}
@@ -213,7 +243,10 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             <span>Content type</span>
             <select
               name="contentType"
-              defaultValue={draft?.contentType ?? "Seed"}
+              value={contentType}
+              onChange={(event) =>
+                updatePlacement(region, event.target.value as ContentType)
+              }
             >
               {CONTENT_TYPES.map((contentType) => (
                 <option key={contentType}>{contentType}</option>
@@ -232,17 +265,36 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             </select>
           </label>
           <label className="admin-form-field">
-            <span>Growth stage</span>
+            <span>Growth stage{growthStageRequired ? "" : " (optional)"}</span>
             <select
               name="growthStage"
-              defaultValue={draft?.growthStage ?? "Seed"}
+              value={growthStage ?? ""}
+              onChange={(event) =>
+                setGrowthStage(
+                  event.target.value
+                    ? (event.target.value as GrowthStage)
+                    : null,
+                )
+              }
+              aria-describedby={
+                growthStageErrors ? "growth-stage-error" : "growth-stage-hint"
+              }
             >
+              {!growthStageRequired ? (
+                <option value="">Not growth-tracked</option>
+              ) : null}
               {GROWTH_STAGES.map((growthStage) => (
                 <option key={growthStage}>{growthStage}</option>
               ))}
             </select>
+            {!growthStageRequired ? (
+              <small id="growth-stage-hint">
+                Lake Reflections may remain outside growth tracking.
+              </small>
+            ) : null}
           </label>
         </div>
+        <FieldError errors={growthStageErrors} id="growth-stage-error" />
       </section>
 
       <section className="admin-editor-section" aria-labelledby="content-fields">

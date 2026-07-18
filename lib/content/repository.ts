@@ -126,6 +126,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isArchivedGrowthStage(
+  region: unknown,
+  growthStage: unknown,
+): growthStage is GrowthStage | null {
+  return (
+    GROWTH_STAGES.has(growthStage as GrowthStage) ||
+    (region === "Lake" && growthStage === null)
+  );
+}
+
 function parseArchivedContent(value: unknown): PublicArchivedContent {
   if (!isRecord(value)) {
     throw new ContentRepositoryError("resolvePublicContentRoute");
@@ -135,7 +145,7 @@ function parseArchivedContent(value: unknown): PublicArchivedContent {
   if (
     typeof title !== "string" ||
     !REGIONS.has(region as RegionName) ||
-    !GROWTH_STAGES.has(growthStage as GrowthStage) ||
+    !isArchivedGrowthStage(region, growthStage) ||
     lifecycle !== "Archived" ||
     restingState !== "archived" ||
     !Array.isArray(value.relations)
@@ -154,7 +164,7 @@ function parseArchivedContent(value: unknown): PublicArchivedContent {
       !RELATION_TYPES.has(relationType as RelationType) ||
       typeof target.slug !== "string" ||
       !REGIONS.has(target.region as RegionName) ||
-      !GROWTH_STAGES.has(target.growthStage as GrowthStage) ||
+      !isArchivedGrowthStage(target.region, target.growthStage) ||
       typeof target.title !== "string"
     ) {
       throw new ContentRepositoryError("resolvePublicContentRoute");
@@ -165,7 +175,7 @@ function parseArchivedContent(value: unknown): PublicArchivedContent {
       target: {
         slug: target.slug,
         region: target.region as RegionName,
-        growthStage: target.growthStage as GrowthStage,
+        growthStage: target.growthStage as GrowthStage | null,
         title: target.title,
       },
     };
@@ -174,7 +184,7 @@ function parseArchivedContent(value: unknown): PublicArchivedContent {
   return {
     title,
     region: region as RegionName,
-    growthStage: growthStage as GrowthStage,
+    growthStage: growthStage as GrowthStage | null,
     lifecycle: "Archived",
     restingState: "archived",
     relations,

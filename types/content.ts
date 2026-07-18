@@ -24,7 +24,8 @@ export type ContentRecord = {
   contentType: ContentType;
   detailLevel: DetailLevel;
   lifecycle: Lifecycle;
-  growthStage: GrowthStage;
+  /** Null means Growth Stage is not applicable to this content domain. */
+  growthStage: GrowthStage | null;
   titleZh: string | null;
   titleEn: string | null;
   summaryZh: string | null;
@@ -86,7 +87,7 @@ export type PublicContentCard = {
   region: RegionName;
   contentType: ContentType;
   detailLevel: DetailLevel;
-  /** Null only while a legacy source has no confirmed Growth Stage. */
+  /** Null means this content is intentionally not growth-tracked. */
   growthStage: GrowthStage | null;
   /** Null only while legacy bilingual field mapping remains unconfirmed. */
   contentLanguage: ContentLanguage | null;
@@ -132,7 +133,7 @@ export type PublicArchivedRelation = {
   target: {
     slug: string;
     region: RegionName;
-    growthStage: GrowthStage;
+    growthStage: GrowthStage | null;
     title: string;
   };
 };
@@ -141,7 +142,7 @@ export type PublicArchivedRelation = {
 export type PublicArchivedContent = {
   title: string;
   region: RegionName;
-  growthStage: GrowthStage;
+  growthStage: GrowthStage | null;
   lifecycle: "Archived";
   restingState: "archived";
   relations: PublicArchivedRelation[];
@@ -212,9 +213,8 @@ export type V1MigrationIssue = {
 };
 
 /**
- * A migration candidate may have no Growth Stage so extraction can report the
- * known Lake gap without guessing a value. It is never a valid ContentRecord
- * until that issue is resolved explicitly.
+ * A migration candidate may have no Growth Stage when the shared applicability
+ * rule marks its Region/content-type pair as not growth-tracked.
  */
 export type V1MigrationContentRecord = {
   legacyId: string;
@@ -358,6 +358,17 @@ export type V1PublishedAtMigrationPolicy = {
   prohibitsDerivedDates: true;
 };
 
+export type V1MigrationValidationPolicy = {
+  version: string;
+  growthStageApplicability: {
+    policyId: string;
+    required: Array<{ region: RegionName; contentType: ContentType }>;
+    optional: Array<{ region: RegionName; contentType: ContentType }>;
+    nullMeaning: "not growth-tracked / not applicable";
+  };
+  rules: string[];
+};
+
 export type V1MigrationPreviewWarning = {
   code: string;
   field: string | null;
@@ -440,7 +451,7 @@ export type V1ApprovedMigrationSnapshotRecord = {
  * execution boundary.
  */
 export type V1ApprovedMigrationSnapshot = {
-  snapshotVersion: 1;
+  snapshotVersion: 2;
   schemaVersion: 1;
   kind: "v1-approved-migration-snapshot";
   createdAt: string;
@@ -450,6 +461,17 @@ export type V1ApprovedMigrationSnapshot = {
     schemaVersion: 1;
     recordCount: number;
   };
+  metadata: {
+    migrationTask: "08B-1";
+    generatedBy: "content:v1:approve-snapshot";
+    sourceMode: "v1-static-typescript";
+    nullableLakeGrowthStage: {
+      recordCount: number;
+      meaning: "not growth-tracked / not applicable";
+      resolutionRequired: false;
+    };
+  };
+  validationPolicy: V1MigrationValidationPolicy;
   records: V1ApprovedMigrationSnapshotRecord[];
   relations: V1MigrationRelation[];
   tags: V1MigrationTag[];
@@ -467,6 +489,13 @@ export type V1ApprovedMigrationSnapshot = {
     status: V1MigrationPreviewState;
     recordCount: number;
   };
+  checks: {
+    blockersClear: boolean;
+    previewPassed: boolean;
+    schemaCompatible: boolean;
+    applicabilityPassed: boolean;
+    digestsMatch: boolean;
+  };
   blockers: V1ApprovedMigrationSnapshotBlocker[];
   digests: {
     snapshotDigest: string;
@@ -474,6 +503,7 @@ export type V1ApprovedMigrationSnapshot = {
     resolutionDigest: string;
     sourceDigest: string;
     destinationStateDigest: string;
+    schemaDigest: string;
   };
 };
 
@@ -483,6 +513,8 @@ export type V1MigrationPreview = {
   environment: "none" | "preview";
   status: V1MigrationPreviewState;
   source: "v1-static-typescript";
+  validationPolicy: V1MigrationValidationPolicy;
+  schemaDigest: string;
   sourceDigest: string;
   destinationStateDigest: string;
   previewDigest: string;
@@ -543,6 +575,8 @@ export type V1MigrationPreview = {
     validationPassed: boolean;
     blockersResolved: boolean;
     digestGenerated: boolean;
+    schemaCompatible: boolean;
+    applicabilityPassed: boolean;
   };
   summary: {
     total: number;
@@ -568,7 +602,7 @@ export type V1ImportDestinationContent = {
   content_type: ContentType;
   detail_level: DetailLevel;
   lifecycle: Lifecycle;
-  growth_stage: GrowthStage;
+  growth_stage: GrowthStage | null;
   title_zh: string | null;
   title_en: string | null;
   summary_zh: string | null;
@@ -602,7 +636,7 @@ export type V1ImportExecutionPayload = {
   expectedDestinationContents: V1ImportDestinationContent[];
   contents: Array<
     Omit<V1MigrationContentRecord, "growthStage"> & {
-      growthStage: GrowthStage;
+      growthStage: GrowthStage | null;
       growthStageResolution: V1GrowthStageResolutionAudit | null;
     }
   >;

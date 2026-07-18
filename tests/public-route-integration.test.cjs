@@ -11,6 +11,7 @@ const integrationPath = path.join(
   projectRoot,
   "lib/content/public-route-integration.ts",
 );
+const seoPath = path.join(projectRoot, "lib/seo.ts");
 const servicePath = path.join(projectRoot, "lib/content/service.ts");
 const originalLoad = Module._load;
 const originalResolveFilename = Module._resolveFilename;
@@ -60,6 +61,10 @@ require.extensions[".ts"] = function transpileTypeScript(module, filename) {
 
 const { createPublicRouteIntegration } = require(integrationPath);
 const { createContentService } = require(servicePath);
+const {
+  createPublicContentStructuredData,
+  serializeStructuredData,
+} = require(seoPath);
 
 test.after(() => {
   Module._load = originalLoad;
@@ -152,8 +157,26 @@ test("Published routes provide the public render DTO and safe metadata", async (
   const metadata = await routes.metadata("Garden", content.slug);
   assert.equal(metadata.title, "Published seed");
   assert.equal(metadata.description, "Public summary");
+  assert.equal(metadata.alternates.canonical, "/garden/published-seed");
+  assert.equal(metadata.openGraph.url, "/garden/published-seed");
   assert.equal(metadata.openGraph.images[0].url, "/covers/published-seed.webp");
+  assert.equal(metadata.twitter.card, "summary_large_image");
+  assert.deepEqual(metadata.robots, { index: true, follow: true });
   assert.equal(JSON.stringify(metadata).includes("id"), false);
+  assert.deepEqual(await routes.metadata("Garden", content.slug), metadata);
+});
+
+test("Published metadata uses a safe social fallback without a cover", async () => {
+  const routes = integration({
+    readRoute: async () => ({
+      kind: "published",
+      content: publicDetail(),
+    }),
+  });
+
+  const metadata = await routes.metadata("Garden", "published-seed");
+  assert.equal(metadata.openGraph.images[0].url, "/opengraph-image.png");
+  assert.equal(metadata.twitter.images[0].url, "/opengraph-image.png");
 });
 
 test("Draft and Review dispositions remain not found at route integration", async () => {
@@ -182,6 +205,17 @@ test("Archived routes retain the limited resting state and are noindex", async (
     (await routes.metadata("Garden", "resting-seed")).robots,
     { index: false, follow: true },
   );
+  assert.equal(
+    (await routes.metadata("Garden", "resting-seed")).alternates.canonical,
+    "/garden/resting-seed",
+  );
+});
+
+test("not-found routes produce noindex metadata", async () => {
+  const metadata = await integration().metadata("Garden", "missing-seed");
+  assert.deepEqual(metadata, {
+    robots: { index: false, follow: false },
+  });
 });
 
 test("invalid slugs fail before any source read", async () => {
@@ -258,6 +292,50 @@ test("dual-style static params stay database-first, deterministic, and unique", 
   assert.deepEqual(await routes.generateStaticParams("Garden"), expected);
 });
 
+test("sitemap is Published-only, unique, deterministic, and stably ordered", async () => {
+  const published = publicCard({
+    slug: "published-seed",
+    lifecycle: "Published",
+  });
+  const forest = publicCard({
+    region: "Forest",
+    slug: "forest-question",
+    contentType: "Question",
+    lifecycle: "Published",
+    lastTendedAt: null,
+    publishedAt: null,
+  });
+  const routes = integration({
+    listPublished: async () => [
+      published,
+      publicCard({ slug: "draft-seed", lifecycle: "Draft" }),
+      publicCard({ slug: "review-seed", lifecycle: "Review" }),
+      publicCard({ slug: "archived-seed", lifecycle: "Archived" }),
+      publicCard({ slug: "Invalid", lifecycle: "Published" }),
+      forest,
+      published,
+    ],
+  });
+
+  const first = await routes.sitemap(new URL("https://garden.example/base"));
+  const second = await routes.sitemap(new URL("https://garden.example"));
+  const expected = [
+    {
+      url: "https://garden.example/forest/forest-question",
+    },
+    {
+      url: "https://garden.example/garden/published-seed",
+      lastModified: "2026-07-16T00:00:00.000Z",
+    },
+  ];
+
+  assert.deepEqual(first, expected);
+  assert.deepEqual(second, expected);
+  assert.equal(JSON.stringify(first).includes("draft-seed"), false);
+  assert.equal(JSON.stringify(first).includes("review-seed"), false);
+  assert.equal(JSON.stringify(first).includes("archived-seed"), false);
+});
+
 test("internal Storage identities are not emitted as cover metadata", async () => {
   const internalPath =
     "contents/00000000-0000-4000-8000-00000000a001/cover.webp";
@@ -271,8 +349,36 @@ test("internal Storage identities are not emitted as cover metadata", async () =
   });
 
   const metadata = await routes.metadata("Garden", "published-seed");
-  assert.equal(metadata.openGraph, undefined);
+  assert.equal(metadata.openGraph.images[0].url, "/opengraph-image.png");
   assert.equal(JSON.stringify(metadata).includes(internalPath), false);
+});
+
+test("structured data contains only allow-listed public fields", () => {
+  const content = publicDetail({
+    title: "Published <seed>",
+    cover: {
+      path: "/covers/published-seed.webp",
+      altZh: null,
+      altEn: "A public cover",
+    },
+    id: "internal-id",
+    legacyId: "migration-id",
+    createdBy: "keeper-id",
+  });
+  const structured = createPublicContentStructuredData(
+    content,
+    new URL("https://garden.example"),
+  );
+  const serialized = serializeStructuredData(structured);
+
+  assert.equal(structured["@type"], "CreativeWork");
+  assert.equal(structured.url, "https://garden.example/garden/published-seed");
+  assert.equal(structured.image, "https://garden.example/covers/published-seed.webp");
+  assert.equal(serialized.includes("internal-id"), false);
+  assert.equal(serialized.includes("migration-id"), false);
+  assert.equal(serialized.includes("keeper-id"), false);
+  assert.equal(serialized.includes("<seed>"), false);
+  assert.equal(serialized.includes("\\u003cseed>"), true);
 });
 
 test("source failures produce safe noindex metadata and no raw error payload", async () => {

@@ -1,14 +1,15 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { gardenItems } from "@/content/garden";
 import { regions } from "@/lib/regions";
+import { createPublicPageMetadata } from "@/lib/seo";
 import { HiddenSeed, Opening, RandomCompass } from "./home-interactions";
 import "./home.css";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Home",
   description: "A digital garden of growing ideas.",
-};
+  path: "/",
+});
 
 const currentlyGrowing = [
   { ...gardenItems[0], meta: "🌿 Growing · Garden", href: "/garden/building-the-garden" },

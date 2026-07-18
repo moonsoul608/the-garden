@@ -546,7 +546,7 @@ Acceptance:
 - [ ] Remove from publication safely
 - [ ] Published item appears in correct Region
 - [ ] Published item appears in Index
-- [ ] Published item appears in sitemap
+- [x] Published item appears in sitemap
 
 ## 6B. Archive and delete
 
@@ -580,7 +580,7 @@ Acceptance:
 - [ ] Revoke token
 - [ ] Regenerate token
 - [ ] `noindex`
-- [ ] Exclude from sitemap
+- [x] Exclude from sitemap
 - [ ] Token gives no edit access
 
 Acceptance:
@@ -843,19 +843,19 @@ Acceptance:
 
 ## 11B. SEO and Open Graph
 
-- [ ] dynamic title
-- [ ] dynamic description
-- [ ] bilingual fallback
-- [ ] content-level Open Graph
-- [ ] cover-image OG
-- [ ] fallback OG image
-- [ ] sitemap Published only
-- [ ] exclude Draft
-- [ ] exclude Review
-- [ ] exclude Archived
-- [ ] exclude Admin
-- [ ] exclude Preview
-- [ ] archived `noindex`
+- [x] dynamic title
+- [x] dynamic description
+- [x] bilingual fallback
+- [x] content-level Open Graph
+- [x] cover-image OG
+- [x] fallback OG image
+- [x] sitemap Published only
+- [x] exclude Draft
+- [x] exclude Review
+- [x] exclude Archived
+- [x] exclude Admin
+- [x] exclude Preview
+- [x] archived `noindex`
 - [ ] preview `noindex`
 
 ## 11C. Markdown import

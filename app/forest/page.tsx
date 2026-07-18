@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { createPublicPageMetadata } from "@/lib/seo";
 import { ForestExperience } from "./forest-experience";
 import "./forest.css";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Forest",
   description: "Where questions grow wild.",
-};
+  path: "/forest",
+});
 
 export default function ForestPage() {
   return (

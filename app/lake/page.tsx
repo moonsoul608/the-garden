@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { createPublicPageMetadata } from "@/lib/seo";
 import { LakeExperience } from "./lake-experience";
 import "./lake.css";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Lake",
   description: "Things worth reflecting on.",
-};
+  path: "/lake",
+});
 
 export default function LakePage() {
   return (

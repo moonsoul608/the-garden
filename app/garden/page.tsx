@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { createPublicPageMetadata } from "@/lib/seo";
 import { GardenCollection } from "./garden-collection";
 import "./garden.css";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Garden",
   description: "Where learning takes root.",
-};
+  path: "/garden",
+});
 
 const beds = [
   { name: "Psychology", icon: "🧠", tagline: "Understanding people, one question at a time.", description: "记录心理学课程、概念整理、研究思考和复习内容。" },

@@ -10,6 +10,10 @@ import type {
   PublicContentDetail,
   PublicContentRelation,
 } from "@/types";
+import {
+  createPublicContentStructuredData,
+  serializeStructuredData,
+} from "@/lib/seo";
 
 import { StatusBadge } from "./status-badge";
 
@@ -198,6 +202,9 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
   const legacyPresentation = detailContent[item.region][item.slug];
   const relatedPaths =
     legacyPresentation?.relatedPaths ?? relationPaths(item.relations);
+  const structuredData = serializeStructuredData(
+    createPublicContentStructuredData(item),
+  );
 
   return (
     <main
@@ -205,6 +212,10 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
       tabIndex={-1}
       className={`detail-page detail-${item.region.toLowerCase()}`}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: structuredData }}
+      />
       <article className="detail-shell">
         <Link className="detail-back" href={regionHrefs[item.region]}>
           ← Return to the {item.region}

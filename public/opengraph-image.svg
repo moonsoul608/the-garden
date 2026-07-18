@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">The Garden</title>
+  <desc id="description">A digital garden of growing ideas.</desc>
+  <rect width="1200" height="630" fill="#f4f0df"/>
+  <circle cx="1040" cy="108" r="70" fill="#efd477" opacity="0.82"/>
+  <path d="M0 468C190 382 332 406 486 476C650 550 812 392 1200 430V630H0Z" fill="#8eae72" opacity="0.62"/>
+  <path d="M0 520C222 452 382 500 562 550C746 600 930 468 1200 500V630H0Z" fill="#365e45" opacity="0.9"/>
+  <path d="M949 469C936 386 948 313 988 250C1012 304 1018 370 999 448" fill="none" stroke="#365e45" stroke-width="12" stroke-linecap="round"/>
+  <path d="M978 312C928 299 898 273 885 233C935 234 970 256 993 294" fill="#6f945c"/>
+  <path d="M989 365C1030 339 1069 335 1106 354C1074 390 1037 403 998 393" fill="#8eae72"/>
+  <text x="104" y="268" fill="#173d2a" font-family="Georgia, serif" font-size="100" letter-spacing="-4">The Garden</text>
+  <text x="110" y="340" fill="#365e45" font-family="Arial, sans-serif" font-size="36">A digital garden of growing ideas.</text>
+</svg>

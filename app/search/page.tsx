@@ -1,12 +1,16 @@
-import type { Metadata } from "next";
 import { forestItems } from "@/content/forest";
 import { gardenItems } from "@/content/garden";
 import { lakeItems } from "@/content/lake";
 import { ruinsItems } from "@/content/ruins";
+import { createPublicPageMetadata } from "@/lib/seo";
 import { SearchExperience } from "./search-experience";
 import "../utilities.css";
 
-export const metadata: Metadata = { title: "Search the Garden", description: "Look for a word. Find a path." };
+export const metadata = createPublicPageMetadata({
+  title: "Search the Garden",
+  description: "Look for a word. Find a path.",
+  path: "/search",
+});
 
 export default function SearchPage() {
   const items = [...gardenItems, ...forestItems, ...lakeItems, ...ruinsItems];

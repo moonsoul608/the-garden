@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { StatusBadge } from "@/components";
 import { ruinsItems } from "@/content/ruins";
+import { createPublicPageMetadata } from "@/lib/seo";
 import "./ruins.css";
 
-export const metadata: Metadata = {
+export const metadata = createPublicPageMetadata({
   title: "Ruins",
   description: "Ruins are not failures. They are traces.",
-};
+  path: "/ruins",
+});
 
 const traceTypes = [
   {

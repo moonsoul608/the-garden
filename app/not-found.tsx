@@ -4,6 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Path not found",
   description: "This path could not be found in The Garden.",
+  robots: { index: false, follow: false },
 };
 
 export default function NotFound() {

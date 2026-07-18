@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Metadata } from "next";
+import type { Metadata, MetadataRoute } from "next";
 import { cache } from "react";
 
 import type {
@@ -13,10 +13,16 @@ import {
   getPublishedContent,
   getPublicContentRouteDisposition,
 } from "./service";
+import {
+  PUBLIC_CONTENT_REGIONS,
+  absolutePublicUrl,
+  approvedPublicImageUrl,
+  createPublicPageMetadata,
+  getSiteOrigin,
+  publicContentPath,
+} from "@/lib/seo";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const INTERNAL_UUID_PATTERN =
-  /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
 
 type RouteReader = (
   region: RegionName,
@@ -55,19 +61,6 @@ function dispositionMatchesRoute(
   return true;
 }
 
-function approvedPublicCoverUrl(path: string): string | null {
-  const candidate = path.trim();
-  if (!candidate || INTERNAL_UUID_PATTERN.test(candidate)) return null;
-  if (/^\/(?!\/)/.test(candidate)) return candidate;
-
-  try {
-    const url = new URL(candidate);
-    return url.protocol === "https:" ? url.toString() : null;
-  } catch {
-    return null;
-  }
-}
-
 function preferredCoverAlt(
   cover: { altZh: string | null; altEn: string | null },
 ): string | null {
@@ -80,33 +73,24 @@ function publishedMetadata(
     { kind: "published" }
   >["content"],
 ): Metadata {
-  const metadata: Metadata = {
-    title: content.title,
-    description: content.summary,
-  };
+  const path = publicContentPath(content.region, content.slug);
   const coverUrl = content.cover
-    ? approvedPublicCoverUrl(content.cover.path)
+    ? approvedPublicImageUrl(content.cover.path)
     : null;
   const coverAlt = content.cover ? preferredCoverAlt(content.cover) : null;
 
-  if (coverUrl && coverAlt) {
-    metadata.openGraph = {
-      title: content.title,
-      description: content.summary,
-      images: [{ url: coverUrl, alt: coverAlt }],
-    };
-    metadata.twitter = {
-      card: "summary_large_image",
-      title: content.title,
-      description: content.summary,
-      images: [{ url: coverUrl, alt: coverAlt }],
-    };
-  }
-
-  return metadata;
+  return createPublicPageMetadata({
+    title: content.title,
+    description: content.summary,
+    path,
+    type: "article",
+    image: coverUrl && coverAlt ? { url: coverUrl, alt: coverAlt } : null,
+  });
 }
 
 function metadataForDisposition(
+  region: RegionName,
+  slug: string,
   disposition: PublicContentRouteDisposition,
 ): Metadata {
   if (disposition.kind === "published") {
@@ -115,10 +99,24 @@ function metadataForDisposition(
   if (disposition.kind === "archived") {
     return {
       title: disposition.content.title,
+      alternates: { canonical: publicContentPath(region, slug) },
       robots: { index: false, follow: true },
     };
   }
-  return {};
+  return { robots: { index: false, follow: false } };
+}
+
+function sitemapLastModified(item: PublicContentCard): string | undefined {
+  for (const candidate of [item.lastTendedAt, item.publishedAt]) {
+    if (candidate && !Number.isNaN(Date.parse(candidate))) return candidate;
+  }
+  return undefined;
+}
+
+function isPublishedSitemapCard(item: PublicContentCard): boolean {
+  const lifecycle = (item as PublicContentCard & { lifecycle?: unknown })
+    .lifecycle;
+  return lifecycle === undefined || lifecycle === "Published";
 }
 
 export function createPublicRouteIntegration(
@@ -161,13 +159,46 @@ export function createPublicRouteIntegration(
   async function metadata(region: RegionName, slug: string): Promise<Metadata> {
     try {
       const disposition = await resolve(region, slug);
-      return metadataForDisposition(disposition);
+      return metadataForDisposition(region, slug, disposition);
     } catch {
       return { robots: { index: false, follow: false } };
     }
   }
 
-  return { resolve, generateStaticParams, metadata };
+  async function sitemap(
+    siteOrigin: URL = getSiteOrigin(),
+  ): Promise<MetadataRoute.Sitemap> {
+    const items = await dependencies.listPublished({
+      regions: [...PUBLIC_CONTENT_REGIONS],
+    });
+    const entries = new Map<
+      string,
+      { url: string; lastModified?: string }
+    >();
+
+    for (const item of items) {
+      if (
+        !isPublishedSitemapCard(item) ||
+        !PUBLIC_CONTENT_REGIONS.includes(item.region) ||
+        !isValidPublicSlug(item.slug)
+      ) {
+        continue;
+      }
+
+      const path = publicContentPath(item.region, item.slug);
+      const lastModified = sitemapLastModified(item);
+      entries.set(path, {
+        url: absolutePublicUrl(path, siteOrigin),
+        ...(lastModified ? { lastModified } : {}),
+      });
+    }
+
+    return [...entries.entries()]
+      .sort(([left], [right]) => left.localeCompare(right, "en"))
+      .map(([, entry]) => entry);
+  }
+
+  return { resolve, generateStaticParams, metadata, sitemap };
 }
 
 const defaultIntegration = createPublicRouteIntegration({
@@ -183,6 +214,8 @@ export const getPublicContentMetadata = cache(
   async (region: RegionName, slug: string): Promise<Metadata> => {
     try {
       return metadataForDisposition(
+        region,
+        slug,
         await resolvePublicContentRoute(region, slug),
       );
     } catch {
@@ -190,3 +223,5 @@ export const getPublicContentMetadata = cache(
     }
   },
 );
+
+export const getPublicContentSitemap = defaultIntegration.sitemap;

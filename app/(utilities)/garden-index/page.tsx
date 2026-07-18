@@ -1,12 +1,16 @@
-import type { Metadata } from "next";
 import { forestItems } from "@/content/forest";
 import { gardenItems } from "@/content/garden";
 import { lakeItems } from "@/content/lake";
 import { ruinsItems } from "@/content/ruins";
+import { createPublicPageMetadata } from "@/lib/seo";
 import { IndexExperience } from "../index/index-experience";
 import "../../utilities.css";
 
-export const metadata: Metadata = { title: "Garden Index", description: "Everything kept across the garden." };
+export const metadata = createPublicPageMetadata({
+  title: "Garden Index",
+  description: "Everything kept across the garden.",
+  path: "/garden-index",
+});
 
 export default function IndexPage() {
   const items = [...gardenItems, ...forestItems, ...lakeItems, ...ruinsItems];

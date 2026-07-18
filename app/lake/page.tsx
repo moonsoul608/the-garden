@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { presentPublicContentCards } from "@/lib/content/public-presentation";
+import { getPublishedContent } from "@/lib/content/service";
 import { createPublicPageMetadata } from "@/lib/seo";
 import { LakeExperience } from "./lake-experience";
 import "./lake.css";
@@ -9,7 +11,11 @@ export const metadata = createPublicPageMetadata({
   path: "/lake",
 });
 
-export default function LakePage() {
+export default async function LakePage() {
+  const items = presentPublicContentCards(
+    await getPublishedContent({ regions: ["Lake"] }),
+  );
+
   return (
     <main id="main-content" tabIndex={-1} className="lake-page">
       <section className="lake-entrance" aria-labelledby="lake-title">
@@ -30,7 +36,7 @@ export default function LakePage() {
         </div>
       </section>
 
-      <LakeExperience />
+      <LakeExperience items={items} />
 
       <section className="lake-ending" aria-labelledby="lake-ending-title">
         <div className="lake-ending-mark" aria-hidden="true">◌</div>

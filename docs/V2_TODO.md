@@ -277,6 +277,7 @@ Acceptance:
 - [x] Add 08D-2 database-source read verification for all Region collections, 19 detail routes, metadata, relations, and Lake-null Growth Stages
 - [x] Add 08D-3 Keeper Admin verification for all 19 imported contents, Regions, and Growth Stage presentation
 - [x] Add 08D-4 controlled cutover preparation for the completed 19/19/4 migration, receipt, source modes, rollback path, and cache boundary without executing cutover
+- [x] Add 08E-1 Preview-only database cutover verification for Home, Regions, Search, all 19 details, metadata, sitemap, lifecycle visibility, relations, Lake-null presentation, and adjacent rollback without changing the default source mode
 - [x] Verify content counts by total, Region, and Content Type
 - [x] Verify source identity, slug, Region, lifecycle, duplicates, missing, and unexpected records
 - [x] Verify one immutable initial version and complete migration provenance per item

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { StatusBadge } from "@/components";
-import { forestItems } from "@/content/forest";
+import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
 const trails = [
   { name: "Mind & Behavior", icon: "🧠", tagline: "Questions about how people think, feel and act.", description: "关于心理、行为、记忆、情绪与人的问题。" },
@@ -12,16 +12,16 @@ const trails = [
   { name: "Stories & Memory", icon: "✍️", tagline: "Questions carried by stories, memory and forgetting.", description: "关于写作、故事、记忆和遗忘的问题。" },
 ] as const;
 
-export function ForestExperience() {
+export function ForestExperience({ items }: { items: PublicContentPresentation[] }) {
   const [activeTrail, setActiveTrail] = useState("All");
   const [foundIndex, setFoundIndex] = useState<number | null>(null);
   const collectionRef = useRef<HTMLElement>(null);
 
   const visibleItems = useMemo(
-    () => forestItems.filter((item) => activeTrail === "All" || item.trails.includes(activeTrail)),
-    [activeTrail],
+    () => items.filter((item) => activeTrail === "All" || item.primaryCategories.includes(activeTrail)),
+    [activeTrail, items],
   );
-  const foundQuestion = foundIndex === null ? null : forestItems[foundIndex];
+  const foundQuestion = foundIndex === null ? null : items[foundIndex];
 
   function chooseTrail(trail: string) {
     setActiveTrail(trail);
@@ -30,7 +30,7 @@ export function ForestExperience() {
   }
 
   function findQuestion() {
-    setFoundIndex(Math.floor(Math.random() * forestItems.length));
+    setFoundIndex(Math.floor(Math.random() * items.length));
   }
 
   return (
@@ -77,7 +77,7 @@ export function ForestExperience() {
                 <div className="question-card-top"><span>Question</span>{item.status && <StatusBadge status={item.status} />}</div>
                 <h3>{item.title}</h3>
                 <p className="question-summary">{item.summary}</p>
-                <ul aria-label="Trails">{item.trails.map((trail) => <li key={trail}>{trail}</li>)}</ul>
+                <ul aria-label="Trails">{item.primaryCategories.map((trail) => <li key={trail}>{trail}</li>)}</ul>
                 <span className="question-cta">{item.cta}</span>
               </Link>
             ))}
@@ -105,7 +105,7 @@ export function ForestExperience() {
                 <div className="question-card-top"><span>Question found</span>{foundQuestion.status && <StatusBadge status={foundQuestion.status} />}</div>
                 <h3>{foundQuestion.title}</h3>
                 <p>{foundQuestion.summary}</p>
-                <ul aria-label="Trails">{foundQuestion.trails.map((trail) => <li key={trail}>{trail}</li>)}</ul>
+                <ul aria-label="Trails">{foundQuestion.primaryCategories.map((trail) => <li key={trail}>{trail}</li>)}</ul>
                 <div className="found-actions">
                   <Link className="button button-primary" href={`/forest/${foundQuestion.slug}`}>Follow this question</Link>
                   <button className="button button-secondary" type="button" onClick={findQuestion}>Find another question</button>

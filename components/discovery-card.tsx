@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { getContentHref } from "@/lib/content-discovery";
-import type { ContentItem } from "@/types";
+import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
 type DiscoveryCardProps = {
-  item: ContentItem;
+  item: PublicContentPresentation;
   compact?: boolean;
 };
 
 export function DiscoveryCard({ item, compact = false }: DiscoveryCardProps) {
-  const category = item.categories[0];
+  const category = item.primaryCategories[0];
 
   return (
     <Link className={`discovery-card card${compact ? " discovery-card-compact" : ""}`} href={getContentHref(item)}>
@@ -19,7 +19,7 @@ export function DiscoveryCard({ item, compact = false }: DiscoveryCardProps) {
       </div>
       <h3>{item.title}</h3>
       <p>{item.summary}</p>
-      {!compact ? <span className="discovery-card-detail">{item.status ?? category}</span> : null}
+      {!compact ? <span className="discovery-card-detail">{item.growthStage ?? category}</span> : null}
       <span className="discovery-card-cta">{item.cta}</span>
     </Link>
   );

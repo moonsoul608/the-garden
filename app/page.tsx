@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { gardenItems } from "@/content/garden";
+import {
+  presentPublicContentCards,
+  type PublicContentPresentation,
+} from "@/lib/content/public-presentation";
+import { getPublishedContent } from "@/lib/content/service";
 import { regions } from "@/lib/regions";
 import { createPublicPageMetadata } from "@/lib/seo";
 import { HiddenSeed, RandomCompass } from "./home-interactions";
@@ -11,35 +15,69 @@ export const metadata = createPublicPageMetadata({
   path: "/",
 });
 
-const currentlyGrowing = [
-  { ...gardenItems[0], meta: "🌿 Growing · Garden", href: "/garden/building-the-garden" },
-  { ...gardenItems[1], meta: "🌿 Growing · Garden", href: "/garden/learning-psychological-statistics" },
-  { ...gardenItems[2], meta: "🌱 Sprout · Garden", href: "/garden/exploring-ai-tools" },
+const currentlyGrowingPaths = [
+  { region: "Garden", slug: "building-the-garden", meta: "🌿 Growing · Garden" },
+  { region: "Garden", slug: "learning-psychological-statistics", meta: "🌿 Growing · Garden" },
+  { region: "Garden", slug: "exploring-ai-tools", meta: "🌱 Sprout · Garden" },
   {
+    region: "Forest",
+    slug: "why-people-fear-forgetting",
+    meta: "🌱 Sprout · Forest",
     title: "Continuing “继续吗”",
     summary: "一个关于记忆、遗忘与写作的故事。",
-    meta: "🌱 Sprout · Forest",
     cta: "Follow the memory →",
-    href: "/forest/why-people-fear-forgetting",
   },
 ] as const;
 
-const recentlyPlanted = [
+const recentlyPlantedPaths = [
   {
+    region: "Garden",
+    slug: "building-the-garden",
     title: "The Garden",
     summary: "从一个普通个人网站开始，慢慢长成一座可以自由探索的数字花园。",
     meta: "🌱 Garden · 🌿 Growing",
     cta: "See how it grows →",
-    href: "/garden/building-the-garden",
   },
   {
+    region: "Forest",
+    slug: "why-people-fear-forgetting",
     title: "继续吗",
     summary: "一个关于记忆、遗忘、写作，以及一个不愿相信自己记忆的人的故事。",
     meta: "🌲 Forest · 🌱 Sprout",
     cta: "Follow the memory →",
-    href: "/forest/why-people-fear-forgetting",
   },
 ] as const;
+
+type HomePath = {
+  region: PublicContentPresentation["region"];
+  slug: string;
+  meta: string;
+  title?: string;
+  summary?: string;
+  cta?: string;
+};
+
+function resolveHomePaths(
+  items: PublicContentPresentation[],
+  paths: readonly HomePath[],
+) {
+  const itemByRoute = new Map(
+    items.map((item) => [`${item.region}/${item.slug}`, item] as const),
+  );
+
+  return paths.flatMap((path) => {
+    const item = itemByRoute.get(`${path.region}/${path.slug}`);
+    if (!item) return [];
+    return [{
+      ...item,
+      title: path.title ?? item.title,
+      summary: path.summary ?? item.summary,
+      cta: path.cta ?? item.cta,
+      meta: path.meta,
+      href: `/${path.region.toLowerCase()}/${path.slug}`,
+    }];
+  });
+}
 
 const mapActions: Record<string, string> = {
   Home: "Return home →",
@@ -73,7 +111,11 @@ function Opening() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const items = presentPublicContentCards(await getPublishedContent());
+  const currentlyGrowing = resolveHomePaths(items, currentlyGrowingPaths);
+  const recentlyPlanted = resolveHomePaths(items, recentlyPlantedPaths);
+
   return (
     <main id="main-content" tabIndex={-1} className="home">
       <Opening />

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { presentPublicContentCards } from "@/lib/content/public-presentation";
+import { getPublishedContent } from "@/lib/content/service";
 import { createPublicPageMetadata } from "@/lib/seo";
 import { GardenCollection } from "./garden-collection";
 import "./garden.css";
@@ -16,7 +18,11 @@ const beds = [
   { name: "Design & Making", icon: "🎨", tagline: "Making ideas easier to see, read and experience.", description: "记录 PPT、文档、网页视觉和创意表达练习。" },
 ] as const;
 
-export default function GardenPage() {
+export default async function GardenPage() {
+  const items = presentPublicContentCards(
+    await getPublishedContent({ regions: ["Garden"] }),
+  );
+
   return (
     <main id="main-content" tabIndex={-1} className="garden-page">
       <section className="garden-entrance" aria-labelledby="garden-title">
@@ -53,7 +59,7 @@ export default function GardenPage() {
         </div>
       </section>
 
-      <GardenCollection beds={beds.map((bed) => bed.name)} />
+      <GardenCollection beds={beds.map((bed) => bed.name)} items={items} />
 
       <section className="garden-ending" aria-labelledby="garden-ending-title">
         <div className="garden-ending-mark" aria-hidden="true">↝</div>

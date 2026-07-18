@@ -2,25 +2,25 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { lakeItems } from "@/content/lake";
+import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
 const ripples = ["All", "Music", "Games", "Films", "Books & Words", "Internet"] as const;
 
-export function LakeExperience() {
+export function LakeExperience({ items }: { items: PublicContentPresentation[] }) {
   const [activeRipple, setActiveRipple] = useState<(typeof ripples)[number]>("All");
   const [surfacedIndex, setSurfacedIndex] = useState<number | null>(null);
 
   const visibleItems = useMemo(
-    () => lakeItems.filter((item) => activeRipple === "All" || item.reflectionType === activeRipple),
-    [activeRipple],
+    () => items.filter((item) => activeRipple === "All" || item.primaryCategories.includes(activeRipple)),
+    [activeRipple, items],
   );
-  const surfaced = surfacedIndex === null ? null : lakeItems[surfacedIndex];
+  const surfaced = surfacedIndex === null ? null : items[surfacedIndex];
 
   function surfaceReflection() {
     setSurfacedIndex((current) => {
-      if (lakeItems.length < 2) return 0;
-      let next = Math.floor(Math.random() * lakeItems.length);
-      if (next === current) next = (next + 1) % lakeItems.length;
+      if (items.length < 2) return 0;
+      let next = Math.floor(Math.random() * items.length);
+      if (next === current) next = (next + 1) % items.length;
       return next;
     });
   }
@@ -56,10 +56,10 @@ export function LakeExperience() {
         <div className="reflection-grid">
           {visibleItems.map((item, index) => (
             <Link className="reflection-card card" href={`/lake/${item.slug}`} key={item.id}>
-              <div className="reflection-card-top"><span>Reflection {String(index + 1).padStart(2, "0")}</span><span>{item.reflectionType}</span></div>
+              <div className="reflection-card-top"><span>Reflection {String(index + 1).padStart(2, "0")}</span><span>{item.primaryCategories[0]}</span></div>
               <div className="reflection-ring" aria-hidden="true"><span /></div>
               <h3>{item.title}</h3>
-              <p>{item.reason}</p>
+              <p>{item.summary}</p>
               <span className="reflection-cta">{item.cta}</span>
             </Link>
           ))}
@@ -77,9 +77,9 @@ export function LakeExperience() {
           <div className="surfaced-result" aria-live="polite">
             {surfaced ? (
               <article className="surfaced-card card">
-                <span className="surfaced-type">{surfaced.reflectionType} · Reflection</span>
+                <span className="surfaced-type">{surfaced.primaryCategories[0]} · Reflection</span>
                 <h3>{surfaced.title}</h3>
-                <p>{surfaced.reason}</p>
+                <p>{surfaced.summary}</p>
                 <div className="surfaced-actions">
                   <Link className="button button-primary" href={`/lake/${surfaced.slug}`}>Look closer</Link>
                   <button className="button button-secondary" type="button" onClick={surfaceReflection}>Let something else surface</button>

@@ -3,12 +3,13 @@
 import { useId, useMemo, useState } from "react";
 import { DiscoveryCard } from "@/components/discovery-card";
 import { matchesContentSearch } from "@/lib/content-discovery";
-import type { ContentItem, ContentType, RegionName } from "@/types";
+import type { PublicContentPresentation } from "@/lib/content/public-presentation";
+import type { ContentType, RegionName } from "@/types";
 
 const regions: Array<"All Regions" | RegionName> = ["All Regions", "Garden", "Forest", "Lake", "Ruins"];
 const contentTypes: Array<"All Types" | ContentType> = ["All Types", "Seed", "Question", "Reflection", "Trace"];
 
-export function IndexExperience({ items }: { items: ContentItem[] }) {
+export function IndexExperience({ items }: { items: PublicContentPresentation[] }) {
   const searchId = useId();
   const [region, setRegion] = useState<(typeof regions)[number]>("All Regions");
   const [contentType, setContentType] = useState<(typeof contentTypes)[number]>("All Types");

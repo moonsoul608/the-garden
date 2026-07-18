@@ -3,25 +3,26 @@
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import { StatusBadge } from "@/components";
-import { gardenItems } from "@/content/garden";
-import type { GardenItem } from "@/types";
+import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
-type GardenCollectionProps = { beds: readonly string[] };
+type GardenCollectionProps = {
+  beds: readonly string[];
+  items: PublicContentPresentation[];
+};
 
-export function GardenCollection({ beds }: GardenCollectionProps) {
+export function GardenCollection({ beds, items }: GardenCollectionProps) {
   const searchId = useId();
   const [activeBed, setActiveBed] = useState("All");
   const [query, setQuery] = useState("");
 
   const visibleItems = useMemo(() => {
     const term = query.trim().toLocaleLowerCase();
-    return gardenItems.filter((item) => {
-      const searchableItem: GardenItem = item;
-      const inBed = activeBed === "All" || item.beds.includes(activeBed);
-      const searchable = [item.title, item.summary, ...item.categories, ...(searchableItem.tags ?? [])].join(" ").toLocaleLowerCase();
+    return items.filter((item) => {
+      const inBed = activeBed === "All" || item.primaryCategories.includes(activeBed);
+      const searchable = [item.title, item.summary, ...item.primaryCategories, ...item.tags].join(" ").toLocaleLowerCase();
       return inBed && (!term || searchable.includes(term));
     });
-  }, [activeBed, query]);
+  }, [activeBed, items, query]);
 
   const reset = () => { setActiveBed("All"); setQuery(""); };
 
@@ -64,7 +65,7 @@ export function GardenCollection({ beds }: GardenCollectionProps) {
               <div className="seed-card-top"><span className="seed-index">Seed {String(index + 1).padStart(2, "0")}</span>{item.status && <StatusBadge status={item.status} />}</div>
               <h3>{item.title}</h3>
               <p className="seed-summary">{item.summary}</p>
-              <ul className="seed-beds" aria-label="Growing beds">{item.beds.map((bed) => <li key={bed}>{bed}</li>)}</ul>
+              <ul className="seed-beds" aria-label="Growing beds">{item.primaryCategories.map((bed) => <li key={bed}>{bed}</li>)}</ul>
               <Link className="seed-link" href={`/garden/${item.slug}`}>{item.cta}</Link>
             </article>
           ))}

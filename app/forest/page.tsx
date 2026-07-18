@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { presentPublicContentCards } from "@/lib/content/public-presentation";
+import { getPublishedContent } from "@/lib/content/service";
 import { createPublicPageMetadata } from "@/lib/seo";
 import { ForestExperience } from "./forest-experience";
 import "./forest.css";
@@ -9,7 +11,11 @@ export const metadata = createPublicPageMetadata({
   path: "/forest",
 });
 
-export default function ForestPage() {
+export default async function ForestPage() {
+  const items = presentPublicContentCards(
+    await getPublishedContent({ regions: ["Forest"] }),
+  );
+
   return (
     <main id="main-content" tabIndex={-1} className="forest-page">
       <section className="forest-entrance" aria-labelledby="forest-title">
@@ -32,7 +38,7 @@ export default function ForestPage() {
         </div>
       </section>
 
-      <ForestExperience />
+      <ForestExperience items={items} />
 
       <section className="forest-ending" aria-labelledby="forest-ending-title">
         <div className="forest-ending-mark" aria-hidden="true">⌁</div>

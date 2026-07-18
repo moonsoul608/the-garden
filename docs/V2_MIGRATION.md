@@ -369,6 +369,18 @@ required route/metadata/sitemap/static-content cache surfaces. Its status is
 future approved deployment window and deployed probes are still required. See
 `docs/V2_PHASE_08D4_CUTOVER_PREPARATION.md`.
 
+Task 08E-1 adds the Preview-only application render verification path. Home,
+all four Region collections, Garden Index, Search, details, metadata, and
+sitemap now share the public content service, so an explicit isolated database
+verification cannot silently mix database details with legacy discovery data.
+The boundary verifies the six requested public surfaces, all 19 detail routes,
+Published-only lifecycle visibility, four relations, Lake-null Growth Stage
+presentation, zero legacy fallback, and the adjacent
+`database -> dual -> legacy` rollback configuration. It remains read-only,
+blocks Production scope, leaves the absent-mode default at `legacy`, and does
+not authorize or execute any deployment cutover. See
+`docs/V2_PHASE_08E1_PREVIEW_CUTOVER.md`.
+
 ---
 
 ## 2. Migration principles

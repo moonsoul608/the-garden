@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import { DiscoveryCard } from "@/components/discovery-card";
 import { matchesContentSearch, regionGroupHeadings, regionOrder } from "@/lib/content-discovery";
-import type { ContentItem } from "@/types";
+import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
-export function SearchExperience({ items }: { items: ContentItem[] }) {
+export function SearchExperience({ items }: { items: PublicContentPresentation[] }) {
   const searchId = useId();
   const [query, setQuery] = useState("");
   const term = query.trim();

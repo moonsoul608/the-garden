@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components";
-import { ruinsItems } from "@/content/ruins";
+import { presentPublicContentCards } from "@/lib/content/public-presentation";
+import { getPublishedContent } from "@/lib/content/service";
 import { createPublicPageMetadata } from "@/lib/seo";
 import "./ruins.css";
 
@@ -31,7 +32,11 @@ const traceTypes = [
   },
 ] as const;
 
-export default function RuinsPage() {
+export default async function RuinsPage() {
+  const items = presentPublicContentCards(
+    await getPublishedContent({ regions: ["Ruins"] }),
+  );
+
   return (
     <main id="main-content" tabIndex={-1} className="ruins-page">
       <section className="ruins-entrance" aria-labelledby="ruins-title">
@@ -82,13 +87,13 @@ export default function RuinsPage() {
           <p className="ruins-description">被留下的东西，仍然能够解释后来发生了什么。</p>
         </header>
         <div className="trace-grid">
-          {ruinsItems.map((trace, index) => (
+          {items.map((trace, index) => (
             <article className="trace-card card" key={trace.id}>
               <div className="trace-card-top">
                 <span className="trace-index">Trace 0{index + 1}</span>
-                {trace.status ? <StatusBadge status={trace.status} /> : null}
+                {trace.growthStage ? <StatusBadge status={trace.growthStage} /> : null}
               </div>
-              <p className="trace-type">{trace.traceType}</p>
+              <p className="trace-type">{trace.primaryCategories[0]}</p>
               <h3>{trace.title}</h3>
               <p className="trace-summary">{trace.summary}</p>
               <div className="trace-actions">

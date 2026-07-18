@@ -409,7 +409,7 @@ Acceptance:
 - [x] Add lifecycle invalidation hook contracts for route, metadata, sitemap, and search
 - [x] Add application tests and a rollback-only SQL integration test
 - [ ] Apply the migration and execute the SQL integration test in Preview
-- [ ] Integrate the boundary into detail routes during the approved route-migration phase
+- [x] Integrate the boundary into detail routes during the approved route-migration phase
 - [ ] Implement the full Archived resting-state design in its approved UI phase
 
 ## 4D-3A. Delete safety foundation

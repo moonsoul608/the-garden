@@ -140,6 +140,7 @@ export function createMediaWorkspaceService(
       };
     } catch (error) {
       if (error instanceof MediaWorkspaceUnavailableError) throw error;
+      console.error("media workspace getWorkspace failed", error);
       throw new MediaWorkspaceUnavailableError();
     }
   }

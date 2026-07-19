@@ -109,12 +109,12 @@ export function createMediaRepository(
   async function listMediaObjects(): Promise<MediaObjectRecord[]> {
     const result = await client.rpc("list_keeper_media_workspace");
     if (result.error || !Array.isArray(result.data)) {
-      if (result.error) {
-        console.error(
-          "list_keeper_media_workspace RPC failed",
-          result.error,
-        );
-      }
+      console.error("list_keeper_media_workspace RPC failed", {
+        error: result.error,
+        data: result.data,
+        dataType: typeof result.data,
+        isArray: Array.isArray(result.data),
+      });
       throw new MediaRepositoryError();
     }
 

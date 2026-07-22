@@ -373,7 +373,10 @@ export function createContentWriteRepository(
     }
 
     const result = await query.order("updated_at", { ascending: false });
-    if (result.error) throwRepositoryError(result.error, "listDrafts");
+    if (result.error) {
+      console.error("listDrafts Supabase query failed", result.error);
+      throwRepositoryError(result.error, "listDrafts");
+    }
 
     return (result.data ?? []).map((row) =>
       mapRevision(row as unknown as ContentRevisionDatabaseRow),

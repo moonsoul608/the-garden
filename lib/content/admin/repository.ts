@@ -359,28 +359,33 @@ export function createContentWriteRepository(
   async function listDrafts(
     filters: DraftListFilters = {},
   ): Promise<DraftRevision[]> {
-    let query = client
-      .from("content_revisions")
-      .select(REVISION_COLUMNS)
-      .eq("lifecycle", "Draft");
+    try {
+      let query = client
+        .from("content_revisions")
+        .select(REVISION_COLUMNS)
+        .eq("lifecycle", "Draft");
 
-    if (filters.region) query = query.eq("region", filters.region);
-    if (filters.contentType) {
-      query = query.eq("content_type", filters.contentType);
-    }
-    if (filters.growthStage) {
-      query = query.eq("growth_stage", filters.growthStage);
-    }
+      if (filters.region) query = query.eq("region", filters.region);
+      if (filters.contentType) {
+        query = query.eq("content_type", filters.contentType);
+      }
+      if (filters.growthStage) {
+        query = query.eq("growth_stage", filters.growthStage);
+      }
 
-    const result = await query.order("updated_at", { ascending: false });
-    if (result.error) {
-      console.error("listDrafts Supabase query failed", result.error);
-      throwRepositoryError(result.error, "listDrafts");
-    }
+      const result = await query.order("updated_at", { ascending: false });
+      if (result.error) {
+        console.error("listDrafts Supabase query failed", result.error);
+        throwRepositoryError(result.error, "listDrafts");
+      }
 
-    return (result.data ?? []).map((row) =>
-      mapRevision(row as unknown as ContentRevisionDatabaseRow),
-    );
+      return (result.data ?? []).map((row) =>
+        mapRevision(row as unknown as ContentRevisionDatabaseRow),
+      );
+    } catch (error) {
+      console.error("listDrafts repository execution failed", error);
+      throw error;
+    }
   }
 
   async function getReviewById(

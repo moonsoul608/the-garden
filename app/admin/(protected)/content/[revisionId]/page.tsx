@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { createAdminContentService } from "@/lib/content/admin";
+import {
+  createAdminContentService,
+  getReviewWorkspaceDetail,
+} from "@/lib/content/admin";
 
 import { saveDraftAction } from "../actions";
 import { ContentForm } from "../content-form";
+import { ReviewActionPanel } from "../../review/review-action-panel";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
   year: "numeric",
@@ -21,6 +25,13 @@ export default async function EditAdminContentPage({
   const draft = await createAdminContentService().getDraftById(revisionId);
 
   if (!draft) notFound();
+
+  const reviewDetail =
+    draft.lifecycle === "Draft"
+      ? await getReviewWorkspaceDetail(revisionId)
+      : null;
+
+  if (draft.lifecycle === "Draft" && !reviewDetail) notFound();
 
   const title = draft.titleEn?.trim() || draft.titleZh?.trim() || "Untitled Draft";
 
@@ -60,6 +71,12 @@ export default async function EditAdminContentPage({
         </Link>
       </div>
       <ContentForm mode="edit" action={saveDraftAction} draft={draft} />
+      {reviewDetail ? (
+        <ReviewActionPanel
+          revision={reviewDetail.revision}
+          ready={reviewDetail.report.ready}
+        />
+      ) : null}
     </main>
   );
 }

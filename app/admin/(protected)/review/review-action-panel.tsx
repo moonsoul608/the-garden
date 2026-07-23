@@ -72,8 +72,10 @@ export function ReviewActionPanel({
   );
 
   useEffect(() => {
-    if (submitState.status === "success") router.refresh();
-  }, [router, submitState.status]);
+    if (submitState.status === "success" && submitState.destination) {
+      router.push(submitState.destination);
+    }
+  }, [router, submitState.destination, submitState.status]);
 
   useEffect(() => {
     if (returnState.status === "success" && returnState.destination) {

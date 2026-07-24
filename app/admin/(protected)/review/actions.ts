@@ -56,6 +56,7 @@ export async function publishReviewAction(
 
   if (result.status === "success") {
     refreshKeeperViews(String(formData.get("revisionId") ?? ""));
+    redirect(result.destination ?? "/admin/content");
   }
 
   return result;

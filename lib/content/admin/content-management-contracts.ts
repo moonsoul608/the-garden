@@ -29,6 +29,7 @@ export type AdminContentListItem = Readonly<{
   title: string;
   region: RegionName;
   lifecycle: Lifecycle;
+  projectionLifecycle: Lifecycle;
   growthStage: GrowthStage | null;
   updatedAt: string;
   revisionId: string | null;

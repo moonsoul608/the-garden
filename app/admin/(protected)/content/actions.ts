@@ -41,3 +41,15 @@ export async function saveDraftAction(
 
   return result;
 }
+
+export async function startDraftRevisionAction(
+  formData: FormData,
+): Promise<void> {
+  const revision = await createAdminContentService().startDraftRevision({
+    contentId: String(formData.get("contentId") ?? ""),
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/content");
+  redirect(`/admin/content/${revision.revisionId}`);
+}

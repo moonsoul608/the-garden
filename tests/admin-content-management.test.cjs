@@ -205,6 +205,7 @@ test("maps active revision values and effective Review lifecycle for the list", 
   );
 
   assert.equal(item.lifecycle, "Review");
+  assert.equal(item.projectionLifecycle, "Draft");
   assert.equal(item.title, "Review title");
   assert.equal(item.growthStage, "Sprout");
   assert.equal(item.revisionLifecycle, "Review");
@@ -261,6 +262,9 @@ test("content list service authorizes, loads, and orders workbench records", asy
     content.map(({ title }) => title),
     ["Published path", "A quiet Draft"],
   );
+  assert.equal(content[0].projectionLifecycle, "Published");
+  assert.equal(content[0].revisionLifecycle, null);
+  assert.equal(content[0].revisionId, null);
 });
 
 test("content list failures do not expose repository details", async () => {
@@ -432,6 +436,11 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.doesNotMatch(page, /supabase|\.from\(/i);
   assert.match(page, /await listAdminContent\(\)/);
   assert.match(page, /Create Content/);
+  assert.match(page, /startDraftRevisionAction/);
+  assert.match(page, /item\.projectionLifecycle === "Published"/);
+  assert.match(page, /item\.revisionLifecycle === null/);
+  assert.match(page, /item\.revisionId === null/);
+  assert.match(page, /Start Draft/);
   assert.match(page, /The workbench is clear\./);
   assert.match(loading, /aria-busy="true"/);
   assert.match(loading, /Loading content/);
@@ -439,6 +448,8 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.match(actions, /createAdminContentService\(\)/);
   assert.match(actions, /\.createDraft\(previousState, formData\)/);
   assert.match(actions, /\.saveDraft\(previousState, formData\)/);
+  assert.match(actions, /\.startDraftRevision\(\{/);
+  assert.match(actions, /redirect\(`\/admin\/content\/\$\{revision\.revisionId\}`\)/);
   assert.doesNotMatch(form, /supabase|requireGardenKeeper|createdBy|updatedBy/i);
   assert.doesNotMatch(form, /Publish|Archive|Delete|Upload/);
 });

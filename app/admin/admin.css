@@ -485,6 +485,7 @@ body:has(.admin-root) > .footer {
 
 .admin-content-empty a,
 .admin-content-row-action a,
+.admin-content-row-action button,
 .admin-back-link,
 .admin-editor-actions > a,
 .admin-form-notice a {
@@ -574,8 +575,19 @@ body:has(.admin-root) > .footer {
 }
 
 .admin-content-row-action a,
+.admin-content-row-action button,
 .admin-content-row-action > span {
   font-size: 0.75rem;
+}
+
+.admin-content-row-action button {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .admin-content-row-action > span {
@@ -833,6 +845,7 @@ body:has(.admin-root) > .footer {
 .admin-form-field textarea:focus-visible,
 .admin-action-link:focus-visible,
 .admin-content-row-action a:focus-visible,
+.admin-content-row-action button:focus-visible,
 .admin-back-link:focus-visible {
   outline: 3px solid #d3af52;
   outline-offset: 3px;

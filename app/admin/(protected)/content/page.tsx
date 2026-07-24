@@ -5,6 +5,8 @@ import {
   listAdminContent,
 } from "@/lib/content/admin";
 
+import { startDraftRevisionAction } from "./actions";
+
 const dateFormatter = new Intl.DateTimeFormat("en", {
   year: "numeric",
   month: "short",
@@ -96,6 +98,19 @@ export default async function AdminContentPage() {
                       <Link href={`/admin/review/${item.revisionId}`}>
                         Inspect Review <span aria-hidden="true">→</span>
                       </Link>
+                    ) : item.projectionLifecycle === "Published" &&
+                      item.revisionLifecycle === null &&
+                      item.revisionId === null ? (
+                      <form action={startDraftRevisionAction}>
+                        <input
+                          type="hidden"
+                          name="contentId"
+                          value={item.contentId}
+                        />
+                        <button type="submit">
+                          Start Draft <span aria-hidden="true">→</span>
+                        </button>
+                      </form>
                     ) : (
                       <span>No Draft open</span>
                     )}

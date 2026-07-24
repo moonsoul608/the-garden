@@ -55,6 +55,7 @@ export function mapAdminContentListItem(
     ),
     region: revision?.region ?? record.region,
     lifecycle,
+    projectionLifecycle: record.lifecycle,
     growthStage: revision ? revision.growthStage : record.growthStage,
     updatedAt: revision?.updatedAt ?? record.updatedAt,
     revisionId: revision?.revisionId ?? null,

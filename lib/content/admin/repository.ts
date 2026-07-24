@@ -384,7 +384,6 @@ export function createContentWriteRepository(
 
       const result = await query.order("updated_at", { ascending: false });
       if (result.error) {
-        console.error("listDrafts Supabase query failed", result.error);
         throwRepositoryError(result.error, "listDrafts");
       }
 
@@ -392,7 +391,6 @@ export function createContentWriteRepository(
         mapRevision(row as unknown as ContentRevisionDatabaseRow),
       );
     } catch (error) {
-      console.error("listDrafts repository execution failed", error);
       throw error;
     }
   }
@@ -650,16 +648,6 @@ export function createContentWriteRepository(
       .maybeSingle();
 
     if (result.error) {
-      if (operation === "returnToDraft") {
-        console.error("return_review_to_draft database mutation failed", {
-          error: result.error,
-          code: result.error.code,
-          message: result.error.message,
-          details: result.error.details,
-          hint: result.error.hint,
-          dataShape: describeJsonShape(result.data as Json),
-        });
-      }
       throwRepositoryError(result.error, operation);
     }
     if (!result.data) {
@@ -705,20 +693,8 @@ export function createContentWriteRepository(
     });
 
     if (result.error) {
-      console.error("publish_review_revision RPC failed", {
-        error: result.error,
-        code: result.error.code,
-        message: result.error.message,
-        details: result.error.details,
-        hint: result.error.hint,
-        dataShape: describeJsonShape(result.data),
-      });
       throwRepositoryError(result.error, "publishReview");
     }
-
-    console.info("publish_review_revision RPC returned", {
-      dataShape: describeJsonShape(result.data),
-    });
 
     return mapPublicationReceipt(result.data);
   }

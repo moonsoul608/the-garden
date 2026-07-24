@@ -649,7 +649,19 @@ export function createContentWriteRepository(
       .select(REVISION_COLUMNS)
       .maybeSingle();
 
-    if (result.error) throwRepositoryError(result.error, operation);
+    if (result.error) {
+      if (operation === "returnToDraft") {
+        console.error("return_review_to_draft database mutation failed", {
+          error: result.error,
+          code: result.error.code,
+          message: result.error.message,
+          details: result.error.details,
+          hint: result.error.hint,
+          dataShape: describeJsonShape(result.data as Json),
+        });
+      }
+      throwRepositoryError(result.error, operation);
+    }
     if (!result.data) {
       throw new ContentMutationError("revision_conflict", operation);
     }

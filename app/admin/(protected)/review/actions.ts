@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { createAdminContentService } from "@/lib/content/admin";
 
@@ -24,6 +25,7 @@ export async function submitForReviewAction(
 
   if (result.status === "success") {
     refreshKeeperViews(String(formData.get("revisionId") ?? ""));
+    if (result.destination) redirect(result.destination);
   }
 
   return result;

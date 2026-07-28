@@ -19,5 +19,6 @@ export const regions = [
 
 export const utilities = [
   { name: "Garden Index", href: "/garden-index" },
+  { name: "Your Paths", href: "/your-paths" },
   { name: "Back to the entrance", href: "/" },
 ] as const;

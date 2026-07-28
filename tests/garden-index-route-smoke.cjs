@@ -18,9 +18,16 @@ async function get(pathname) {
   assert.equal(index.response.status, 200);
   assert.match(index.html, /<h1[^>]*>Garden Index<\/h1>/);
   assert.match(index.html, /href="\/garden-index"[^>]*>Garden Index<\/a>/);
+  assert.match(index.html, /href="\/your-paths"[^>]*>Your Paths<\/a>/);
   assert.match(index.html, /href="\/"[^>]*>Back to the entrance<\/a>/);
+  assert.doesNotMatch(index.html, /<h2[^>]*id="saved-paths-title"[^>]*>Saved Paths<\/h2>/);
   assert.doesNotMatch(index.html, /href="\/index(?:[?#"])/);
   assert.doesNotMatch(index.html, /href="\/search(?:[?#"])/);
+
+  const yourPaths = await get("/your-paths");
+  assert.equal(yourPaths.response.status, 200);
+  assert.match(yourPaths.html, /<h1[^>]*>Your Paths<\/h1>/);
+  assert.match(yourPaths.html, /<h2[^>]*id="saved-paths-title"[^>]*>Saved Paths<\/h2>/);
 
   const search = await get("/search?q=garden&region=Lake");
   assert.equal(search.response.status, 307);
@@ -30,7 +37,7 @@ async function get(pathname) {
     .map((match) => match[1])
     .filter((pathname, position, paths) => paths.indexOf(pathname) === position);
 
-  assert.equal(contentPaths.length, 19, `Expected 19 unique content links, found ${contentPaths.length}`);
+  assert.equal(contentPaths.length, 6, `Expected 6 initially visible content links, found ${contentPaths.length}`);
 
   const results = await Promise.all(contentPaths.map(async (pathname) => {
     const response = await fetch(`${baseUrl}${pathname}`, { redirect: "manual" });
@@ -40,9 +47,10 @@ async function get(pathname) {
 
   console.log("PASS / returns Home (200)");
   console.log("PASS /garden-index returns Garden Index (200)");
+  console.log("PASS /your-paths returns Your Paths with Saved Paths (200)");
   console.log("PASS /search redirects to Garden Index with query parameters");
   console.log("PASS Garden Index and Back to the entrance use distinct canonical routes");
-  console.log("PASS all 19 Garden Index content links return 200");
+  console.log("PASS initially visible Garden Index content links return 200");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

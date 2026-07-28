@@ -2,7 +2,6 @@
 
 import { useId, useMemo, useState } from "react";
 import { DiscoveryCard } from "@/components/discovery-card";
-import { SavedPathsSection } from "@/components/saved-paths-section";
 import { matchesContentSearch } from "@/lib/content-discovery";
 import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 import type { ContentType, RegionName } from "@/types";
@@ -38,8 +37,6 @@ export function IndexExperience({ items }: { items: PublicContentPresentation[] 
 
   return (
     <section className="discovery-body" aria-labelledby="index-collection-title">
-      <SavedPathsSection items={items} />
-
       <div className="index-controls card">
         <div className="filter-set">
           <h2>Region</h2>

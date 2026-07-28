@@ -430,7 +430,7 @@ test("all four detail pages use only the public route boundary", () => {
   }
 });
 
-test("Garden Guide remains viewport-fixed and exposes one discovery entry", () => {
+test("Garden Guide remains viewport-fixed and exposes discovery plus personal entries", () => {
   const styles = fs.readFileSync(
     path.join(projectRoot, "app/globals.css"),
     "utf8",
@@ -445,6 +445,7 @@ test("Garden Guide remains viewport-fixed and exposes one discovery entry", () =
   assert.match(guidePanelRule, /position:\s*fixed/);
   assert.doesNotMatch(topBarRule, /backdrop-filter|transform|perspective|contain:/);
   assert.match(regionsSource, /name:\s*"Garden Index",\s*href:\s*"\/garden-index"/);
+  assert.match(regionsSource, /name:\s*"Your Paths",\s*href:\s*"\/your-paths"/);
   assert.doesNotMatch(regionsSource, /name:\s*"Search the Garden",\s*href:\s*"\/search"/);
 });
 

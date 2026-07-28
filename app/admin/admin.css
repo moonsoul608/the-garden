@@ -2339,3 +2339,139 @@ body:has(.admin-root) > .footer {
     animation: none;
   }
 }
+
+.admin-notes-workspace {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 5rem);
+}
+
+.admin-notes-summary {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-note-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.admin-note-summary-grid div {
+  padding: 1.25rem;
+  border: 1px solid #cad5ca;
+  border-radius: 0.75rem;
+  background: #fffef9;
+}
+
+.admin-note-summary-grid dt {
+  color: #607266;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-note-summary-grid dd {
+  margin: 0.35rem 0 0;
+  color: #203429;
+  font-size: 2rem;
+  font-weight: 850;
+}
+
+.admin-note-list {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-note-card {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid #cad5ca;
+  border-radius: 0.9rem;
+  background: #fffef9;
+  box-shadow: 0 1.5rem 4rem rgb(23 35 27 / 0.045);
+}
+
+.admin-note-card-header,
+.admin-note-card-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.admin-note-card-header h2 {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+}
+
+.admin-note-status {
+  border: 1px solid #d2dbd0;
+  border-radius: 99rem;
+  padding: 0.35rem 0.65rem;
+  background: #f4f0df;
+  color: #5f6e63;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-note-status--unread {
+  border-color: rgb(65 121 84 / 0.36);
+  background: rgb(208 229 198 / 0.42);
+  color: #315a40;
+}
+
+.admin-note-message {
+  margin: 0;
+  color: #203429;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.admin-note-card-footer time {
+  color: #607266;
+  font-size: 0.82rem;
+}
+
+.admin-note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.85rem;
+}
+
+.admin-note-actions form {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-note-action-status {
+  max-width: 16rem;
+  margin: 0;
+  color: #607266;
+  font-size: 0.75rem;
+}
+
+.admin-note-action-status--success {
+  color: #315a40;
+}
+
+@media (max-width: 48rem) {
+  .admin-note-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-note-card-header,
+  .admin-note-card-footer {
+    flex-direction: column;
+  }
+
+  .admin-note-actions {
+    justify-content: flex-start;
+  }
+}

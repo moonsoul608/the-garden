@@ -27,3 +27,6 @@ export type * from "./media-contracts";
 export * from "./media-repository";
 export * from "./media-service";
 export * from "./media-validation";
+export type * from "./visitor-notes-contracts";
+export * from "./visitor-notes-repository";
+export * from "./visitor-notes-service";

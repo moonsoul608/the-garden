@@ -42,6 +42,7 @@ export default async function ProtectedAdminLayout({
           <Link href="/admin/review">Review queue</Link>
           <Link href="/admin/lifecycle">Lifecycle</Link>
           <Link href="/admin/media">Media</Link>
+          <Link href="/admin/notes">Visitor Notes</Link>
         </nav>
 
         <div className="admin-identity">

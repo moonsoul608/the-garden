@@ -18,6 +18,7 @@ import {
 } from "@/lib/seo";
 
 import { StatusBadge } from "./status-badge";
+import { RecentlyVisitedTracker } from "./recently-visited-tracker";
 import { SavedPathToggle } from "./saved-path-toggle";
 
 const regionHrefs = {
@@ -327,6 +328,7 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: structuredData }}
       />
+      <RecentlyVisitedTracker route={currentRoute} />
       <article className="detail-shell">
         <Link className="detail-back" href={regionHrefs[item.region]}>
           ← Return to the {item.region}

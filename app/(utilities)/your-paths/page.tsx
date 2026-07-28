@@ -1,3 +1,4 @@
+import { RecentlyVisitedSection } from "@/components/recently-visited-section";
 import { SavedPathsSection } from "@/components/saved-paths-section";
 import { presentPublicContentCards } from "@/lib/content/public-presentation";
 import { getPublishedContent } from "@/lib/content/service";
@@ -22,8 +23,9 @@ export default async function YourPathsPage() {
         <p className="tagline">Saved paths kept locally on this device.</p>
         <p>这里保存你在这台设备上标记过的路径。</p>
       </header>
-      <section className="discovery-body" aria-label="Your saved paths">
+      <section className="discovery-body" aria-label="Your paths">
         <SavedPathsSection items={items} />
+        <RecentlyVisitedSection items={items} />
       </section>
     </main>
   );

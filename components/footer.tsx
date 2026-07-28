@@ -8,7 +8,6 @@ export function Footer() {
       <nav className="footer-links" aria-label="Footer">
         <a href="#garden-guide-toggle">Garden Guide</a>
         <Link href="/garden-index">Garden Index</Link>
-        <Link href="/search">Search the Garden</Link>
         <span aria-disabled="true">Leave a note</span>
       </nav>
       <p className="unavailable-note">This path is still being prepared.</p>

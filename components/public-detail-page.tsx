@@ -18,6 +18,7 @@ import {
 } from "@/lib/seo";
 
 import { StatusBadge } from "./status-badge";
+import { SavedPathToggle } from "./saved-path-toggle";
 
 const regionHrefs = {
   Garden: "/garden",
@@ -314,6 +315,7 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
   const coverAlt = preferredCoverAlt(item.cover);
   const publishedAt = publicDate(item.publishedAt);
   const lastTendedAt = publicDate(item.lastTendedAt);
+  const currentRoute = `/${item.region.toLowerCase()}/${item.slug}`;
 
   return (
     <main
@@ -335,6 +337,7 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
           </p>
           <h1>{item.title}</h1>
           <p className="detail-summary">{item.summary}</p>
+          <SavedPathToggle route={currentRoute} title={item.title} />
           <dl className="detail-meta">
             {item.primaryCategories.length > 0 ? (
               <div>

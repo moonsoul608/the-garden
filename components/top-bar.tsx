@@ -6,7 +6,7 @@ export function TopBar() {
     <header className="top-bar">
       <Link className="site-mark" href="/">The Garden</Link>
       <div className="top-actions">
-        <Link className="search-link" href="/search" aria-label="Search the Garden">
+        <Link className="search-link" href="/garden-index" aria-label="Garden Index">
           <span aria-hidden="true">⌕</span>
         </Link>
         <GardenGuide />

@@ -430,7 +430,7 @@ test("all four detail pages use only the public route boundary", () => {
   }
 });
 
-test("Garden Guide remains viewport-fixed and exposes Index and Search", () => {
+test("Garden Guide remains viewport-fixed and exposes one discovery entry", () => {
   const styles = fs.readFileSync(
     path.join(projectRoot, "app/globals.css"),
     "utf8",
@@ -445,7 +445,7 @@ test("Garden Guide remains viewport-fixed and exposes Index and Search", () => {
   assert.match(guidePanelRule, /position:\s*fixed/);
   assert.doesNotMatch(topBarRule, /backdrop-filter|transform|perspective|contain:/);
   assert.match(regionsSource, /name:\s*"Garden Index",\s*href:\s*"\/garden-index"/);
-  assert.match(regionsSource, /name:\s*"Search the Garden",\s*href:\s*"\/search"/);
+  assert.doesNotMatch(regionsSource, /name:\s*"Search the Garden",\s*href:\s*"\/search"/);
 });
 
 test("the legacy Index alias redirects to the canonical Garden Index", () => {

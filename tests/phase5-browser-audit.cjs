@@ -193,7 +193,7 @@ async function press(cdp, sessionId, key, modifiers = 0) {
     for (const [route, inputSelector, clearLabel] of [
       ["/garden", ".garden-search input", "Clear Garden search"],
       ["/garden-index", ".discovery-search-field input", "Clear index search"],
-      ["/search", ".search-call-field input", "Clear garden search"],
+      ["/search", ".discovery-search-field input", "Clear index search"],
     ]) {
       await navigate(cdp, sessionId, `${baseUrl}${route}`);
       await evaluate(cdp, sessionId, `document.querySelector(${JSON.stringify(inputSelector)}).focus()`);

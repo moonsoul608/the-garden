@@ -237,7 +237,6 @@ test("all source-dependent public pages read through the shared service", () => 
     "app/forest/page.tsx",
     "app/lake/page.tsx",
     "app/ruins/page.tsx",
-    "app/search/page.tsx",
     "app/(utilities)/garden-index/page.tsx",
   ];
 

@@ -8,6 +8,13 @@
 .detail-header .eyebrow { margin-top: 0; color: var(--detail-accent); }
 .detail-header h1 { max-width: 16ch; overflow-wrap: anywhere; font-size: clamp(2.7rem, 8vw, 5.5rem); line-height: 1.02; }
 .detail-summary { max-width: 38rem; margin: var(--space-6) 0; color: var(--color-ink-muted); font-family: var(--font-display); font-size: clamp(1.2rem, 3vw, 1.55rem); }
+.saved-path-control { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin: 0 0 var(--space-6); }
+.saved-path-toggle { display: inline-flex; min-height: 2.75rem; align-items: center; gap: var(--space-2); border: 1px solid var(--detail-line); border-radius: 999px; padding: .55rem 1rem; color: var(--detail-accent); background: rgb(255 253 247 / .7); font: inherit; font-weight: 750; cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast); }
+.saved-path-toggle:is(:hover, :focus-visible) { border-color: var(--detail-accent); background: var(--color-surface); }
+.saved-path-toggle[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--detail-accent); }
+.saved-path-toggle span:first-child { font-size: 1.2rem; line-height: 1; }
+.saved-path-disclosure { margin: 0; color: var(--color-ink-muted); font-size: .86rem; }
+.saved-path-feedback { flex-basis: 100%; min-height: 1.4rem; margin: 0; color: var(--detail-accent); font-size: .86rem; font-weight: 700; }
 .detail-meta { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); margin: var(--space-7) 0 0; }
 .detail-meta div { min-width: 9rem; }
 .detail-meta dt { color: var(--color-ink-muted); font-size: .72rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
@@ -63,6 +70,8 @@ a.related-path:is(:hover, :focus-visible) { background: var(--color-surface); tr
   .detail-header { padding-top: var(--space-7); }
   .detail-meta { display: grid; grid-template-columns: 1fr; }
   .detail-cover { border-radius: var(--radius-md); }
+  .saved-path-control { align-items: stretch; flex-direction: column; }
+  .saved-path-toggle { justify-content: center; width: 100%; }
   .unfinished-note { align-items: flex-start; padding: var(--space-4); }
   .timeline-list { padding-left: var(--space-5); }
   .timeline-marker { left: calc(-1 * var(--space-5) - .08rem); }

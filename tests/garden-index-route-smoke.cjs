@@ -20,6 +20,11 @@ async function get(pathname) {
   assert.match(index.html, /href="\/garden-index"[^>]*>Garden Index<\/a>/);
   assert.match(index.html, /href="\/"[^>]*>Back to the entrance<\/a>/);
   assert.doesNotMatch(index.html, /href="\/index(?:[?#"])/);
+  assert.doesNotMatch(index.html, /href="\/search(?:[?#"])/);
+
+  const search = await get("/search?q=garden&region=Lake");
+  assert.equal(search.response.status, 307);
+  assert.match(search.response.headers.get("location") ?? "", /\/garden-index\?q=garden&region=Lake$/);
 
   const contentPaths = [...index.html.matchAll(/href="(\/(?:garden|forest|lake|ruins)\/[^"?#]+)"/g)]
     .map((match) => match[1])
@@ -35,6 +40,7 @@ async function get(pathname) {
 
   console.log("PASS / returns Home (200)");
   console.log("PASS /garden-index returns Garden Index (200)");
+  console.log("PASS /search redirects to Garden Index with query parameters");
   console.log("PASS Garden Index and Back to the entrance use distinct canonical routes");
   console.log("PASS all 19 Garden Index content links return 200");
 })().catch((error) => {

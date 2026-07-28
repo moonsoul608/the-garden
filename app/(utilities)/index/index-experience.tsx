@@ -2,33 +2,44 @@
 
 import { useId, useMemo, useState } from "react";
 import { DiscoveryCard } from "@/components/discovery-card";
+import { SavedPathsSection } from "@/components/saved-paths-section";
 import { matchesContentSearch } from "@/lib/content-discovery";
 import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 import type { ContentType, RegionName } from "@/types";
 
 const regions: Array<"All Regions" | RegionName> = ["All Regions", "Garden", "Forest", "Lake", "Ruins"];
 const contentTypes: Array<"All Types" | ContentType> = ["All Types", "Seed", "Question", "Reflection", "Trace"];
+const defaultVisibleResults = 6;
 
 export function IndexExperience({ items }: { items: PublicContentPresentation[] }) {
   const searchId = useId();
   const [region, setRegion] = useState<(typeof regions)[number]>("All Regions");
   const [contentType, setContentType] = useState<(typeof contentTypes)[number]>("All Types");
   const [query, setQuery] = useState("");
+  const [showAllResults, setShowAllResults] = useState(false);
 
   const results = useMemo(() => items.filter((item) =>
     (region === "All Regions" || item.region === region) &&
     (contentType === "All Types" || item.contentType === contentType) &&
     matchesContentSearch(item, query)
   ), [contentType, items, query, region]);
+  const hasActiveDiscoveryFilters = region !== "All Regions" || contentType !== "All Types" || Boolean(query.trim());
+  const shouldCollapseResults = !hasActiveDiscoveryFilters && results.length > defaultVisibleResults;
+  const visibleResults = shouldCollapseResults && !showAllResults
+    ? results.slice(0, defaultVisibleResults)
+    : results;
 
   function clearAll() {
     setRegion("All Regions");
     setContentType("All Types");
     setQuery("");
+    setShowAllResults(false);
   }
 
   return (
     <section className="discovery-body" aria-labelledby="index-collection-title">
+      <SavedPathsSection items={items} />
+
       <div className="index-controls card">
         <div className="filter-set">
           <h2>Region</h2>
@@ -58,7 +69,21 @@ export function IndexExperience({ items }: { items: PublicContentPresentation[] 
       </div>
 
       {results.length ? (
-        <div className="discovery-grid">{results.map((item) => <DiscoveryCard item={item} key={`${item.region}-${item.id}`} />)}</div>
+        <>
+          <div className="discovery-grid">{visibleResults.map((item) => <DiscoveryCard item={item} key={`${item.region}-${item.id}`} />)}</div>
+          {shouldCollapseResults ? (
+            <div className="discovery-expand-actions">
+              <button
+                className="button button-secondary"
+                type="button"
+                aria-expanded={showAllResults}
+                onClick={() => setShowAllResults((current) => !current)}
+              >
+                {showAllResults ? "Show less" : `Show all ${results.length} paths`}
+              </button>
+            </div>
+          ) : null}
+        </>
       ) : (
         <div className="discovery-empty card" role="status">
           <span aria-hidden="true">⌁</span>
@@ -67,6 +92,7 @@ export function IndexExperience({ items }: { items: PublicContentPresentation[] 
           <button className="button button-secondary" type="button" onClick={clearAll}>Clear all</button>
         </div>
       )}
+
     </section>
   );
 }

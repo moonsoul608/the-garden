@@ -31,7 +31,6 @@ const REVISION_COLUMNS = [
   "content_id",
   "lifecycle",
   "updated_at",
-  "restored_at",
 ].join(",");
 
 const VERSION_COLUMNS = [
@@ -56,7 +55,7 @@ type LifecycleContentRow = Pick<
 
 type LifecycleRevisionRow = Pick<
   ContentRevisionDatabaseRow,
-  "content_id" | "lifecycle" | "updated_at" | "restored_at"
+  "content_id" | "lifecycle" | "updated_at"
 >;
 
 type LifecycleVersionRow = Pick<
@@ -176,7 +175,7 @@ export function createLifecycleManagementReadRepository(
           ? {
               lifecycle: revision.lifecycle,
               updatedAt: revision.updated_at,
-              restoredAt: revision.restored_at,
+              restoredAt: null,
             }
           : null,
         sourceArchive: archiveVersion

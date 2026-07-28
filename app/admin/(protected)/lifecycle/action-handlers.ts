@@ -42,8 +42,9 @@ function state(
   status: LifecycleActionState["status"],
   message: string,
   preview: SafeDeletionPreview | null = null,
+  destination: string | null = null,
 ): LifecycleActionState {
-  return { status, message, preview };
+  return { status, message, destination, preview };
 }
 
 function safeError(error: unknown, fallback: string): LifecycleActionState {
@@ -131,6 +132,8 @@ export function createLifecycleActionHandlers({
       return state(
         "success",
         "Archived safely. The public route now rests outside garden discovery.",
+        null,
+        "/admin/content",
       );
     } catch (error) {
       return safeError(
@@ -157,7 +160,7 @@ export function createLifecycleActionHandlers({
         );
       }
 
-      await mutations.restoreVersionToDraft({
+      const receipt = await mutations.restoreVersionToDraft({
         contentId: target.contentId,
         sourceVersionId: target.sourceArchiveVersionId,
         expectedArchivedToken: text(formData, "expectedUpdatedAt"),
@@ -167,6 +170,8 @@ export function createLifecycleActionHandlers({
       return state(
         "success",
         "Restored into a private Draft with its archive provenance preserved.",
+        null,
+        `/admin/content/${receipt.revisionId}`,
       );
     } catch (error) {
       return safeError(

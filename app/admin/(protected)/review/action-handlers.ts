@@ -163,7 +163,7 @@ export function createReviewActionHandlers(service: ReviewActionService) {
         status: "success",
         message:
           "Published safely. Repeating this confirmed request will not create another version.",
-        destination: "/admin/review",
+        destination: "/admin/content",
         publishedAt: receipt.publishedAt,
       };
     } catch (error) {

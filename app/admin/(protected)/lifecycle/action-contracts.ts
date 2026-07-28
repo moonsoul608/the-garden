@@ -21,11 +21,13 @@ export type SafeDeletionPreview = Readonly<{
 export type LifecycleActionState = Readonly<{
   status: LifecycleActionStatus;
   message: string | null;
+  destination: string | null;
   preview: SafeDeletionPreview | null;
 }>;
 
 export const INITIAL_LIFECYCLE_ACTION_STATE: LifecycleActionState = {
   status: "idle",
   message: null,
+  destination: null,
   preview: null,
 };

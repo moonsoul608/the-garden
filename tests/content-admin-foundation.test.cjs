@@ -61,6 +61,18 @@ const restoreFoundationMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260716010000_phase_04d_restore_foundation.sql",
 );
+const productionPublishingRepairMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260724100000_restore_phase_04d_publishing.sql",
+);
+const productionCompatibleRestoreMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260724140000_restore_production_compatible_restore_to_draft.sql",
+);
+const archivedPublishCompatibilityMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260724150000_restore_archived_publish_compatibility.sql",
+);
 const deleteSafetyMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260716030000_phase_04d_delete_safety_foundation.sql",
@@ -1298,6 +1310,88 @@ test("Atomic publishing migration uses one locked, narrow publish function", () 
   );
 });
 
+test("Archived publish compatibility keeps existing publish behavior narrow", () => {
+  const previousMigration = fs.readFileSync(
+    productionPublishingRepairMigrationPath,
+    "utf8",
+  );
+  const migration = fs.readFileSync(
+    archivedPublishCompatibilityMigrationPath,
+    "utf8",
+  );
+  const publishFunctionStart = migration.search(
+    /create or replace function public\.publish_review_revision/i,
+  );
+  const publishFunctionEnd = migration.indexOf(
+    "comment on function public.publish_review_revision",
+    publishFunctionStart,
+  );
+  const previousFunctionStart = previousMigration.search(
+    /create or replace function public\.publish_review_revision/i,
+  );
+  const previousFunctionEnd = previousMigration.indexOf(
+    "comment on function public.publish_review_revision",
+    previousFunctionStart,
+  );
+
+  assert.notEqual(publishFunctionStart, -1);
+  assert.ok(publishFunctionEnd > publishFunctionStart);
+  assert.notEqual(previousFunctionStart, -1);
+  assert.ok(previousFunctionEnd > previousFunctionStart);
+
+  const publishFunction = migration.slice(
+    publishFunctionStart,
+    publishFunctionEnd,
+  );
+  const previousFunction = previousMigration.slice(
+    previousFunctionStart,
+    previousFunctionEnd,
+  );
+  const normalize = (value) => value.replace(/\s+/g, " ").trim();
+  const draftBranchPattern =
+    /if content\.lifecycle = 'Draft' then\s+(?<branch>if content\.published_at is not null[\s\S]*?end if;)\s+else/i;
+  const publishedCorePattern =
+    /if revision\.base_content_updated_at is null[\s\S]*?if revision\.region is distinct from content\.region then[\s\S]*?end if;/i;
+
+  const draftBranch = publishFunction.match(draftBranchPattern)?.groups?.branch;
+  const previousDraftBranch =
+    previousFunction.match(draftBranchPattern)?.groups?.branch;
+  assert.ok(draftBranch);
+  assert.equal(normalize(draftBranch), normalize(previousDraftBranch));
+
+  const publishedCore = publishFunction.match(publishedCorePattern)?.[0];
+  const previousPublishedCore =
+    previousFunction.match(publishedCorePattern)?.[0];
+  assert.ok(publishedCore);
+  assert.equal(normalize(publishedCore), normalize(previousPublishedCore));
+
+  assert.match(
+    publishFunction,
+    /content\.lifecycle not in \('Draft', 'Published', 'Archived'\)/i,
+  );
+  assert.match(
+    publishFunction,
+    /content\.lifecycle = 'Published' and content\.archived_at is not null/i,
+  );
+  assert.match(
+    publishFunction,
+    /content\.lifecycle = 'Archived'[\s\S]*?content\.archived_at is null or content\.archived_by is null/i,
+  );
+  assert.match(
+    publishFunction,
+    /set[\s\S]*?lifecycle = 'Published'[\s\S]*?archived_at = case[\s\S]*?when projection\.lifecycle = 'Archived' then null[\s\S]*?else projection\.archived_at[\s\S]*?archived_by = case[\s\S]*?when projection\.lifecycle = 'Archived' then null[\s\S]*?else projection\.archived_by[\s\S]*?updated_at = publication_time/i,
+  );
+  assert.match(publishFunction, /returns jsonb/i);
+  assert.match(publishFunction, /security definer/i);
+  assert.match(publishFunction, /set search_path = pg_catalog/i);
+  assert.match(
+    migration,
+    /revoke all on function public\.publish_review_revision\(uuid, uuid, bigint\)[\s\S]*?grant execute on function public\.publish_review_revision\(uuid, uuid, bigint\)\s+to authenticated/i,
+  );
+  assert.doesNotMatch(migration, /restore_version_to_draft/i);
+  assert.doesNotMatch(migration, /alter table|create table|add column/i);
+});
+
 test("Growth Stage schema migration permits only nullable Lake Reflections", () => {
   const migration = fs.readFileSync(
     growthStageApplicabilityMigrationPath,
@@ -2061,6 +2155,78 @@ test("Restore migration exposes one atomic Keeper-only workflow", () => {
   assert.ok(cloneFunctionEnd > cloneFunctionStart);
   assert.match(cloneFunction, /lifecycle\s*<>\s*'Published'/i);
   assert.doesNotMatch(cloneFunction, /'Archived'/i);
+});
+
+test("Production-compatible restore recovery preserves the RPC contract without revision restore fields", () => {
+  const migration = fs.readFileSync(
+    productionCompatibleRestoreMigrationPath,
+    "utf8",
+  );
+  const functionStart = migration.search(
+    /create or replace function public\.restore_version_to_draft/i,
+  );
+  const functionEnd = migration.search(/revoke all on function public\.restore_version_to_draft/i);
+  const restoreFunction = migration.slice(functionStart, functionEnd);
+
+  assert.match(
+    restoreFunction,
+    /p_content_id uuid,\s*p_source_version_id uuid,\s*p_expected_archived_token timestamptz,\s*p_operation_id uuid/s,
+  );
+  assert.match(restoreFunction, /returns jsonb/i);
+  assert.match(restoreFunction, /volatile/i);
+  assert.match(restoreFunction, /security definer/i);
+  assert.match(restoreFunction, /set search_path = pg_catalog/i);
+  assert.doesNotMatch(
+    restoreFunction,
+    /content_revisions\.(?:restore_operation_id|restored_at|restored_by)/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /alter table public\.content_revisions/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /set_content_revision_audit_fields|create policy|create trigger/i,
+  );
+
+  for (const field of [
+    "restore_operation_id",
+    "restore_source_version_id",
+    "restore_revision_id",
+    "restore_archived_token",
+  ]) {
+    assert.match(migration, new RegExp(`add column if not exists ${field} uuid|add column if not exists ${field} timestamptz`, "i"));
+    assert.match(restoreFunction, new RegExp(field, "i"));
+  }
+  assert.match(migration, /content_versions_restore_receipt_idx/i);
+  assert.match(migration, /content_versions_restore_receipt_all_or_none/i);
+  assert.match(migration, /has an incompatible definition/i);
+  assert.match(restoreFunction, /restore_operation_conflict/i);
+  assert.match(restoreFunction, /checkpoint_reason[\s\S]*?'PreRestore'/i);
+  assert.match(restoreFunction, /source_version_id/i);
+  assert.match(restoreFunction, /'contentId'[\s\S]*?'sourceVersionId'[\s\S]*?'revisionId'[\s\S]*?'operationId'[\s\S]*?'preRestoreVersionId'[\s\S]*?'lockVersion'[\s\S]*?'restoredAt'[\s\S]*?'restoredBy'/i);
+  assert.match(restoreFunction, /'restoredAt', receipt_checkpoint\.created_at/i);
+  assert.match(restoreFunction, /'restoredBy', receipt_checkpoint\.created_by/i);
+  assert.match(
+    migration,
+    /p_current_region = 'Lake'[\s\S]*?jsonb_typeof\(projection -> 'growthStage'\) = 'null'[\s\S]*?projection ->> 'growthStage' in/i,
+  );
+  assert.match(
+    migration,
+    /p_current_region <> 'Lake'[\s\S]*?projection ->> 'growthStage' not in/i,
+  );
+  assert.match(
+    restoreFunction,
+    /case when source_projection ->> 'growthStage' is null then null/i,
+  );
+  assert.match(
+    migration,
+    /grant execute on function public\.restore_version_to_draft\(uuid, uuid, timestamptz, uuid\)\s+to authenticated/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /grant execute on function private\.restore_snapshot_is_valid/i,
+  );
 });
 
 test("Keeper previews impact and deletes Archived content through the narrow repository", async () => {

@@ -73,8 +73,10 @@ function ArchiveDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
   );
 
   useEffect(() => {
-    if (actionState.status === "success") router.refresh();
-  }, [actionState.status, router]);
+    if (actionState.status === "success") {
+      router.push(actionState.destination ?? "/admin/content");
+    }
+  }, [actionState.destination, actionState.status, router]);
 
   return (
     <>
@@ -147,8 +149,10 @@ function RestoreDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
   );
 
   useEffect(() => {
-    if (actionState.status === "success") router.refresh();
-  }, [actionState.status, router]);
+    if (actionState.status === "success" && actionState.destination) {
+      router.push(actionState.destination);
+    }
+  }, [actionState.destination, actionState.status, router]);
 
   return (
     <>

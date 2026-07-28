@@ -408,6 +408,7 @@ test("publish confirmation handles idempotent success and safe failure", async (
   const success = await successHandlers.publishReview(idleState(), confirmed);
   assert.equal(success.status, "success");
   assert.match(success.message, /will not create another version/);
+  assert.equal(success.destination, "/admin/content");
   assert.equal(publishCalls, 1);
 
   const failureHandlers = createReviewActionHandlers({
@@ -420,6 +421,7 @@ test("publish confirmation handles idempotent success and safe failure", async (
   });
   const failure = await failureHandlers.publishReview(idleState(), confirmed);
   assert.equal(failure.status, "error");
+  assert.equal(failure.destination, null);
   assert.doesNotMatch(failure.message, /private|rpc|sql/i);
 
   const staleHandlers = createReviewActionHandlers({
@@ -432,6 +434,7 @@ test("publish confirmation handles idempotent success and safe failure", async (
   });
   const stale = await staleHandlers.publishReview(idleState(), confirmed);
   assert.equal(stale.status, "conflict");
+  assert.equal(stale.destination, null);
   assert.match(stale.message, /Reload/);
 });
 

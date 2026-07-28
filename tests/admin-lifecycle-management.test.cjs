@@ -11,6 +11,10 @@ const lifecycleServicePath = path.join(
   projectRoot,
   "lib/content/admin/lifecycle-management-service.ts",
 );
+const lifecycleRepositoryPath = path.join(
+  projectRoot,
+  "lib/content/admin/lifecycle-management-repository.ts",
+);
 const handlersPath = path.join(
   projectRoot,
   "app/admin/(protected)/lifecycle/action-handlers.ts",
@@ -88,6 +92,9 @@ const {
   createLifecycleManagementService,
   mapLifecycleListItem,
 } = require(lifecycleServicePath);
+const {
+  createLifecycleManagementReadRepository,
+} = require(lifecycleRepositoryPath);
 const { createLifecycleActionHandlers } = require(handlersPath);
 const { ContentMutationError } = require(path.join(
   projectRoot,
@@ -207,6 +214,77 @@ test("lifecycle list exposes public identity and maps the last action", () => {
   assert.doesNotMatch(JSON.stringify(item), new RegExp(sourceVersionId));
 });
 
+test("lifecycle repository does not require restore-only revision columns", async () => {
+  const calls = [];
+  const client = {
+    from(table) {
+      return {
+        select(columns) {
+          calls.push([table, "select", columns]);
+          const query = {
+            in(column, values) {
+              calls.push([table, "in", column, values]);
+              return query;
+            },
+            order(column, options) {
+              calls.push([table, "order", column, options]);
+              return Promise.resolve({
+                data:
+                  table === "contents"
+                    ? [
+                        {
+                          id: contentId,
+                          slug: "a-maintained-path",
+                          region: "Garden",
+                          lifecycle: "Published",
+                          title_zh: null,
+                          title_en: "A maintained path",
+                          updated_at: updatedAt,
+                          published_at: "2026-07-16T09:00:00.000Z",
+                          archived_at: null,
+                        },
+                      ]
+                    : [],
+                error: null,
+              });
+            },
+          };
+
+          if (table === "content_revisions") {
+            return {
+              in(column, values) {
+                calls.push([table, "in", column, values]);
+                return Promise.resolve({
+                  data: [
+                    {
+                      content_id: contentId,
+                      lifecycle: "Draft",
+                      updated_at: "2026-07-16T10:30:00.000Z",
+                    },
+                  ],
+                  error: null,
+                });
+              },
+            };
+          }
+
+          return query;
+        },
+      };
+    },
+  };
+
+  const repository = createLifecycleManagementReadRepository(client);
+  const records = await repository.listLifecycleRecords();
+
+  assert.deepEqual(
+    calls.find(([table, operation]) => table === "content_revisions" && operation === "select"),
+    ["content_revisions", "select", "content_id,lifecycle,updated_at"],
+  );
+  assert.equal(records[0].activeRevision.lifecycle, "Draft");
+  assert.equal(records[0].activeRevision.restoredAt, null);
+});
+
 test("archive confirmation resolves the public route and calls the archive service", async () => {
   let received;
   const handlers = createLifecycleActionHandlers({
@@ -234,6 +312,7 @@ test("archive confirmation resolves the public route and calls the archive servi
   );
 
   assert.equal(result.status, "success", JSON.stringify(result));
+  assert.equal(result.destination, "/admin/content");
   assert.deepEqual(received, {
     contentId,
     expectedUpdatedAt: updatedAt,
@@ -255,7 +334,7 @@ test("restore keeps version identity server-side and preserves the archive token
     mutations: mutationStubs({
       restoreVersionToDraft: async (input) => {
         received = input;
-        return {};
+        return { revisionId: "00000000-0000-4000-8000-000000005d42" };
       },
     }),
     createOperationId: () => "00000000-0000-4000-8000-000000005d22",
@@ -270,6 +349,10 @@ test("restore keeps version identity server-side and preserves the archive token
   );
 
   assert.equal(result.status, "success");
+  assert.equal(
+    result.destination,
+    "/admin/content/00000000-0000-4000-8000-000000005d42",
+  );
   assert.deepEqual(received, {
     contentId,
     sourceVersionId,
@@ -399,6 +482,7 @@ test("unsafe lifecycle transitions stop at the server boundary with safe errors"
     }),
   );
   assert.equal(wrongState.status, "conflict");
+  assert.equal(wrongState.destination, null);
   assert.equal(archiveCalls, 0);
 
   const privateFailureHandlers = createLifecycleActionHandlers({
@@ -419,6 +503,7 @@ test("unsafe lifecycle transitions stop at the server boundary with safe errors"
     }),
   );
   assert.equal(privateFailure.status, "error");
+  assert.equal(privateFailure.destination, null);
   assert.doesNotMatch(privateFailure.message, /private|rpc|database/i);
 
   const staleHandlers = createLifecycleActionHandlers({
@@ -439,6 +524,7 @@ test("unsafe lifecycle transitions stop at the server boundary with safe errors"
     }),
   );
   assert.equal(stale.status, "conflict");
+  assert.equal(stale.destination, null);
   assert.match(stale.message, /Reload/);
 });
 
@@ -460,4 +546,17 @@ test("lifecycle route keeps authorization, data, and mutations on the server", (
   assert.match(panel, /Storage objects are NOT immediately deleted/);
   assert.match(panel, /Historical versions remain protected/);
   assert.doesNotMatch(panel, /contentId|sourceVersionId|relationId|supabase|rpc/i);
+
+  const archiveDialog = panel.slice(
+    panel.indexOf("function ArchiveDialog"),
+    panel.indexOf("function RestoreDialog"),
+  );
+  const restoreDialog = panel.slice(
+    panel.indexOf("function RestoreDialog"),
+    panel.indexOf("function DeleteDialog"),
+  );
+  assert.match(archiveDialog, /router\.push\(actionState\.destination \?\? "\/admin\/content"\)/);
+  assert.doesNotMatch(archiveDialog, /router\.refresh\(\)/);
+  assert.match(restoreDialog, /router\.push\(actionState\.destination\)/);
+  assert.doesNotMatch(restoreDialog, /router\.refresh\(\)/);
 });

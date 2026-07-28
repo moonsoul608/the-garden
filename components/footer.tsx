@@ -8,9 +8,9 @@ export function Footer() {
       <nav className="footer-links" aria-label="Footer">
         <a href="#garden-guide-toggle">Garden Guide</a>
         <Link href="/garden-index">Garden Index</Link>
-        <span aria-disabled="true">Leave a note</span>
+        <Link href="/leave-a-note">Leave a note</Link>
       </nav>
-      <p className="unavailable-note">This path is still being prepared.</p>
+      <p className="unavailable-note">Notes are private and never appear as public comments.</p>
     </footer>
   );
 }

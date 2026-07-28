@@ -1,0 +1,17 @@
+.note-page { min-height: 70vh; background: linear-gradient(180deg, var(--region-home), var(--color-paper) 30rem); }
+.note-hero { display: grid; width: min(76rem, calc(100% - 2rem)); min-height: 42rem; align-items: center; grid-template-columns: .9fr 1.1fr; gap: clamp(2rem, 7vw, 6rem); margin-inline: auto; padding: clamp(4rem, 9vw, 7rem) 0; }
+.note-hero-copy > p:not(.eyebrow, .tagline) { max-width: 40rem; color: var(--color-ink-muted); }
+.note-form { display: grid; gap: var(--space-4); padding: clamp(1.25rem, 4vw, 2.5rem); }
+.note-field { display: grid; gap: var(--space-2); }
+.note-field label { font-weight: 700; }
+.note-field label span { color: var(--color-ink-muted); font-size: .84rem; font-weight: 500; }
+.note-field input, .note-field textarea { width: 100%; border: 1px solid var(--color-line); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); color: var(--color-ink); background: #fffef9; font: inherit; line-height: 1.6; }
+.note-field textarea { resize: vertical; }
+.note-field-hidden { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.note-meta { margin: 0; color: var(--color-ink-muted); font-size: .85rem; text-align: right; }
+.note-status { min-height: 1.7em; margin: 0; color: var(--color-leaf-dark); font-weight: 700; }
+.note-status-error { color: #8a3c28; }
+@media (max-width: 48rem) {
+  .note-hero { grid-template-columns: 1fr; min-height: auto; }
+}
+

@@ -380,6 +380,24 @@ export type ContentTagDatabaseRow = {
 export type ContentTagDatabaseInsert = ContentTagDatabaseRow;
 export type ContentTagDatabaseUpdate = Partial<ContentTagDatabaseRow>;
 
+export type VisitorNoteDatabaseRow = {
+  id: string;
+  name: string | null;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+};
+
+export type VisitorNoteDatabaseInsert = {
+  id?: string;
+  name?: string | null;
+  message: string;
+  is_read?: boolean;
+  created_at?: string;
+};
+
+export type VisitorNoteDatabaseUpdate = Partial<VisitorNoteDatabaseInsert>;
+
 type SupabaseTable<Row, Insert, Update> = {
   Row: Row;
   Insert: Insert;
@@ -440,6 +458,11 @@ export type ContentDatabase = {
         HomeCurationDatabaseRow,
         HomeCurationDatabaseInsert,
         HomeCurationDatabaseUpdate
+      >;
+      visitor_notes: SupabaseTable<
+        VisitorNoteDatabaseRow,
+        VisitorNoteDatabaseInsert,
+        VisitorNoteDatabaseUpdate
       >;
     };
     Views: Record<string, never>;

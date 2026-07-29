@@ -4,10 +4,13 @@ import { notFound } from "next/navigation";
 import {
   createAdminContentService,
   getReviewWorkspaceDetail,
+  listGrowthNotes,
 } from "@/lib/content/admin";
+import { requiresGrowthStage } from "@/lib/content/validation";
 
 import { saveDraftAction } from "../actions";
 import { ContentForm } from "../content-form";
+import { GrowthNotesSection } from "../growth-notes-section";
 import { ReviewActionPanel } from "../../review/review-action-panel";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
@@ -33,6 +36,13 @@ export default async function EditAdminContentPage({
 
   if (draft.lifecycle === "Draft" && !reviewDetail) notFound();
 
+  const growthNotesApplicable = requiresGrowthStage(
+    draft.region,
+    draft.contentType,
+  );
+  const growthNotes = growthNotesApplicable
+    ? await listGrowthNotes(draft.contentId)
+    : [];
   const title = draft.titleEn?.trim() || draft.titleZh?.trim() || "Untitled Draft";
 
   return (
@@ -71,6 +81,13 @@ export default async function EditAdminContentPage({
         </Link>
       </div>
       <ContentForm mode="edit" action={saveDraftAction} draft={draft} />
+      {growthNotesApplicable ? (
+        <GrowthNotesSection
+          contentId={draft.contentId}
+          revisionId={draft.revisionId}
+          notes={growthNotes}
+        />
+      ) : null}
       {reviewDetail ? (
         <ReviewActionPanel
           revision={reviewDetail.revision}

@@ -848,6 +848,23 @@ body:has(.admin-root) > .footer {
   line-height: 1.4;
 }
 
+.admin-checkbox-field .admin-checkbox-control {
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  gap: 0.55rem;
+  color: #33463a;
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-transform: none;
+}
+
+.admin-checkbox-field input[type="checkbox"] {
+  width: 1rem;
+  min-width: 1rem;
+  height: 1rem;
+}
+
 .admin-field-error {
   display: block;
   margin-top: -0.65rem;
@@ -880,6 +897,62 @@ body:has(.admin-root) > .footer {
 .admin-form-notice span,
 .admin-form-notice a {
   font-size: 0.75rem;
+}
+
+.admin-growth-notes-section > .admin-growth-notes-workspace {
+  grid-column: 2;
+}
+
+.admin-growth-notes-workspace,
+.admin-growth-note-form,
+.admin-growth-note-list,
+.admin-growth-note-card {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-growth-note-form {
+  padding: clamp(1rem, 2vw, 1.4rem);
+  border: 1px solid #cad5ca;
+  border-radius: 0.75rem;
+  background: #fbfdf9;
+}
+
+.admin-growth-note-card {
+  padding: clamp(1rem, 2vw, 1.4rem);
+  border: 1px solid #d8dfd4;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.admin-growth-note-card .admin-growth-note-form {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.admin-growth-note-actions,
+.admin-growth-note-delete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-growth-note-status,
+.admin-growth-note-empty {
+  margin: 0;
+  color: #607266;
+  font-size: 0.78rem;
+}
+
+.admin-growth-note-status--success {
+  color: #315a40;
+}
+
+.admin-growth-note-status--error {
+  color: #8d3428;
 }
 
 .admin-editor-actions {
@@ -1975,7 +2048,8 @@ body:has(.admin-root) > .footer {
   }
 
   .admin-editor-section > .admin-form-grid,
-  .admin-editor-section > .admin-field-error {
+  .admin-editor-section > .admin-field-error,
+  .admin-growth-notes-section > .admin-growth-notes-workspace {
     grid-column: 1;
   }
 

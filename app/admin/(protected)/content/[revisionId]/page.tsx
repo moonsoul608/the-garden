@@ -3,13 +3,16 @@ import { notFound } from "next/navigation";
 
 import {
   createAdminContentService,
+  listContentRelationTargets,
   getReviewWorkspaceDetail,
   listGrowthNotes,
+  listOutgoingContentRelations,
 } from "@/lib/content/admin";
 import { requiresGrowthStage } from "@/lib/content/validation";
 
 import { saveDraftAction } from "../actions";
 import { ContentForm } from "../content-form";
+import { ContentRelationsSection } from "../content-relations-section";
 import { GrowthNotesSection } from "../growth-notes-section";
 import { ReviewActionPanel } from "../../review/review-action-panel";
 
@@ -43,6 +46,10 @@ export default async function EditAdminContentPage({
   const growthNotes = growthNotesApplicable
     ? await listGrowthNotes(draft.contentId)
     : [];
+  const [contentRelations, relationTargets] = await Promise.all([
+    listOutgoingContentRelations(draft.contentId),
+    listContentRelationTargets(draft.contentId),
+  ]);
   const title = draft.titleEn?.trim() || draft.titleZh?.trim() || "Untitled Draft";
 
   return (
@@ -81,6 +88,12 @@ export default async function EditAdminContentPage({
         </Link>
       </div>
       <ContentForm mode="edit" action={saveDraftAction} draft={draft} />
+      <ContentRelationsSection
+        sourceContentId={draft.contentId}
+        revisionId={draft.revisionId}
+        relations={contentRelations}
+        targets={relationTargets}
+      />
       {growthNotesApplicable ? (
         <GrowthNotesSection
           contentId={draft.contentId}

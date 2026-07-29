@@ -899,7 +899,8 @@ body:has(.admin-root) > .footer {
   font-size: 0.75rem;
 }
 
-.admin-growth-notes-section > .admin-growth-notes-workspace {
+.admin-growth-notes-section > .admin-growth-notes-workspace,
+.admin-content-relations-section > .admin-growth-notes-workspace {
   grid-column: 2;
 }
 
@@ -953,6 +954,48 @@ body:has(.admin-root) > .footer {
 
 .admin-growth-note-status--error {
   color: #8d3428;
+}
+
+.admin-content-relation-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.admin-content-relation-summary {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.admin-content-relation-summary > p {
+  margin: 0;
+  color: #607266;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-content-relation-summary h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-content-relation-notes {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+  color: #4d6254;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.admin-content-relation-notes p {
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 .admin-editor-actions {
@@ -2049,8 +2092,13 @@ body:has(.admin-root) > .footer {
 
   .admin-editor-section > .admin-form-grid,
   .admin-editor-section > .admin-field-error,
-  .admin-growth-notes-section > .admin-growth-notes-workspace {
+  .admin-growth-notes-section > .admin-growth-notes-workspace,
+  .admin-content-relations-section > .admin-growth-notes-workspace {
     grid-column: 1;
+  }
+
+  .admin-content-relation-card {
+    grid-template-columns: 1fr;
   }
 
   .admin-form-grid--four {

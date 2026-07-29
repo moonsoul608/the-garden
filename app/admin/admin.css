@@ -594,6 +594,62 @@ body:has(.admin-root) > .footer {
   color: #718075;
 }
 
+.admin-home-curation-workspace {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.admin-home-curation-summary,
+.admin-home-slot {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid #c9d3ca;
+  border-radius: 1rem;
+  background: rgb(246 249 244 / 0.78);
+  box-shadow: 0 1.25rem 3rem rgb(51 74 57 / 0.08);
+}
+
+.admin-home-curation-form {
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+.admin-home-slot .admin-section-heading span {
+  display: block;
+  max-width: 34rem;
+  margin-top: 0.45rem;
+  color: #587061;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.admin-home-slot-rows {
+  display: grid;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.admin-home-slot-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.9rem;
+}
+
+.admin-home-slot-order {
+  display: inline-flex;
+  width: 2.4rem;
+  height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c6d1c8;
+  border-radius: 999px;
+  color: #456452;
+  background: #f9fbf7;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
 .admin-content-loading {
   display: grid;
   gap: 1rem;
@@ -908,6 +964,27 @@ body:has(.admin-root) > .footer {
 .admin-primary-action:disabled {
   cursor: wait;
   opacity: 0.7;
+}
+
+.admin-secondary-action {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #9dafaa;
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  cursor: pointer;
+  color: #234f34;
+  background: rgb(255 255 255 / 0.7);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.admin-secondary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .admin-login-control {
@@ -1846,6 +1923,15 @@ body:has(.admin-root) > .footer {
   .admin-content-row {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+
+  .admin-home-slot-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .admin-home-slot-row .admin-secondary-action {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .admin-review-row,

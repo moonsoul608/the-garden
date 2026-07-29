@@ -462,7 +462,10 @@ test("the four route pages retain safe render branches and error boundaries", ()
     );
     assert.match(page, /disposition\.kind === "not_found"/);
     assert.match(page, /disposition\.kind === "archived"/);
-    assert.match(page, /<PublicDetailPage item={disposition\.content} \/>/);
+    assert.match(
+      page,
+      /<PublicDetailPage item={disposition\.content} source={source} \/>/,
+    );
     assert.match(error, /public-route-error/);
   }
 });

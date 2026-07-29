@@ -242,7 +242,11 @@ test("all source-dependent public pages read through the shared service", () => 
 
   for (const page of pages) {
     const source = fs.readFileSync(path.join(projectRoot, page), "utf8");
-    assert.match(source, /getPublishedContent/);
+    if (page === "app/page.tsx") {
+      assert.match(source, /getPublishedHomeCuration/);
+    } else {
+      assert.match(source, /getPublishedContent/);
+    }
     assert.match(source, /presentPublicContentCard/);
     assert.doesNotMatch(
       source,

@@ -77,7 +77,7 @@ export function RecentlyVisitedSection({
               className="saved-path-card"
               key={`recent-${item.region}-${item.id}`}
             >
-              <DiscoveryCard item={item} compact />
+              <DiscoveryCard item={item} compact source="your-paths" />
               <p className="recently-visited-stamp">
                 Visited {visitedLabel(visitedAt)}
               </p>

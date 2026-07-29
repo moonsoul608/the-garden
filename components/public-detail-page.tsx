@@ -16,6 +16,7 @@ import {
   createPublicContentStructuredData,
   serializeStructuredData,
 } from "@/lib/seo";
+import type { DetailSourceContext } from "@/lib/content-discovery";
 
 import { StatusBadge } from "./status-badge";
 import { RecentlyVisitedTracker } from "./recently-visited-tracker";
@@ -28,12 +29,40 @@ const regionHrefs = {
   Ruins: "/ruins",
 } as const;
 
+const sourceBackLinks: Record<
+  DetailSourceContext,
+  { href: string; label: string }
+> = {
+  index: { href: "/garden-index", label: "Return to Garden Index" },
+  "your-paths": { href: "/your-paths", label: "Return to Your Paths" },
+  garden: { href: "/garden", label: "Return to the Garden" },
+  forest: { href: "/forest", label: "Return to the Forest" },
+  lake: { href: "/lake", label: "Return to the Lake" },
+  ruins: { href: "/ruins", label: "Return to the Ruins" },
+};
+
 const metadataLabels = {
   Garden: "Bed",
   Forest: "Trail",
   Lake: "Reflection",
   Ruins: "Trace",
 } as const;
+
+type SourceParam = string | string[] | undefined;
+
+function sourceBackLink(source: SourceParam) {
+  const value = Array.isArray(source) ? source[0] : source;
+  return value && value in sourceBackLinks
+    ? sourceBackLinks[value as DetailSourceContext]
+    : null;
+}
+
+function fallbackBackLink(region: PublicContentDetail["region"]) {
+  return {
+    href: regionHrefs[region],
+    label: `Return to the ${region}`,
+  };
+}
 
 type MarkdownBlock =
   | { kind: "heading"; level: number; text: string }
@@ -301,7 +330,13 @@ function GrowthTimeline({
   );
 }
 
-export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
+export function PublicDetailPage({
+  item,
+  source,
+}: {
+  item: PublicContentDetail;
+  source?: SourceParam;
+}) {
   const legacyPresentation = detailContent[item.region][item.slug];
   const relatedPaths =
     item.relations.length > 0
@@ -317,6 +352,7 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
   const publishedAt = publicDate(item.publishedAt);
   const lastTendedAt = publicDate(item.lastTendedAt);
   const currentRoute = `/${item.region.toLowerCase()}/${item.slug}`;
+  const backLink = sourceBackLink(source) ?? fallbackBackLink(item.region);
 
   return (
     <main
@@ -330,8 +366,8 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
       />
       <RecentlyVisitedTracker route={currentRoute} />
       <article className="detail-shell">
-        <Link className="detail-back" href={regionHrefs[item.region]}>
-          ← Return to the {item.region}
+        <Link className="detail-back" href={backLink.href}>
+          ← {backLink.label}
         </Link>
         <header className="detail-header">
           <p className="eyebrow">
@@ -424,22 +460,29 @@ export function PublicDetailPage({ item }: { item: PublicContentDetail }) {
         />
         <Link
           className="button button-secondary detail-return"
-          href={regionHrefs[item.region]}
+          href={backLink.href}
         >
-          Return to the {item.region}
+          {backLink.label}
         </Link>
       </article>
     </main>
   );
 }
 
-export function ArchivedDetailPage({ item }: { item: PublicArchivedContent }) {
+export function ArchivedDetailPage({
+  item,
+  source,
+}: {
+  item: PublicArchivedContent;
+  source?: SourceParam;
+}) {
   const paths = item.relations.map(({ target }) => ({
     label: target.title,
     href: `/${target.region.toLowerCase()}/${target.slug}`,
     context: `${target.region} · ${target.growthStage ?? "Not growth-tracked"}`,
     relationship: "Related path",
   }));
+  const backLink = sourceBackLink(source) ?? fallbackBackLink(item.region);
 
   return (
     <main
@@ -448,8 +491,8 @@ export function ArchivedDetailPage({ item }: { item: PublicArchivedContent }) {
       className={`detail-page detail-${item.region.toLowerCase()}`}
     >
       <article className="detail-shell">
-        <Link className="detail-back" href={regionHrefs[item.region]}>
-          ← Return to the {item.region}
+        <Link className="detail-back" href={backLink.href}>
+          ← {backLink.label}
         </Link>
         <header className="detail-header">
           <p className="eyebrow">{item.region} · Archived</p>
@@ -475,9 +518,9 @@ export function ArchivedDetailPage({ item }: { item: PublicArchivedContent }) {
         <RelatedPaths paths={paths} />
         <Link
           className="button button-secondary detail-return"
-          href={regionHrefs[item.region]}
+          href={backLink.href}
         >
-          Return to the {item.region}
+          {backLink.label}
         </Link>
       </article>
     </main>

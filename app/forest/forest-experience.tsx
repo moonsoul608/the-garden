@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { StatusBadge } from "@/components";
+import { getContentHref } from "@/lib/content-discovery";
 import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
 const trails = [
@@ -73,7 +74,7 @@ export function ForestExperience({ items }: { items: PublicContentPresentation[]
         {visibleItems.length ? (
           <div className="question-grid">
             {visibleItems.map((item) => (
-              <Link className="question-card card" href={`/forest/${item.slug}`} key={item.id}>
+              <Link className="question-card card" href={getContentHref(item, "forest")} key={item.id}>
                 <div className="question-card-top"><span>Question</span>{item.status && <StatusBadge status={item.status} />}</div>
                 <h3>{item.title}</h3>
                 <p className="question-summary">{item.summary}</p>
@@ -107,7 +108,7 @@ export function ForestExperience({ items }: { items: PublicContentPresentation[]
                 <p>{foundQuestion.summary}</p>
                 <ul aria-label="Trails">{foundQuestion.primaryCategories.map((trail) => <li key={trail}>{trail}</li>)}</ul>
                 <div className="found-actions">
-                  <Link className="button button-primary" href={`/forest/${foundQuestion.slug}`}>Follow this question</Link>
+                  <Link className="button button-primary" href={getContentHref(foundQuestion, "forest")}>Follow this question</Link>
                   <button className="button button-secondary" type="button" onClick={findQuestion}>Find another question</button>
                   <Link className="button button-secondary" href={`/greenhouse?idea=${encodeURIComponent(foundQuestion.title)}`}>Grow it in the Greenhouse</Link>
                 </div>

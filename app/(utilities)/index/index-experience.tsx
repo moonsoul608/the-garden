@@ -67,7 +67,7 @@ export function IndexExperience({ items }: { items: PublicContentPresentation[] 
 
       {results.length ? (
         <>
-          <div className="discovery-grid">{visibleResults.map((item) => <DiscoveryCard item={item} key={`${item.region}-${item.id}`} />)}</div>
+          <div className="discovery-grid">{visibleResults.map((item) => <DiscoveryCard item={item} source="index" key={`${item.region}-${item.id}`} />)}</div>
           {shouldCollapseResults ? (
             <div className="discovery-expand-actions">
               <button

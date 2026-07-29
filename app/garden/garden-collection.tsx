@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useId, useMemo, useState } from "react";
 import { StatusBadge } from "@/components";
+import { getContentHref } from "@/lib/content-discovery";
 import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
 type GardenCollectionProps = {
@@ -66,7 +67,7 @@ export function GardenCollection({ beds, items }: GardenCollectionProps) {
               <h3>{item.title}</h3>
               <p className="seed-summary">{item.summary}</p>
               <ul className="seed-beds" aria-label="Growing beds">{item.primaryCategories.map((bed) => <li key={bed}>{bed}</li>)}</ul>
-              <Link className="seed-link" href={`/garden/${item.slug}`}>{item.cta}</Link>
+              <Link className="seed-link" href={getContentHref(item, "garden")}>{item.cta}</Link>
             </article>
           ))}
         </div>

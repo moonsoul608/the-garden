@@ -1,17 +1,25 @@
 import Link from "next/link";
-import { getContentHref } from "@/lib/content-discovery";
+import {
+  getContentHref,
+  type DetailSourceContext,
+} from "@/lib/content-discovery";
 import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
 type DiscoveryCardProps = {
   item: PublicContentPresentation;
   compact?: boolean;
+  source?: DetailSourceContext;
 };
 
-export function DiscoveryCard({ item, compact = false }: DiscoveryCardProps) {
+export function DiscoveryCard({
+  item,
+  compact = false,
+  source,
+}: DiscoveryCardProps) {
   const category = item.primaryCategories[0];
 
   return (
-    <Link className={`discovery-card card${compact ? " discovery-card-compact" : ""}`} href={getContentHref(item)}>
+    <Link className={`discovery-card card${compact ? " discovery-card-compact" : ""}`} href={getContentHref(item, source)}>
       <div className="discovery-card-meta">
         <span>{item.region}</span>
         <span aria-hidden="true">·</span>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components";
+import { getContentHref } from "@/lib/content-discovery";
 import { presentPublicContentCards } from "@/lib/content/public-presentation";
 import { getPublishedContent } from "@/lib/content/service";
 import { createPublicPageMetadata } from "@/lib/seo";
@@ -99,7 +100,7 @@ export default async function RuinsPage() {
               <div className="trace-actions">
                 <Link
                   className="button button-primary trace-main-link"
-                  href={`/ruins/${trace.slug}`}
+                  href={getContentHref(trace, "ruins")}
                   aria-label={`${trace.cta.replace(" →", "")}: ${trace.title}`}
                 >
                   {trace.cta}

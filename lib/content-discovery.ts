@@ -18,10 +18,20 @@ export const regionGroupHeadings: Record<RegionName, string> = {
   Ruins: "Left in the Ruins",
 };
 
+export type DetailSourceContext =
+  | "index"
+  | "your-paths"
+  | "garden"
+  | "forest"
+  | "lake"
+  | "ruins";
+
 export function getContentHref(
   item: Pick<ContentItem | PublicContentCard, "region" | "slug">,
+  source?: DetailSourceContext,
 ) {
-  return `/${item.region.toLocaleLowerCase()}/${item.slug}`;
+  const href = `/${item.region.toLocaleLowerCase()}/${item.slug}`;
+  return source ? `${href}?source=${source}` : href;
 }
 
 export function matchesContentSearch(item: DiscoverableContent, query: string) {

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { getContentHref } from "@/lib/content-discovery";
 import type { PublicContentPresentation } from "@/lib/content/public-presentation";
 
 const ripples = ["All", "Music", "Games", "Films", "Books & Words", "Internet"] as const;
@@ -55,7 +56,7 @@ export function LakeExperience({ items }: { items: PublicContentPresentation[] }
         </header>
         <div className="reflection-grid">
           {visibleItems.map((item, index) => (
-            <Link className="reflection-card card" href={`/lake/${item.slug}`} key={item.id}>
+            <Link className="reflection-card card" href={getContentHref(item, "lake")} key={item.id}>
               <div className="reflection-card-top"><span>Reflection {String(index + 1).padStart(2, "0")}</span><span>{item.primaryCategories[0]}</span></div>
               <div className="reflection-ring" aria-hidden="true"><span /></div>
               <h3>{item.title}</h3>
@@ -81,7 +82,7 @@ export function LakeExperience({ items }: { items: PublicContentPresentation[] }
                 <h3>{surfaced.title}</h3>
                 <p>{surfaced.summary}</p>
                 <div className="surfaced-actions">
-                  <Link className="button button-primary" href={`/lake/${surfaced.slug}`}>Look closer</Link>
+                  <Link className="button button-primary" href={getContentHref(surfaced, "lake")}>Look closer</Link>
                   <button className="button button-secondary" type="button" onClick={surfaceReflection}>Let something else surface</button>
                 </div>
               </article>

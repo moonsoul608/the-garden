@@ -67,7 +67,7 @@ export function SavedPathsSection({
         <div className="discovery-grid saved-paths-grid">
           {savedItems.map((item) => (
             <div className="saved-path-card" key={`saved-${item.region}-${item.id}`}>
-              <DiscoveryCard item={item} compact />
+              <DiscoveryCard item={item} compact source="your-paths" />
               <button
                 type="button"
                 className="saved-path-card-toggle"

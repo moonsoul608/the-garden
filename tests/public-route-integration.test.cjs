@@ -11,6 +11,7 @@ const integrationPath = path.join(
   projectRoot,
   "lib/content/public-route-integration.ts",
 );
+const contentDiscoveryPath = path.join(projectRoot, "lib/content-discovery.ts");
 const seoPath = path.join(projectRoot, "lib/seo.ts");
 const servicePath = path.join(projectRoot, "lib/content/service.ts");
 const originalLoad = Module._load;
@@ -61,6 +62,7 @@ require.extensions[".ts"] = function transpileTypeScript(module, filename) {
 
 const { createPublicRouteIntegration } = require(integrationPath);
 const { createContentService } = require(servicePath);
+const { getContentHref } = require(contentDiscoveryPath);
 const {
   createPublicContentStructuredData,
   serializeStructuredData,
@@ -418,7 +420,10 @@ test("all four detail pages use only the public route boundary", () => {
     assert.match(source, /getPublicContentStaticParams\(region\)/);
     assert.match(source, /disposition\.kind === "not_found"/);
     assert.match(source, /disposition\.kind === "archived"/);
-    assert.match(source, /<PublicDetailPage item={disposition\.content} \/>/);
+    assert.match(source, /searchParams\?: Promise<\{ source\?: string \| string\[\] \}>/);
+    assert.match(source, /const source = \(await searchParams\)\?\.source/);
+    assert.match(source, /<PublicDetailPage item={disposition\.content} source={source} \/>/);
+    assert.match(source, /<ArchivedDetailPage item={disposition\.content} source={source} \/>/);
     assert.doesNotMatch(source, /@\/content|@\/lib\/supabase|\.find\(/);
     assert.match(source, /dynamicParams = true/);
 
@@ -446,7 +451,36 @@ test("Garden Guide remains viewport-fixed and exposes discovery plus personal en
   assert.doesNotMatch(topBarRule, /backdrop-filter|transform|perspective|contain:/);
   assert.match(regionsSource, /name:\s*"Garden Index",\s*href:\s*"\/garden-index"/);
   assert.match(regionsSource, /name:\s*"Your Paths",\s*href:\s*"\/your-paths"/);
+  assert.doesNotMatch(regionsSource, /name:\s*"Back to the entrance",\s*href:\s*"\/"/);
   assert.doesNotMatch(regionsSource, /name:\s*"Search the Garden",\s*href:\s*"\/search"/);
+});
+
+test("detail links can carry an allowlisted source without changing canonical defaults", () => {
+  const item = publicCard({ region: "Lake", slug: "quiet-water" });
+
+  assert.equal(getContentHref(item), "/lake/quiet-water");
+  assert.equal(getContentHref(item, "index"), "/lake/quiet-water?source=index");
+  assert.equal(
+    getContentHref(item, "your-paths"),
+    "/lake/quiet-water?source=your-paths",
+  );
+  assert.equal(getContentHref(item, "lake"), "/lake/quiet-water?source=lake");
+});
+
+test("public detail pages allowlist source-aware back navigation", () => {
+  const source = fs.readFileSync(
+    path.join(projectRoot, "components/public-detail-page.tsx"),
+    "utf8",
+  );
+
+  assert.match(source, /index:\s*\{ href:\s*"\/garden-index", label:\s*"Return to Garden Index" \}/);
+  assert.match(source, /"your-paths":\s*\{ href:\s*"\/your-paths", label:\s*"Return to Your Paths" \}/);
+  assert.match(source, /garden:\s*\{ href:\s*"\/garden", label:\s*"Return to the Garden" \}/);
+  assert.match(source, /forest:\s*\{ href:\s*"\/forest", label:\s*"Return to the Forest" \}/);
+  assert.match(source, /lake:\s*\{ href:\s*"\/lake", label:\s*"Return to the Lake" \}/);
+  assert.match(source, /ruins:\s*\{ href:\s*"\/ruins", label:\s*"Return to the Ruins" \}/);
+  assert.match(source, /value && value in sourceBackLinks/);
+  assert.match(source, /sourceBackLink\(source\) \?\? fallbackBackLink\(item\.region\)/);
 });
 
 test("the legacy Index alias redirects to the canonical Garden Index", () => {

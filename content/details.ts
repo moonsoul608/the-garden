@@ -41,9 +41,9 @@ export const detailContent: Record<RegionName, Record<string, DetailContent>> = 
       ],
       relatedTitle: "Where this path leads next",
       relatedPaths: [
-        { label: "Continue into Coding", href: "/garden/python-starting-from-the-basics" },
-        { label: "See the Home design", href: "/" },
-        { label: "Grow an idea in the Greenhouse", href: "/greenhouse" },
+        { label: "继续探索 Coding", href: "/garden/python-starting-from-the-basics" },
+        { label: "查看首页设计", href: "/" },
+        { label: "去 Greenhouse 培育想法", href: "/greenhouse" },
       ],
     },
     "learning-psychological-statistics": {
@@ -62,19 +62,17 @@ export const detailContent: Record<RegionName, Record<string, DetailContent>> = 
       ],
       relatedTitle: "Where this path leads next",
       relatedPaths: [
-        { label: "Practice a complete t-test example" },
-        { label: "Review confidence intervals" },
         { label: "Return to Psychology Seeds", href: "/garden" },
       ],
     },
     "exploring-ai-tools": { explanation: "这颗 Seed 记录我对 AI 学习辅助、创作支持和工具使用方式的持续尝试。", relatedPaths: [
-      { label: "Grow an idea in the Greenhouse", href: "/greenhouse" }, { label: "Follow a question about humans and AI", href: "/forest/does-ai-help-thinking-or-organize-answers" }, { label: "Return to the Garden", href: "/garden" },
+      { label: "去 Greenhouse 培育想法", href: "/greenhouse" }, { label: "Follow a question about humans and AI", href: "/forest/does-ai-help-thinking-or-organize-answers" }, { label: "Return to the Garden", href: "/garden" },
     ] },
     "python-starting-from-the-basics": { explanation: "这颗 Seed 保存从环境配置、基础语法到简单练习的学习起点。", relatedPaths: [
       { label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "Return to the Garden", href: "/garden" },
     ] },
     "designing-better-slides-and-documents": { explanation: "这颗 Seed 记录如何通过排版、层级和信息组织，让内容更容易阅读和理解。", relatedPaths: [
-      { label: "Follow a design question", href: "/forest/why-exploratory-websites-invite-more-clicks" }, { label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "Return to the Garden", href: "/garden" },
+      { label: "跟随设计问题", href: "/forest/why-exploratory-websites-invite-more-clicks" }, { label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "Return to the Garden", href: "/garden" },
     ] },
   },
   Forest: {
@@ -95,9 +93,9 @@ export const detailContent: Record<RegionName, Record<string, DetailContent>> = 
       ],
       relatedTitle: "Where it may lead",
       relatedPaths: [
-        { label: "See how this idea shaped The Garden", href: "/garden/building-the-garden" },
-        { label: "Explore psychology and user experience", href: "/forest/how-psychology-shapes-product-and-web-design" },
-        { label: "Grow this question in the Greenhouse", href: greenhouseIdea("为什么探索式网站会让人更愿意继续点击？") },
+        { label: "查看这个想法如何塑造 The Garden", href: "/garden/building-the-garden" },
+        { label: "探索心理学与用户体验", href: "/forest/how-psychology-shapes-product-and-web-design" },
+        { label: "去 Greenhouse 培育这个问题", href: greenhouseIdea("为什么探索式网站会让人更愿意继续点击？") },
       ],
     },
     "why-people-fear-forgetting": {
@@ -118,19 +116,19 @@ export const detailContent: Record<RegionName, Record<string, DetailContent>> = 
       ],
       relatedTitle: "Where it may lead",
       relatedPaths: [
-        { label: "Read the trace left by “继续吗”", href: "/ruins/unfinished-continue" },
-        { label: "Explore memory and identity", href: "/forest" },
-        { label: "Grow this question in the Greenhouse", href: greenhouseIdea("人为什么会害怕遗忘？") },
+        { label: "阅读“继续吗”留下的 Trace", href: "/ruins/unfinished-continue" },
+        { label: "探索记忆与身份", href: "/forest" },
+        { label: "去 Greenhouse 培育这个问题", href: greenhouseIdea("人为什么会害怕遗忘？") },
       ],
     },
     "does-ai-help-thinking-or-organize-answers": { explanation: "这个问题关注使用 AI 时，辅助思考与替代思考之间的界限。", relatedPaths: [
-      { label: "Explore AI Tools", href: "/garden/exploring-ai-tools" }, { label: "Grow this question", href: greenhouseIdea("AI 可以帮助人思考，还是只是在替人组织答案？") }, { label: "Return to the Forest", href: "/forest" },
+      { label: "Explore AI Tools", href: "/garden/exploring-ai-tools" }, { label: "培育这个问题", href: greenhouseIdea("AI 可以帮助人思考，还是只是在替人组织答案？") }, { label: "Return to the Forest", href: "/forest" },
     ] },
     "how-psychology-shapes-product-and-web-design": { explanation: "这个问题关注注意、行为和心理规律怎样影响界面与用户体验。", relatedPaths: [
-      { label: "Follow the exploratory website question", href: "/forest/why-exploratory-websites-invite-more-clicks" }, { label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "Return to the Forest", href: "/forest" },
+      { label: "跟随探索式网站问题", href: "/forest/why-exploratory-websites-invite-more-clicks" }, { label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "Return to the Forest", href: "/forest" },
     ] },
     "when-a-question-moves-from-forest-to-garden": { explanation: "当一个问题已经能够转化为练习、项目或下一步行动时，它可能正在从思考走向生长。", relatedPaths: [
-      { label: "See what is growing", href: "/garden" }, { label: "Grow the question in the Greenhouse", href: "/greenhouse" }, { label: "Return to the Forest", href: "/forest" },
+      { label: "看看正在生长的内容", href: "/garden" }, { label: "去 Greenhouse 培育问题", href: "/greenhouse" }, { label: "Return to the Forest", href: "/forest" },
     ] },
   },
   Lake: {
@@ -138,19 +136,19 @@ export const detailContent: Record<RegionName, Record<string, DetailContent>> = 
       { title: "What it is", blocks: [{ type: "paragraph", text: "一款以时间、历史与失序为重要叙事元素的角色扮演游戏。" }] },
       { title: "Why it stayed", blocks: [{ type: "paragraph", text: "它的美术、时代感和叙事方式，让游戏世界像一段被重新拼起的记忆。" }] },
       { title: "What it reflects", blocks: [{ type: "paragraph", text: "我喜欢那些不急着解释全部背景，而是让人通过细节、氛围和碎片逐渐理解世界的作品。" }] },
-    ], relatedPaths: [{ label: "Return to the Lake", href: "/lake" }, { label: "Follow a reflection into the Forest", href: "/forest" }] },
+    ], relatedPaths: [{ label: "Return to the Lake", href: "/lake" }, { label: "跟随 Reflection 进入 Forest", href: "/forest" }] },
     "love-love-love": { sections: [
       { title: "What it is", blocks: [{ type: "paragraph", text: "方大同演唱的一首歌曲。" }] },
       { title: "Why it stayed", blocks: [{ type: "paragraph", text: "它把感情写得轻盈又真诚，旋律结束以后，情绪仍然会停留一会儿。" }] },
       { title: "What it reflects", blocks: [{ type: "paragraph", text: "我喜欢不需要过度用力，却能留下长久情绪的表达。" }] },
-    ], relatedPaths: [{ label: "Return to the Lake", href: "/lake" }, { label: "Follow a reflection into the Forest", href: "/forest" }] },
+    ], relatedPaths: [{ label: "Return to the Lake", href: "/lake" }, { label: "跟随 Reflection 进入 Forest", href: "/forest" }] },
     "summer-ghost": { sections: [
       { title: "What it is", blocks: [{ type: "paragraph", text: "一部围绕三名少年、传说中的幽灵与短暂夏日相遇展开的动画作品。" }] },
       { title: "Why it stayed", blocks: [{ type: "paragraph", text: "它用短暂的夏日相遇讨论死亡、孤独与继续生活，安静却留下了很深的余韵。" }] },
       { title: "What it reflects", blocks: [{ type: "paragraph", text: "我会被那些节奏克制、篇幅不长，却能认真触碰记忆、孤独与生命意义的故事吸引。" }] },
-    ], relatedPaths: [{ label: "Return to the Lake", href: "/lake" }, { label: "Follow a reflection into the Forest", href: "/forest" }] },
+    ], relatedPaths: [{ label: "Return to the Lake", href: "/lake" }, { label: "跟随 Reflection 进入 Forest", href: "/forest" }] },
     "jung-and-mandala": { explanation: "这项 Reflection 关注曼陀罗如何被荣格用来理解心灵的秩序与完整性。", relatedPaths: [{ label: "Explore Mind & Behavior", href: "/forest" }, { label: "Return to the Lake", href: "/lake" }] },
-    "the-garden": { explanation: "这项 Reflection 保存 The Garden 作为一个网络空间所形成的氛围与意义。", relatedPaths: [{ label: "See how The Garden was built", href: "/garden/building-the-garden" }, { label: "Return Home", href: "/" }, { label: "Return to the Lake", href: "/lake" }] },
+    "the-garden": { explanation: "这项 Reflection 保存 The Garden 作为一个网络空间所形成的氛围与意义。", relatedPaths: [{ label: "查看 The Garden 是如何建成的", href: "/garden/building-the-garden" }, { label: "Return Home", href: "/" }, { label: "Return to the Lake", href: "/lake" }] },
   },
   Ruins: {
     "first-version-of-home": { sections: [
@@ -158,10 +156,10 @@ export const detailContent: Record<RegionName, Record<string, DetailContent>> = 
       { title: "Why it stopped", blocks: [{ type: "paragraph", text: "Welcome 和 About 都在介绍网站与个人。" }, { type: "paragraph", text: "首页前半部分和 Garden Map 都在引导访客选择路径。" }, { type: "paragraph", text: "Currently Growing 和多个状态模块也重复表达“最近在做什么”。" }, { type: "paragraph", text: "这会让首页过长，也会增加开发和维护成本。" }] },
       { title: "What it left behind", blocks: [{ type: "paragraph", text: "它帮助我们确认：" }, { type: "list", items: ["美学不等于堆叠内容", "同一种信息只需要出现一次", "探索感必须建立在清晰结构上", "开发说明需要区分内部名称与展示名称"] }] },
     ], relatedTitle: "What grew from it", relatedPaths: [
-      { label: "See the current Home design", href: "/" }, { label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "Follow the question about exploratory websites", href: "/forest/why-exploratory-websites-invite-more-clicks" },
+      { label: "查看首页设计", href: "/" }, { label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "跟随探索式网站问题", href: "/forest/why-exploratory-websites-invite-more-clicks" },
     ] },
-    "portfolio-never-built": { explanation: "传统作品集的方向被放弃后，留下了“怎样真实展示尚未成熟的自己”这个问题。", relatedPaths: [{ label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "Reflect on The Garden", href: "/lake/the-garden" }, { label: "Return to the Ruins", href: "/ruins" }] },
-    "too-much-interaction": { explanation: "这次尝试留下的经验是：探索感不能以清晰度和可用性为代价。", relatedPaths: [{ label: "Follow the exploratory website question", href: "/forest/why-exploratory-websites-invite-more-clicks" }, { label: "See the current Home", href: "/" }, { label: "Return to the Ruins", href: "/ruins" }] },
-    "unfinished-continue": { explanation: "虽然这段版本没有继续完成，但其中关于记忆和遗忘的主题被保留了下来。", relatedPaths: [{ label: "Follow the question about forgetting", href: "/forest/why-people-fear-forgetting" }, { label: "Return to the Ruins", href: "/ruins" }] },
+    "portfolio-never-built": { explanation: "传统作品集的方向被放弃后，留下了“怎样真实展示尚未成熟的自己”这个问题。", relatedPaths: [{ label: "Open Building The Garden", href: "/garden/building-the-garden" }, { label: "回看 The Garden", href: "/lake/the-garden" }, { label: "Return to the Ruins", href: "/ruins" }] },
+    "too-much-interaction": { explanation: "这次尝试留下的经验是：探索感不能以清晰度和可用性为代价。", relatedPaths: [{ label: "跟随探索式网站问题", href: "/forest/why-exploratory-websites-invite-more-clicks" }, { label: "See the current Home", href: "/" }, { label: "Return to the Ruins", href: "/ruins" }] },
+    "unfinished-continue": { explanation: "虽然这段版本没有继续完成，但其中关于记忆和遗忘的主题被保留了下来。", relatedPaths: [{ label: "跟随关于遗忘的问题", href: "/forest/why-people-fear-forgetting" }, { label: "Return to the Ruins", href: "/ruins" }] },
   },
 };

@@ -66,8 +66,8 @@ export default async function GardenPage() {
         <h2 id="garden-ending-title">Growth is rarely a straight line.</h2>
         <p>成长很少是一条直线。</p>
         <nav className="garden-ending-actions" aria-label="Continue exploring">
-          <Link className="button button-primary" href="/forest">Follow a question into the Forest →</Link>
-          <Link className="button button-secondary" href="/ruins">See what stopped growing →</Link>
+          <Link className="button button-primary" href="/forest">跟随问题进入 Forest →</Link>
+          <Link className="button button-secondary" href="/ruins">看看什么停止了生长 →</Link>
         </nav>
       </section>
     </main>

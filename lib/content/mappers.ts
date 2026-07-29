@@ -6,6 +6,7 @@ import type {
   PublicContentDatabaseRow,
 } from "@/types/database";
 import type {
+  ContentLanguage,
   ContentRecord,
   ContentRelation,
   GrowthNote,
@@ -48,6 +49,12 @@ export function requireBilingualValue(
   }
 
   return value;
+}
+
+function preferredLanguageForContent(
+  contentLanguage: ContentLanguage | null,
+): PreferredLanguage {
+  return contentLanguage === "en" ? "en" : "zh";
 }
 
 export function mapContentDatabaseRow(
@@ -125,7 +132,9 @@ export function mapContentRelationDatabaseRow(
 
 export function mapContentRecordToPublicCard(
   content: ContentRecord,
-  preferredLanguage: PreferredLanguage = "zh",
+  preferredLanguage: PreferredLanguage = preferredLanguageForContent(
+    content.contentLanguage,
+  ),
 ): PublicContentCard {
   if (!content.slug) {
     throw new ContentMappingError("slug");
@@ -167,7 +176,9 @@ export function mapContentRecordToPublicDetail(
   content: ContentRecord,
   growthNotes: GrowthNote[] = [],
   relations: PublicContentRelation[] = [],
-  preferredLanguage: PreferredLanguage = "zh",
+  preferredLanguage: PreferredLanguage = preferredLanguageForContent(
+    content.contentLanguage,
+  ),
 ): PublicContentDetail {
   return {
     ...mapContentRecordToPublicCard(content, preferredLanguage),

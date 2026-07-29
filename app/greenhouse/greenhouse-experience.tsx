@@ -306,7 +306,7 @@ export function GreenhouseExperience({ initialIdea }: { initialIdea: string }) {
       <section className="greenhouse-ending" aria-labelledby="ending-title">
         <div><p className="eyebrow">From here</p><h2 id="ending-title">Every idea needs a first step.</h2><p>每一个想法，都需要一个开始。</p></div>
         <div className="ending-actions">
-          <Link className="button button-primary" href="/forest">Follow a question into the Forest →</Link>
+          <Link className="button button-primary" href="/forest">跟随问题进入 Forest →</Link>
           <Link className="button button-secondary" href="/garden">See what is already growing →</Link>
         </div>
       </section>

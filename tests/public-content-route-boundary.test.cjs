@@ -202,6 +202,137 @@ test("Published route returns the normal published DTO", async () => {
   assert.equal("id" in result.content, false);
 });
 
+test("content language selects public bilingual fields consistently", async () => {
+  const cases = [
+    {
+      contentLanguage: "en",
+      expected: {
+        title: "English title",
+        summary: "English summary",
+        bodyMarkdown: "English body",
+      },
+    },
+    {
+      contentLanguage: "zh",
+      expected: {
+        title: "中文标题",
+        summary: "中文摘要",
+        bodyMarkdown: "中文正文",
+      },
+    },
+    {
+      contentLanguage: "mixed",
+      expected: {
+        title: "中文标题",
+        summary: "中文摘要",
+        bodyMarkdown: "中文正文",
+      },
+    },
+  ];
+
+  for (const { contentLanguage, expected } of cases) {
+    const row = databaseRow({
+      content_language: contentLanguage,
+      title_zh: "中文标题",
+      title_en: "English title",
+      summary_zh: "中文摘要",
+      summary_en: "English summary",
+      body_zh_markdown: "中文正文",
+      body_en_markdown: "English body",
+    });
+    const service = createContentService({
+      mode: "database",
+      repository: repositoryStub({
+        resolvePublicContentRoute: async () => ({ kind: "published" }),
+        getPublishedContentByRoute: async () => ({
+          row,
+          tags: [],
+          growthNotes: [],
+          relations: [],
+        }),
+      }),
+      legacySource: legacySourceStub(),
+    });
+
+    const result = await service.getPublicContentRouteDisposition(
+      "Garden",
+      row.slug,
+    );
+
+    assert.equal(result.kind, "published");
+    assert.equal(result.content.title, expected.title);
+    assert.equal(result.content.summary, expected.summary);
+    assert.equal(result.content.bodyMarkdown, expected.bodyMarkdown);
+  }
+});
+
+test("content language selection preserves missing-field fallbacks", async () => {
+  const cases = [
+    {
+      contentLanguage: "en",
+      row: {
+        title_zh: "中文标题",
+        title_en: null,
+        summary_zh: "中文摘要",
+        summary_en: null,
+        body_zh_markdown: "中文正文",
+        body_en_markdown: null,
+      },
+      expected: {
+        title: "中文标题",
+        summary: "中文摘要",
+        bodyMarkdown: "中文正文",
+      },
+    },
+    {
+      contentLanguage: "zh",
+      row: {
+        title_zh: null,
+        title_en: "English title",
+        summary_zh: null,
+        summary_en: "English summary",
+        body_zh_markdown: null,
+        body_en_markdown: "English body",
+      },
+      expected: {
+        title: "English title",
+        summary: "English summary",
+        bodyMarkdown: "English body",
+      },
+    },
+  ];
+
+  for (const { contentLanguage, row: rowOverrides, expected } of cases) {
+    const row = databaseRow({
+      content_language: contentLanguage,
+      ...rowOverrides,
+    });
+    const service = createContentService({
+      mode: "database",
+      repository: repositoryStub({
+        resolvePublicContentRoute: async () => ({ kind: "published" }),
+        getPublishedContentByRoute: async () => ({
+          row,
+          tags: [],
+          growthNotes: [],
+          relations: [],
+        }),
+      }),
+      legacySource: legacySourceStub(),
+    });
+
+    const result = await service.getPublicContentRouteDisposition(
+      "Garden",
+      row.slug,
+    );
+
+    assert.equal(result.kind, "published");
+    assert.equal(result.content.title, expected.title);
+    assert.equal(result.content.summary, expected.summary);
+    assert.equal(result.content.bodyMarkdown, expected.bodyMarkdown);
+  }
+});
+
 test("database mode reads only Published collection records", async () => {
   const published = databaseRow();
   const service = createContentService({

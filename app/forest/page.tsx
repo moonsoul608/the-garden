@@ -45,7 +45,7 @@ export default async function ForestPage() {
         <h2 id="forest-ending-title">Some paths end in answers. Others become better questions.</h2>
         <p>有些小径通向答案，另一些只会带来更好的问题。</p>
         <nav className="forest-ending-actions" aria-label="Continue from the Forest">
-          <Link className="button button-primary" href="/garden">Turn a question into action →</Link>
+          <Link className="button button-primary" href="/garden">把问题变成行动 →</Link>
           <Link className="button button-secondary" href="/greenhouse">Grow a question in the Greenhouse →</Link>
         </nav>
       </section>

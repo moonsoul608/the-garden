@@ -209,15 +209,6 @@ function mapPublicationReceipt(value: Json): PublicationReceipt {
   };
 }
 
-function describeJsonShape(value: Json): string {
-  if (value === null) return "null";
-  if (Array.isArray(value)) return `array(${value.length})`;
-  if (typeof value === "object") {
-    return `object(${Object.keys(value).sort().join(",")})`;
-  }
-  return typeof value;
-}
-
 function mapPublishedProjection(
   row: ContentDatabaseRow,
   tags: string[],

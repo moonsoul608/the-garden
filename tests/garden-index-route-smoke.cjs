@@ -29,6 +29,7 @@ async function get(pathname) {
   assert.match(yourPaths.html, /<h1[^>]*>Your Paths<\/h1>/);
   assert.match(yourPaths.html, /<h2[^>]*id="saved-paths-title"[^>]*>Saved Paths<\/h2>/);
   assert.match(yourPaths.html, /<h2[^>]*id="recently-visited-title"[^>]*>Recently Visited<\/h2>/);
+  assert.match(yourPaths.html, /<h2[^>]*id="your-notes-title"[^>]*>Your Notes<\/h2>/);
 
   const search = await get("/search?q=garden&region=Lake");
   assert.equal(search.response.status, 307);

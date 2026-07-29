@@ -1,5 +1,6 @@
 import { RecentlyVisitedSection } from "@/components/recently-visited-section";
 import { SavedPathsSection } from "@/components/saved-paths-section";
+import { YourNotesSection } from "@/components/your-notes-section";
 import { presentPublicContentCards } from "@/lib/content/public-presentation";
 import { getPublishedContent } from "@/lib/content/service";
 import { createPublicPageMetadata } from "@/lib/seo";
@@ -26,6 +27,7 @@ export default async function YourPathsPage() {
       <section className="discovery-body" aria-label="Your paths">
         <SavedPathsSection items={items} />
         <RecentlyVisitedSection items={items} />
+        <YourNotesSection />
       </section>
     </main>
   );

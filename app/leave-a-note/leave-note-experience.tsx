@@ -2,6 +2,7 @@
 
 import { FormEvent, useRef, useState } from "react";
 
+import { saveLocalNoteReceipt } from "@/lib/local-note-receipts";
 import {
   VISITOR_NOTE_MAX_MESSAGE_LENGTH,
   VISITOR_NOTE_MAX_NAME_LENGTH,
@@ -47,6 +48,7 @@ export function LeaveNoteExperience() {
         throw new Error(payload.ok ? "The note could not be sent." : payload.error);
       }
 
+      saveLocalNoteReceipt(trimmedMessage);
       setName("");
       setMessage("");
       setWebsite("");
@@ -138,4 +140,3 @@ export function LeaveNoteExperience() {
     </main>
   );
 }
-

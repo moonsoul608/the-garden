@@ -14,9 +14,16 @@ import type {
   ContentRelationTargetOption,
 } from "./content-relations-contracts";
 
+const lifecycleLabels: Record<ContentSummaryRow["lifecycle"], string> = {
+  Draft: "草稿",
+  Review: "待审核",
+  Published: "已发布",
+  Archived: "已归档",
+};
+
 export class ContentRelationsRepositoryError extends Error {
   constructor() {
-    super("Content Relations could not be changed safely.");
+    super("Content Relations 无法安全更改。");
     this.name = "ContentRelationsRepositoryError";
   }
 }
@@ -53,15 +60,15 @@ type ContentSummaryRow = Pick<
 >;
 
 function titleFor(row: ContentSummaryRow): string {
-  return row.title_en?.trim() || row.title_zh?.trim() || row.slug || "Untitled";
+  return row.title_en?.trim() || row.title_zh?.trim() || row.slug || "未命名";
 }
 
 function labelFor(row: ContentSummaryRow): string {
   return [
     titleFor(row),
     row.region,
-    row.lifecycle,
-    row.growth_stage ?? "No growth stage",
+    lifecycleLabels[row.lifecycle],
+    row.growth_stage ?? "不跟踪 Growth Stage",
   ].join(" - ");
 }
 

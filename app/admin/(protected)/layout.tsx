@@ -36,18 +36,18 @@ export default async function ProtectedAdminLayout({
           <span>Garden Keeper</span>
         </header>
 
-        <nav className="admin-navigation" aria-label="Admin navigation">
-          <Link href="/admin">Dashboard</Link>
-          <Link href="/admin/home">Home Curation</Link>
-          <Link href="/admin/content">Content</Link>
-          <Link href="/admin/review">Review queue</Link>
-          <Link href="/admin/lifecycle">Lifecycle</Link>
-          <Link href="/admin/media">Media</Link>
-          <Link href="/admin/notes">Visitor Notes</Link>
+        <nav className="admin-navigation" aria-label="管理导航">
+          <Link href="/admin">工作台</Link>
+          <Link href="/admin/home">首页精选</Link>
+          <Link href="/admin/content">内容管理</Link>
+          <Link href="/admin/review">审核队列</Link>
+          <Link href="/admin/lifecycle">生命周期管理</Link>
+          <Link href="/admin/media">媒体库</Link>
+          <Link href="/admin/notes">访客留言</Link>
         </nav>
 
         <div className="admin-identity">
-          <span>Signed in</span>
+          <span>已登录</span>
           <strong>Garden Keeper</strong>
         </div>
       </aside>

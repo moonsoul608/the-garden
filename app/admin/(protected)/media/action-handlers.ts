@@ -30,7 +30,7 @@ function safelyMapError(error: unknown): MediaActionState {
 
   return {
     status: "error",
-    message: "The cover could not be stored. Try again without leaving this page.",
+    message: "封面无法上传。请不要离开当前页面并重试。",
     objectPath: null,
     previousObjectPath: null,
   };
@@ -54,8 +54,8 @@ export function createMediaActionHandlers(service: MediaWorkspaceService) {
       return {
         status: "success",
         message: receipt.previousObjectPath
-          ? "New cover attached. The previous object remains preserved."
-          : "Cover uploaded and attached to the Draft.",
+          ? "新封面已关联。之前的对象仍会保留。"
+          : "封面已上传并关联到草稿。",
         objectPath: receipt.objectPath,
         previousObjectPath: receipt.previousObjectPath,
       };

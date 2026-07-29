@@ -9,10 +9,10 @@ export default async function AdminMediaPage() {
   return (
     <main id="admin-main" className="admin-main">
       <header className="admin-page-header">
-        <p>Garden Keeper · Media</p>
-        <h1>Seed library</h1>
+        <p>Garden Keeper · 媒体库</p>
+        <h1>媒体库</h1>
         <span>
-          Tend cover objects, their garden uses, and their resting state without removing what came before.
+          管理封面对象、使用情况和引用状态，不删除既有历史。
         </span>
       </header>
 

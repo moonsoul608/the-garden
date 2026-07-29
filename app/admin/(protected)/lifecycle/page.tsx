@@ -5,6 +5,7 @@ import {
   type LifecycleOverview,
 } from "@/lib/content/admin";
 
+import { lifecycleLabel } from "../admin-labels";
 import { LifecycleActions } from "./lifecycle-actions";
 
 const dateFormatter = new Intl.DateTimeFormat("en", {
@@ -32,12 +33,12 @@ function LifecycleSection({
     <section className="admin-lifecycle-section" aria-labelledby={id}>
       <div className="admin-section-heading admin-section-heading--compact">
         <div>
-          <p className="admin-section-kicker">Garden maintenance</p>
+          <p className="admin-section-kicker">内容维护</p>
           <h2 id={id}>{title}</h2>
           <span>{description}</span>
         </div>
         <p className="admin-content-count">
-          {items.length} {items.length === 1 ? "path" : "paths"}
+          {items.length} 条
         </p>
       </div>
 
@@ -61,17 +62,17 @@ function LifecycleSection({
               </div>
               <dl className="admin-lifecycle-row-meta">
                 <div>
-                  <dt>Lifecycle</dt>
+                  <dt>生命周期</dt>
                   <dd>
                     <span
                       className={`admin-lifecycle-marker admin-lifecycle-marker--${item.lifecycle.toLocaleLowerCase()}`}
                       aria-hidden="true"
                     />
-                    {item.lifecycle}
+                    {lifecycleLabel(item.lifecycle)}
                   </dd>
                 </div>
                 <div>
-                  <dt>Updated</dt>
+                  <dt>更新时间</dt>
                   <dd>
                     <time dateTime={item.updatedAt}>
                       {dateFormatter.format(new Date(item.updatedAt))}
@@ -79,7 +80,7 @@ function LifecycleSection({
                   </dd>
                 </div>
                 <div>
-                  <dt>Last action</dt>
+                  <dt>上次操作</dt>
                   <dd>
                     <strong>{item.lastAction}</strong>
                     <time dateTime={item.lastActionAt}>
@@ -101,10 +102,9 @@ function UnavailableState() {
   return (
     <section className="admin-lifecycle-unavailable" role="alert">
       <span aria-hidden="true">·</span>
-      <h2>The maintenance paths are quiet for now.</h2>
+      <h2>维护列表暂不可用。</h2>
       <p>
-        Lifecycle records could not be loaded safely. No internal details were
-        revealed and no action was run.
+        生命周期记录无法安全加载。内部详情未显示，也没有执行任何操作。
       </p>
     </section>
   );
@@ -123,10 +123,9 @@ export default async function AdminLifecyclePage() {
     <main id="admin-main" className="admin-main">
       <header className="admin-page-header">
         <p>Garden Keeper</p>
-        <h1>Lifecycle maintenance</h1>
+        <h1>生命周期管理</h1>
         <span>
-          A careful place for tending paths that are open, resting, or ready
-          to return to Draft.
+          管理已发布、已归档，以及可恢复为草稿的内容。
         </span>
       </header>
 
@@ -135,16 +134,16 @@ export default async function AdminLifecyclePage() {
           <>
             <LifecycleSection
               id="published-lifecycle-title"
-              title="Published paths"
-              description="Content currently open in the public garden."
-              emptyMessage="No Published paths need maintenance."
+              title="已发布内容"
+              description="当前在公开站点可访问的内容。"
+              emptyMessage="没有需要维护的已发布内容。"
               items={overview.published}
             />
             <LifecycleSection
               id="archived-lifecycle-title"
-              title="Archived paths"
-              description="Content resting outside discovery, with protected history."
-              emptyMessage="No paths are resting in the archive."
+              title="已归档内容"
+              description="已移出发现入口并保留受保护历史的内容。"
+              emptyMessage="当前没有已归档内容。"
               items={overview.archived}
             />
           </>
@@ -157,14 +156,13 @@ export default async function AdminLifecyclePage() {
           aria-labelledby="deleted-history-title"
         >
           <div>
-            <p className="admin-section-kicker">Terminal history</p>
-            <h2 id="deleted-history-title">Deleted route history</h2>
+            <p className="admin-section-kicker">终止记录</p>
+            <h2 id="deleted-history-title">已删除路由历史</h2>
           </div>
           <p>
-            Terminal route records are kept as a safety boundary. Deleted
-            content details are intentionally not shown here.
+            终止路由记录会作为安全边界保留。已删除内容详情不会在这里显示。
           </p>
-          <span>History view placeholder</span>
+          <span>历史视图占位</span>
         </section>
       </div>
     </main>

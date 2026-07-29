@@ -109,7 +109,7 @@ const createdAt = "2026-07-29T10:00:00.000Z";
 function target(overrides = {}) {
   return {
     id: targetContentId,
-    label: "Target title - Garden - Published - Sprout",
+    label: "Target title - Garden - 已发布 - Sprout",
     title: "Target title",
     region: "Garden",
     lifecycle: "Published",
@@ -429,8 +429,8 @@ test("Content Relations editor follows protected content editor patterns", () =>
   assert.doesNotMatch(actions, /supabase|\.from\(|\.rpc\(/i);
   assert.match(section, /["']use client["']/);
   assert.match(section, /useActionState/);
-  assert.match(section, /Create Content Relation/);
-  assert.match(section, /Delete/);
+  assert.match(section, /创建 Content Relations/);
+  assert.match(section, /删除/);
   assert.match(section, /targetContentId/);
   assert.match(contracts, /INITIAL_CONTENT_RELATION_ACTION_STATE/);
   assert.match(adminIndex, /content-relations-service/);

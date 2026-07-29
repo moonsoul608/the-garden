@@ -59,7 +59,7 @@ const SPECIALIZED_CODES = new Set<ContentValidationIssueCode>([
 ]);
 
 function preferredTitle(revision: DraftRevision): string {
-  return revision.titleEn?.trim() || revision.titleZh?.trim() || "Untitled Draft";
+  return revision.titleEn?.trim() || revision.titleZh?.trim() || "未命名草稿";
 }
 
 function detailsFor(
@@ -96,22 +96,22 @@ export function mapReviewChecklist(
   return [
     statusItem({
       key: "validation",
-      label: "Validation",
+      label: "校验",
       hasIssue: generalIssues.length > 0,
       summary:
         generalIssues.length > 0
-          ? `${generalIssues.length} content requirement${generalIssues.length === 1 ? "" : "s"} need attention.`
-          : "Required content fields are complete.",
+          ? `${generalIssues.length} 个内容要求需要处理。`
+          : "必填内容字段已完整。",
       details: generalIssues,
     }),
     statusItem({
       key: "taxonomy",
-      label: "Taxonomy",
+      label: "分类",
       hasIssue: taxonomyIssues.length > 0,
       summary:
         taxonomyIssues.length > 0
-          ? "Region, content type, or category placement needs attention."
-          : `${candidate.primaryCategories.length} primary categor${candidate.primaryCategories.length === 1 ? "y" : "ies"} checked.`,
+          ? "区域、内容类型或分类位置需要处理。"
+          : `已检查 ${candidate.primaryCategories.length} 个主分类。`,
       details:
         taxonomyIssues.length > 0
           ? taxonomyIssues
@@ -119,36 +119,36 @@ export function mapReviewChecklist(
     }),
     statusItem({
       key: "tags",
-      label: "Tags",
+      label: "标签",
       hasIssue: tagIssues.length > 0,
       summary:
         tagIssues.length > 0
-          ? "One or more tags need attention."
+          ? "一个或多个标签需要处理。"
           : candidate.tags.length > 0
-            ? `${candidate.tags.length} tag${candidate.tags.length === 1 ? "" : "s"} checked.`
-            : "No tags added; tags are optional.",
+            ? `已检查 ${candidate.tags.length} 个标签。`
+            : "未添加标签；标签为可选项。",
       details: tagIssues.length > 0 ? tagIssues : candidate.tags,
     }),
     statusItem({
       key: "slug",
-      label: "Slug conflict",
+      label: "Slug 冲突",
       hasIssue: slugIssues.length > 0 || report.slugConflicts.length > 0,
       summary:
         slugIssues.length > 0 || report.slugConflicts.length > 0
-          ? "This Region and slug are already in use."
-          : "No conflicting published path was found.",
+          ? "此区域和 Slug 已被使用。"
+          : "未发现冲突的已发布路径。",
       details: slugIssues,
     }),
     statusItem({
       key: "cover",
-      label: "Cover metadata",
+      label: "封面元数据",
       hasIssue: coverIssues.length > 0,
       summary:
         report.coverStatus.state === "absent"
-          ? "No cover is attached; a cover is optional for this review."
+          ? "未附加封面；此审核中封面为可选项。"
           : report.coverStatus.state === "ready"
-            ? "Cover path and alternative text are ready."
-            : "The cover metadata needs attention.",
+            ? "封面路径和替代文本已就绪。"
+            : "封面元数据需要处理。",
       details: coverIssues,
     }),
     statusItem({
@@ -156,34 +156,34 @@ export function mapReviewChecklist(
       label: "Growth Notes",
       hasIssue: growthNoteIssues.length > 0,
       summary: candidate.growthStage === null
-        ? "Growth tracking does not apply to this content."
+        ? "此内容不适用 Growth Stage 跟踪。"
         : report.growthStageConsistency.changed
         ? report.growthStageConsistency.hasMatchingGrowthNote
-          ? "The growth-stage change has a matching Growth Note."
-          : "The growth-stage change needs a matching Growth Note."
-        : "The growth stage is unchanged.",
+          ? "Growth Stage 变更已有对应的 Growth Notes。"
+          : "Growth Stage 变更需要对应的 Growth Notes。"
+        : "Growth Stage 未变化。",
       details: growthNoteIssues,
     }),
     statusItem({
       key: "relations",
-      label: "Relations",
+      label: "Content Relations",
       hasIssue: relationIssues.length > 0,
       summary:
         relationIssues.length > 0
-          ? `${relationIssues.length} relation issue${relationIssues.length === 1 ? "" : "s"} need attention.`
-          : "Content relations resolve safely.",
+          ? `${relationIssues.length} 个关系问题需要处理。`
+          : "Content Relations 已安全解析。",
       details: relationIssues,
     }),
     {
       key: "published-differences",
-      label: "Published differences",
+      label: "已发布差异",
       state: "information",
       summary:
         difference.kind === "new"
-          ? "This will create a new published path."
+          ? "这将创建新的已发布路径。"
           : difference.kind === "unchanged"
-            ? "No fields differ from the published version."
-            : `${difference.changedFields.length} field${difference.changedFields.length === 1 ? "" : "s"} differ from the published version.`,
+            ? "没有字段与已发布版本不同。"
+            : `${difference.changedFields.length} 个字段与已发布版本不同。`,
       details: difference.changedFields,
     },
   ];

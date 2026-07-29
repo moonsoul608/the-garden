@@ -39,15 +39,15 @@ function ActionNotice({
       className={`admin-review-notice admin-review-notice--${state.status}`}
       role={state.status === "success" ? "status" : "alert"}
     >
-      <strong>{state.status === "success" ? "Done" : "Unable to continue"}</strong>
+      <strong>{state.status === "success" ? "已完成" : "无法继续"}</strong>
       <span>{state.message}</span>
       {state.publishedAt ? (
         <time dateTime={state.publishedAt}>
-          Published {new Date(state.publishedAt).toLocaleString()}
+          已发布 {new Date(state.publishedAt).toLocaleString()}
         </time>
       ) : null}
       {state.status !== "success" && state.destination ? (
-        <Link href={state.destination}>Return to the Review queue</Link>
+        <Link href={state.destination}>返回审核队列</Link>
       ) : null}
     </div>
   );
@@ -87,11 +87,10 @@ export function ReviewActionPanel({
     return (
       <section className="admin-review-actions" aria-labelledby="review-action-title">
         <div>
-          <p className="admin-section-kicker">Next step</p>
-          <h2 id="review-action-title">Move this Draft to the Review bench</h2>
+          <p className="admin-section-kicker">下一步</p>
+          <h2 id="review-action-title">将此草稿提交审核</h2>
           <span>
-            The server will prepare the readiness report again before changing
-            the lifecycle.
+            服务器会在更改生命周期前再次生成准备情况报告。
           </span>
         </div>
         <form action={submitAction}>
@@ -101,7 +100,7 @@ export function ReviewActionPanel({
             type="submit"
             disabled={submitPending || !ready}
           >
-            {submitPending ? "Checking…" : "Submit for Review"}
+            {submitPending ? "检查中…" : "提交审核"}
           </button>
         </form>
         <ActionNotice state={submitState} />
@@ -112,29 +111,28 @@ export function ReviewActionPanel({
   return (
     <section className="admin-review-actions" aria-labelledby="review-action-title">
       <div>
-        <p className="admin-section-kicker">Decision bench</p>
-        <h2 id="review-action-title">Choose the next path</h2>
+        <p className="admin-section-kicker">审核决策</p>
+        <h2 id="review-action-title">选择下一步</h2>
         <span>
-          Return the work for more tending, or publish through the existing
-          atomic publishing service.
+          可以退回草稿继续编辑，或通过现有原子发布服务发布。
         </span>
       </div>
 
       <div className="admin-review-action-grid">
         <form className="admin-review-return-form" action={returnAction}>
           <RevisionFields revision={revision} />
-          <label htmlFor="return-reason">Reason for returning to Draft</label>
+          <label htmlFor="return-reason">退回草稿原因</label>
           <textarea
             id="return-reason"
             name="reason"
             rows={4}
             maxLength={1000}
             required
-            placeholder="What needs another pass?"
+            placeholder="哪些内容需要再处理？"
           />
-          <small>The Keeper identity is supplied by the server.</small>
+          <small>Garden Keeper 身份由服务器提供。</small>
           <button type="submit" disabled={returnPending}>
-            {returnPending ? "Returning…" : "Return to Draft"}
+            {returnPending ? "退回中…" : "退回草稿"}
           </button>
           <ActionNotice state={returnState} />
         </form>
@@ -142,10 +140,9 @@ export function ReviewActionPanel({
         <form className="admin-review-publish-form" action={publishAction}>
           <RevisionFields revision={revision} />
           <details>
-            <summary>Confirm publish</summary>
+            <summary>确认发布</summary>
             <p>
-              Publishing updates the public projection and records a version
-              snapshot atomically.
+              发布会以原子方式更新公开投影，并记录版本快照。
             </p>
             <label>
               <input
@@ -154,14 +151,14 @@ export function ReviewActionPanel({
                 value="confirmed"
                 required
               />
-              <span>I reviewed the checklist and want to publish this revision.</span>
+              <span>我已检查清单，并确认发布此修订。</span>
             </label>
             <button
               className="admin-primary-action"
               type="submit"
               disabled={publishPending || !ready}
             >
-              {publishPending ? "Publishing…" : "Publish to the garden"}
+              {publishPending ? "发布中…" : "发布"}
             </button>
           </details>
           <ActionNotice state={publishState} />

@@ -24,19 +24,19 @@ function actionState(
 
 function safeError(error: unknown): VisitorNoteActionState {
   if (error instanceof VisitorNoteInputError) {
-    return actionState("error", "That visitor note is no longer available.");
+    return actionState("error", "该访客留言已不可用。");
   }
 
   if (error instanceof VisitorNotesManagementUnavailableError) {
     return actionState(
       "error",
-      "Visitor notes are temporarily unavailable. No note was changed.",
+      "访客留言暂时不可用。没有留言被更改。",
     );
   }
 
   return actionState(
     "error",
-    "The visitor note could not be changed. No private details were exposed.",
+    "访客留言无法更改。未显示任何内部详情。",
   );
 }
 
@@ -55,7 +55,7 @@ export async function markVisitorNoteReadAction(
       isRead: true,
     });
     refreshVisitorNotes();
-    return actionState("success", "Visitor note marked read.");
+    return actionState("success", "访客留言已标记为已读。");
   } catch (error) {
     return safeError(error);
   }
@@ -71,7 +71,7 @@ export async function markVisitorNoteUnreadAction(
       isRead: false,
     });
     refreshVisitorNotes();
-    return actionState("success", "Visitor note marked unread.");
+    return actionState("success", "访客留言已标记为未读。");
   } catch (error) {
     return safeError(error);
   }
@@ -86,7 +86,7 @@ export async function deleteVisitorNoteAction(
       noteId: text(formData, "noteId"),
     });
     refreshVisitorNotes();
-    return actionState("success", "Visitor note deleted.");
+    return actionState("success", "访客留言已删除。");
   } catch (error) {
     return safeError(error);
   }

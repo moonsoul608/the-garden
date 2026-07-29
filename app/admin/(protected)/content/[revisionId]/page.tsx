@@ -50,30 +50,30 @@ export default async function EditAdminContentPage({
     listOutgoingContentRelations(draft.contentId),
     listContentRelationTargets(draft.contentId),
   ]);
-  const title = draft.titleEn?.trim() || draft.titleZh?.trim() || "Untitled Draft";
+  const title = draft.titleEn?.trim() || draft.titleZh?.trim() || "未命名草稿";
 
   return (
     <main id="admin-main" className="admin-main admin-editor-main">
       <Link className="admin-back-link" href="/admin/content">
-        <span aria-hidden="true">←</span> Content workbench
+        <span aria-hidden="true">←</span> 内容管理
       </Link>
       <header className="admin-page-header admin-editor-header">
         <div>
-          <p>Draft editor</p>
+          <p>草稿编辑器</p>
           <h1>{title}</h1>
-          <span>Simple structured fields for careful tending.</span>
+          <span>使用结构化字段编辑内容。</span>
         </div>
-        <dl className="admin-revision-card" aria-label="Current revision">
+        <dl className="admin-revision-card" aria-label="当前修订">
           <div>
-            <dt>Current revision</dt>
-            <dd>Change {draft.lockVersion}</dd>
+            <dt>当前修订</dt>
+            <dd>变更 {draft.lockVersion}</dd>
           </div>
           <div>
-            <dt>Source</dt>
-            <dd>{draft.sourceVersionId ? "Published version" : "New content"}</dd>
+            <dt>来源</dt>
+            <dd>{draft.sourceVersionId ? "已发布版本" : "新内容"}</dd>
           </div>
           <div>
-            <dt>Last saved</dt>
+            <dt>上次保存</dt>
             <dd>
               <time dateTime={draft.updatedAt}>
                 {dateFormatter.format(new Date(draft.updatedAt))}
@@ -84,7 +84,7 @@ export default async function EditAdminContentPage({
       </header>
       <div className="admin-editor-review-link">
         <Link href={`/admin/review/${draft.revisionId}`}>
-          Check Review readiness <span aria-hidden="true">→</span>
+          检查审核准备情况 <span aria-hidden="true">→</span>
         </Link>
       </div>
       <ContentForm mode="edit" action={saveDraftAction} draft={draft} />

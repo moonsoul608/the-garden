@@ -33,7 +33,7 @@ const UUID_PATTERN =
 
 export class GrowthNotesManagementUnavailableError extends Error {
   constructor() {
-    super("Growth Notes are temporarily unavailable.");
+    super("Growth Notes 暂时不可用。");
     this.name = "GrowthNotesManagementUnavailableError";
   }
 }
@@ -42,7 +42,7 @@ export class GrowthNoteInputError extends Error {
   readonly field: string;
 
   constructor(field = "growthNote") {
-    super("The Growth Note input is invalid.");
+    super("Growth Notes 输入无效。");
     this.name = "GrowthNoteInputError";
     this.field = field;
   }
@@ -50,14 +50,14 @@ export class GrowthNoteInputError extends Error {
 
 export class GrowthNoteNotFoundError extends Error {
   constructor() {
-    super("The selected Growth Note is unavailable.");
+    super("所选 Growth Notes 不可用。");
     this.name = "GrowthNoteNotFoundError";
   }
 }
 
 export class GrowthNoteContentUnavailableError extends Error {
   constructor() {
-    super("The selected content cannot accept Growth Notes.");
+    super("所选内容不能添加 Growth Notes。");
     this.name = "GrowthNoteContentUnavailableError";
   }
 }

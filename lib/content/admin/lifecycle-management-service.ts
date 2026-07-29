@@ -23,7 +23,7 @@ type AuthorizeLifecycleRequest = () => Promise<AuthenticatedUser>;
 
 export class LifecycleManagementUnavailableError extends Error {
   constructor() {
-    super("The lifecycle workspace is temporarily unavailable.");
+    super("生命周期工作区暂时不可用。");
     this.name = "LifecycleManagementUnavailableError";
   }
 }
@@ -42,7 +42,7 @@ const ROUTE_REGIONS: Readonly<Record<string, RegionName>> = {
 };
 
 function preferredTitle(record: LifecycleManagementRecord): string {
-  return record.titleEn?.trim() || record.titleZh?.trim() || "Untitled content";
+  return record.titleEn?.trim() || record.titleZh?.trim() || "未命名内容";
 }
 
 function canonicalRoute(record: LifecycleManagementRecord): string | null {
@@ -61,12 +61,12 @@ export function mapLifecycleListItem(
   const revision = record.activeRevision;
   const restoredAt = revision?.restoredAt ?? null;
   const action = restoredAt
-    ? { label: "Restored to Draft", occurredAt: restoredAt }
+    ? { label: "已恢复为草稿", occurredAt: restoredAt }
     : record.lifecycle === "Archived" && record.archivedAt
-      ? { label: "Archived", occurredAt: record.archivedAt }
+      ? { label: "已归档", occurredAt: record.archivedAt }
       : record.publishedAt
-        ? { label: "Published", occurredAt: record.publishedAt }
-        : { label: "Updated", occurredAt: record.updatedAt };
+        ? { label: "已发布", occurredAt: record.publishedAt }
+        : { label: "已更新", occurredAt: record.updatedAt };
 
   return {
     title: preferredTitle(record),

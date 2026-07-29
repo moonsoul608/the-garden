@@ -166,7 +166,7 @@ test("Admin renders Lake nulls as not tracked and exact non-Lake Growth Stages",
     const presentation = getAdminGrowthPresentation(record.growthStage);
     if (record.region === "Lake") {
       assert.deepEqual(presentation, {
-        label: "Not growth-tracked",
+        label: "不跟踪 Growth Stage",
         marker: null,
       });
     } else {

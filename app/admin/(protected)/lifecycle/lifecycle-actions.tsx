@@ -11,6 +11,7 @@ import {
 
 import type { LifecycleListItem } from "@/lib/content/admin";
 
+import { lifecycleLabel } from "../admin-labels";
 import { INITIAL_LIFECYCLE_ACTION_STATE } from "./action-contracts";
 import {
   archiveContentAction,
@@ -57,7 +58,7 @@ function ActionNotice({
       className={`admin-lifecycle-notice admin-lifecycle-notice--${state.status}`}
       role={state.status === "success" ? "status" : "alert"}
     >
-      <strong>{state.status === "success" ? "Tending complete" : "Unable to continue"}</strong>
+      <strong>{state.status === "success" ? "操作完成" : "无法继续"}</strong>
       <span>{state.message}</span>
     </div>
   );
@@ -81,7 +82,7 @@ function ArchiveDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
   return (
     <>
       <button type="button" onClick={() => openDialog(dialogRef)}>
-        Archive
+        归档
       </button>
       <dialog
         className="admin-lifecycle-dialog"
@@ -89,20 +90,19 @@ function ArchiveDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
         aria-labelledby={dialogTitleId}
       >
         <div className="admin-lifecycle-dialog-body">
-          <p className="admin-section-kicker">Archive confirmation</p>
-          <h2 id={dialogTitleId}>Let this path rest?</h2>
+          <p className="admin-section-kicker">归档确认</p>
+          <h2 id={dialogTitleId}>确认归档此内容？</h2>
           <Identity item={item} />
           <div className="admin-lifecycle-impact">
-            <h3>What archiving changes</h3>
+            <h3>归档会产生的变化</h3>
             <ul>
-              <li>The item leaves Region collections, search, and Home curation.</li>
-              <li>Its public route becomes a resting-state path.</li>
-              <li>An immutable archive checkpoint preserves its current state.</li>
+              <li>内容会从区域集合、搜索和首页精选中移除。</li>
+              <li>公开路由会进入归档状态。</li>
+              <li>不可变归档检查点会保留当前状态。</li>
             </ul>
           </div>
           <p className="admin-lifecycle-dialog-note">
-            The existing archive service will recheck lifecycle eligibility and
-            concurrency before making any change.
+            现有归档服务会在更改前重新检查生命周期资格和并发状态。
           </p>
           <form action={action}>
             <input
@@ -121,14 +121,14 @@ function ArchiveDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
                 className="admin-secondary-action"
                 onClick={() => closeDialog(dialogRef)}
               >
-                Keep Published
+                保持已发布
               </button>
               <button
                 type="submit"
                 className="admin-primary-action"
                 disabled={pending}
               >
-                {pending ? "Archiving…" : "Confirm archive"}
+                {pending ? "归档中…" : "确认归档"}
               </button>
             </div>
           </form>
@@ -157,7 +157,7 @@ function RestoreDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
   return (
     <>
       <button type="button" onClick={() => openDialog(dialogRef)}>
-        Restore to Draft
+        恢复为草稿
       </button>
       <dialog
         className="admin-lifecycle-dialog"
@@ -165,33 +165,33 @@ function RestoreDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
         aria-labelledby={dialogTitleId}
       >
         <div className="admin-lifecycle-dialog-body">
-          <p className="admin-section-kicker">Restore preview</p>
-          <h2 id={dialogTitleId}>Bring this archive back to the workbench?</h2>
+          <p className="admin-section-kicker">恢复预览</p>
+          <h2 id={dialogTitleId}>将此归档恢复到工作区？</h2>
           <Identity item={item} />
           <dl className="admin-lifecycle-preview-grid">
             <div>
-              <dt>Source archive</dt>
+              <dt>来源归档</dt>
               <dd>
                 {item.sourceArchiveAt ? (
                   <time dateTime={item.sourceArchiveAt}>
-                    Protected {dateFormatter.format(new Date(item.sourceArchiveAt))}
+                    受保护于 {dateFormatter.format(new Date(item.sourceArchiveAt))}
                   </time>
                 ) : (
-                  "Archive checkpoint unavailable"
+                  "归档检查点不可用"
                 )}
               </dd>
             </div>
             <div>
-              <dt>Result</dt>
-              <dd>One private Draft, ready for editing and Review</dd>
+              <dt>结果</dt>
+              <dd>创建一个可编辑并可提交审核的私有草稿</dd>
             </div>
           </dl>
           <div className="admin-lifecycle-impact">
-            <h3>What remains protected</h3>
+            <h3>仍会保留的保护</h3>
             <ul>
-              <li>The selected archive remains the Draft&apos;s source provenance.</li>
-              <li>The Archived projection continues resting until a later Review is published.</li>
-              <li>The archive timestamp is rechecked with optimistic locking.</li>
+              <li>所选归档会保留为草稿的来源凭据。</li>
+              <li>已归档投影会继续保持归档，直到后续审核发布。</li>
+              <li>归档时间戳会通过乐观锁重新检查。</li>
             </ul>
           </div>
           <form action={action}>
@@ -211,14 +211,14 @@ function RestoreDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
                 className="admin-secondary-action"
                 onClick={() => closeDialog(dialogRef)}
               >
-                Leave Archived
+                保持已归档
               </button>
               <button
                 type="submit"
                 className="admin-primary-action"
                 disabled={pending || !item.sourceArchiveAt}
               >
-                {pending ? "Restoring…" : "Create private Draft"}
+                {pending ? "恢复中…" : "创建私有草稿"}
               </button>
             </div>
           </form>
@@ -255,7 +255,7 @@ function DeleteDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
         className="admin-destructive-action"
         onClick={() => openDialog(dialogRef)}
       >
-        Delete permanently
+        永久删除
       </button>
       <dialog
         className="admin-lifecycle-dialog admin-lifecycle-dialog--danger"
@@ -263,16 +263,16 @@ function DeleteDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
         aria-labelledby={dialogTitleId}
       >
         <div className="admin-lifecycle-dialog-body">
-          <p className="admin-section-kicker">Destructive action</p>
-          <h2 id={dialogTitleId}>Permanently remove this garden record?</h2>
+          <p className="admin-section-kicker">危险操作</p>
+          <h2 id={dialogTitleId}>永久删除此内容记录？</h2>
           <Identity item={item} />
 
           {!preview ? (
             <>
               <div className="admin-lifecycle-warning" role="note">
-                <strong>This cannot be undone.</strong>
+                <strong>此操作无法撤销。</strong>
                 <span>
-                  Prepare a fresh server preview before the final confirmation.
+                  最终确认前，请先生成最新的服务器影响预览。
                 </span>
               </div>
               <form action={previewAction}>
@@ -287,10 +287,10 @@ function DeleteDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
                     className="admin-secondary-action"
                     onClick={() => closeDialog(dialogRef)}
                   >
-                    Leave Archived
+                    保持已归档
                   </button>
                   <button type="submit" disabled={previewPending}>
-                    {previewPending ? "Preparing impact…" : "Preview deletion impact"}
+                    {previewPending ? "准备影响预览中…" : "预览删除影响"}
                   </button>
                 </div>
               </form>
@@ -300,40 +300,39 @@ function DeleteDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
             <>
               <div className="admin-deletion-preview" aria-live="polite">
                 <section>
-                  <h3>Affected routes</h3>
+                  <h3>受影响路由</h3>
                   <ul>
                     {preview.affectedRoutes.map((route) => (
                       <li key={route}><code>{route}</code></li>
                     ))}
                   </ul>
-                  <p>{preview.redirectReferenceCount} redirect references are included.</p>
+                  <p>包含 {preview.redirectReferenceCount} 个重定向引用。</p>
                 </section>
                 <section>
-                  <h3>Relation impact</h3>
+                  <h3>关系影响</h3>
                   <p>
-                    {preview.inboundRelationCount} inbound and{" "}
-                    {preview.outboundRelationCount} outbound live relations will be removed.
+                    将移除 {preview.inboundRelationCount} 个入站和{" "}
+                    {preview.outboundRelationCount} 个出站实时关系。
                   </p>
                 </section>
                 <section>
-                  <h3>Version preservation</h3>
+                  <h3>版本保留</h3>
                   <p>
-                    {preview.versionCount} historical versions remain protected and are not deleted.
+                    {preview.versionCount} 个历史版本会继续受保护，不会被删除。
                   </p>
                 </section>
                 <section>
-                  <h3>Storage behavior</h3>
+                  <h3>存储行为</h3>
                   <p>
-                    {preview.storageReferenceCount} Storage references are recorded.
-                    Storage objects are NOT immediately deleted.
+                    已记录 {preview.storageReferenceCount} 个 Storage 引用。
+                    Storage 对象不会立即删除。
                   </p>
                 </section>
               </div>
               <div className="admin-lifecycle-warning" role="alert">
-                <strong>Irreversible live-record deletion</strong>
+                <strong>不可逆的实时记录删除</strong>
                 <span>
-                  Routes become terminal and the live projection cannot be restored.
-                  Historical versions remain protected.
+                  路由会变为终止状态，实时投影无法恢复。历史版本仍会保留保护。
                 </span>
               </div>
               <form className="admin-delete-confirmation" action={deleteAction}>
@@ -353,7 +352,7 @@ function DeleteDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
                   value={preview.impactDigest}
                 />
                 <label htmlFor={confirmationId}>
-                  Type <strong>DELETE</strong> to confirm
+                  输入 <strong>DELETE</strong> 确认
                 </label>
                 <input
                   id={confirmationId}
@@ -368,14 +367,14 @@ function DeleteDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
                     className="admin-secondary-action"
                     onClick={() => closeDialog(dialogRef)}
                   >
-                    Keep this archive
+                    保留此归档
                   </button>
                   <button
                     type="submit"
                     className="admin-destructive-confirmation"
                     disabled={deletePending}
                   >
-                    {deletePending ? "Removing record…" : "Delete permanently"}
+                    {deletePending ? "删除记录中…" : "永久删除"}
                   </button>
                 </div>
               </form>
@@ -392,13 +391,13 @@ export function LifecycleActions({
   item,
 }: Readonly<{ item: LifecycleListItem }>) {
   if (!item.canonicalRoute) {
-    return <span className="admin-lifecycle-action-note">Public route unavailable</span>;
+    return <span className="admin-lifecycle-action-note">公开路由不可用</span>;
   }
 
   if (item.workspaceState) {
     return (
       <span className="admin-lifecycle-action-note">
-        {item.workspaceState} work is active
+        {lifecycleLabel(item.workspaceState)}工作正在进行
       </span>
     );
   }

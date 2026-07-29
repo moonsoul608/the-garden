@@ -208,11 +208,11 @@ test("protected dashboard keeps noindex, server fetching, and typed empty states
   assert.doesNotMatch(page, /["']use client["']/);
   assert.doesNotMatch(page, /supabase|\.from\(/i);
   assert.match(page, /await getDashboardSummary\(\)/);
-  assert.match(page, /Nothing has been planted here yet\./);
-  assert.match(page, /No activity has been recorded\./);
-  assert.match(page, /Create Content/);
-  assert.match(page, /Review Queue/);
-  assert.match(page, /Media/);
+  assert.match(page, /还没有内容。/);
+  assert.match(page, /还没有记录任何活动。/);
+  assert.match(page, /创建内容/);
+  assert.match(page, /审核队列/);
+  assert.match(page, /媒体库/);
   assert.match(page, /href:\s*"\/admin\/content\/new"/);
   assert.match(page, /href=\{action\.href\}/);
   assert.doesNotMatch(page, /<button/i);

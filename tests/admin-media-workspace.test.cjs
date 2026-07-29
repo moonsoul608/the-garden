@@ -464,7 +464,7 @@ test("route, UI, and SQL keep the workspace Keeper-only and deletion-free", () =
   assert.match(layout, /requireGardenKeeper/);
   assert.match(layout, /href="\/admin\/media"/);
   assert.match(route, /createMediaWorkspaceService\(\)\.getWorkspace\(\)/);
-  assert.match(client, /Quarantine labels are awareness only/);
+  assert.match(client, /隔离标签仅用于提示/);
   assert.match(migration, /if not private\.is_garden_keeper\(\)/i);
   assert.match(migration, /revoke all[\s\S]*?from public, anon, authenticated/i);
   assert.doesNotMatch(migration, /(?:create|drop|alter)\s+policy/i);

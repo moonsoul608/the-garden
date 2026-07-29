@@ -33,41 +33,41 @@ function actionState(
 }
 
 function fieldError(field: string, message: string): ContentRelationActionState {
-  return actionState("error", "Some Content Relation fields need attention.", {
+  return actionState("error", "部分 Content Relations 字段需要处理。", {
     [field]: [message],
   });
 }
 
 function safeError(error: unknown): ContentRelationActionState {
   if (error instanceof ContentRelationInputError) {
-    return fieldError(error.field, "Check this Content Relation field.");
+    return fieldError(error.field, "请检查这个 Content Relations 字段。");
   }
 
   if (error instanceof ContentRelationContentUnavailableError) {
-    return fieldError(error.field, "That content item is unavailable.");
+    return fieldError(error.field, "该内容不可用。");
   }
 
   if (error instanceof ContentRelationDuplicateError) {
-    return fieldError("targetContentId", "That relation already exists.");
+    return fieldError("targetContentId", "该关系已经存在。");
   }
 
   if (error instanceof ContentRelationNotFoundError) {
     return actionState(
       "error",
-      "That Content Relation is no longer available.",
+      "该 Content Relations 已不可用。",
     );
   }
 
   if (error instanceof ContentRelationsManagementUnavailableError) {
     return actionState(
       "error",
-      "Content Relations are temporarily unavailable. No relation was changed.",
+      "Content Relations 暂时不可用。没有关系被更改。",
     );
   }
 
   return actionState(
     "error",
-    "The Content Relation could not be changed. No private details were exposed.",
+    "Content Relations 无法更改。未显示任何内部详情。",
   );
 }
 
@@ -91,7 +91,7 @@ export async function createContentRelationAction(
       noteEn: optionalText(formData, "noteEn"),
     });
     refreshContentRelations(formData);
-    return actionState("success", "Content Relation created.");
+    return actionState("success", "Content Relations 已创建。");
   } catch (error) {
     return safeError(error);
   }
@@ -107,7 +107,7 @@ export async function deleteContentRelationAction(
       relationId: text(formData, "relationId"),
     });
     refreshContentRelations(formData);
-    return actionState("success", "Content Relation deleted.");
+    return actionState("success", "Content Relations 已删除。");
   } catch (error) {
     return safeError(error);
   }

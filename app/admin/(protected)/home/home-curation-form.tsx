@@ -28,12 +28,12 @@ const SLOT_CONFIGS: readonly SlotConfig[] = [
   {
     slot: "currentlyGrowing",
     title: "Currently Growing",
-    description: "The ideas taking root on the homepage right now.",
+    description: "当前显示在首页的重点内容。",
   },
   {
     slot: "recentlyPlanted",
     title: "Recently Planted",
-    description: "The newest seeds shown lower on the homepage.",
+    description: "显示在首页下方的最新内容。",
   },
 ];
 
@@ -41,7 +41,7 @@ function optionLabel(option: HomeCurationContentOption): string {
   return [
     option.title,
     option.region,
-    option.growthStage ?? "Not growth-tracked",
+    option.growthStage ?? "不跟踪 Growth Stage",
   ].join(" - ");
 }
 
@@ -50,7 +50,7 @@ function SubmitButton() {
 
   return (
     <button className="admin-primary-action" type="submit" disabled={pending}>
-      {pending ? "Saving..." : "Save Home Curation"}
+      {pending ? "保存中..." : "保存首页精选"}
     </button>
   );
 }
@@ -66,7 +66,7 @@ function Notice({
       role={state.status === "success" ? "status" : "alert"}
       aria-live="polite"
     >
-      <strong>{state.status === "success" ? "Saved" : "Save paused"}</strong>
+      <strong>{state.status === "success" ? "已保存" : "保存暂停"}</strong>
       <span>{state.message}</span>
     </div>
   );
@@ -96,28 +96,28 @@ function SlotRows({
           <span>{config.description}</span>
         </div>
         <p className="admin-content-count">
-          {values.filter(Boolean).length} selected
+          已选择 {values.filter(Boolean).length} 条
         </p>
       </div>
 
       <div className="admin-home-slot-rows">
         {values.length === 0 ? (
           <div className="admin-inline-empty">
-            <p>No content selected.</p>
-            <span>Add a row to place Published content in this slot.</span>
+            <p>还没有选择内容。</p>
+            <span>添加一行，将已发布内容放入此位置。</span>
           </div>
         ) : (
           values.map((value, index) => (
             <div className="admin-home-slot-row" key={`${config.slot}-${index}`}>
               <span className="admin-home-slot-order">{index + 1}</span>
               <label className="admin-form-field">
-                <span>Published content</span>
+                <span>已发布内容</span>
                 <select
                   name={config.slot}
                   value={value}
                   onChange={(event) => onChange(index, event.target.value)}
                 >
-                  <option value="">None</option>
+                  <option value="">无</option>
                   {options.map((option) => (
                     <option key={option.contentId} value={option.contentId}>
                       {optionLabel(option)}
@@ -130,7 +130,7 @@ function SlotRows({
                 type="button"
                 onClick={() => onRemove(index)}
               >
-                Remove
+                移除
               </button>
             </div>
           ))
@@ -143,7 +143,7 @@ function SlotRows({
         onClick={onAdd}
         disabled={options.length === 0}
       >
-        Add Selection
+        添加内容
       </button>
     </section>
   );
@@ -181,8 +181,8 @@ export function HomeCurationForm({
 
       {options.length === 0 ? (
         <div className="admin-form-notice" role="alert">
-          <strong>No Published content</strong>
-          <span>Publish content before adding homepage curation rows.</span>
+          <strong>没有已发布内容</strong>
+          <span>请先发布内容，再添加首页精选行。</span>
         </div>
       ) : null}
 

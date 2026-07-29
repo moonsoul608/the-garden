@@ -22,13 +22,13 @@ type MediaWorkspaceProps = Readonly<{
 }>;
 
 const STATUS_LABELS: Record<MediaReferenceStatus, string> = {
-  Referenced: "Referenced",
-  Unreferenced: "Unreferenced",
-  QuarantineCandidate: "Quarantine candidate",
+  Referenced: "已引用",
+  Unreferenced: "未引用",
+  QuarantineCandidate: "隔离候选",
 };
 
 function formatBytes(bytes: number | null): string {
-  if (bytes === null) return "Unknown size";
+  if (bytes === null) return "大小未知";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
@@ -44,11 +44,11 @@ function UploadButton({ disabled }: Readonly<{ disabled: boolean }>) {
         type="submit"
         disabled={disabled || pending}
       >
-        {pending ? "Storing cover…" : "Store and attach cover"}
+        {pending ? "上传封面中…" : "上传并关联封面"}
       </button>
       {pending ? (
         <div className="admin-media-progress" role="status" aria-live="polite">
-          <span>Carrying the cover into the seed library.</span>
+          <span>正在将封面上传到媒体库。</span>
           <span className="admin-media-progress-track" aria-hidden="true">
             <span />
           </span>
@@ -98,10 +98,10 @@ export function MediaWorkspace({
       <section className="admin-media-upload" aria-labelledby="media-upload-title">
         <div className="admin-section-heading">
           <div>
-            <p className="admin-section-kicker">Greenhouse intake</p>
-            <h2 id="media-upload-title">Prepare a Draft cover</h2>
+            <p className="admin-section-kicker">上传入口</p>
+            <h2 id="media-upload-title">准备草稿封面</h2>
           </div>
-          <span className="admin-media-limit">JPEG · PNG · WebP · 5 MiB max</span>
+          <span className="admin-media-limit">JPEG · PNG · WebP · 5 MiB 上限</span>
         </div>
 
         {draftTargets.length > 0 ? (
@@ -123,41 +123,41 @@ export function MediaWorkspace({
             />
 
             <label className="admin-form-field">
-              <span>Draft bed</span>
+              <span>草稿</span>
               <select
                 value={selectedDraft?.revisionId ?? ""}
                 onChange={(event) => setSelectedRevisionId(event.target.value)}
               >
                 {draftTargets.map((draft) => (
                   <option key={draft.revisionId} value={draft.revisionId}>
-                    {draft.title} · change {draft.lockVersion}
+                    {draft.title} · 变更 {draft.lockVersion}
                   </option>
                 ))}
               </select>
               <small>
                 {selectedDraft?.currentCoverPath
-                  ? "This replaces the Draft reference only; the old object stays preserved."
-                  : "This Draft does not have a cover yet."}
+                  ? "这只会替换草稿引用；旧对象仍会保留。"
+                  : "此草稿还没有封面。"}
               </small>
             </label>
 
             <label className="admin-form-field admin-media-file-field">
-              <span>Cover file</span>
+              <span>封面文件</span>
               <input
                 name="cover"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 required
               />
-              <small>File metadata is checked again on the server before Storage.</small>
+              <small>写入 Storage 前，服务器会再次检查文件元数据。</small>
             </label>
 
             <UploadButton disabled={!selectedDraft} />
           </form>
         ) : (
           <div className="admin-inline-empty">
-            <p>No Draft bed is ready for a cover.</p>
-            <span>Create or return content to Draft before attaching media.</span>
+            <p>当前没有可添加封面的草稿。</p>
+            <span>请先创建内容或将内容恢复为草稿，再关联媒体。</span>
           </div>
         )}
 
@@ -167,7 +167,7 @@ export function MediaWorkspace({
             role={state.status === "success" ? "status" : "alert"}
             aria-live="polite"
           >
-            <strong>{state.status === "success" ? "Cover tended" : "Upload paused"}</strong>
+            <strong>{state.status === "success" ? "封面已处理" : "上传暂停"}</strong>
             <span>{state.message}</span>
           </div>
         ) : null}
@@ -176,17 +176,17 @@ export function MediaWorkspace({
       <section className="admin-media-library" aria-labelledby="media-library-title">
         <div className="admin-section-heading admin-section-heading--compact">
           <div>
-            <p className="admin-section-kicker">Seed library</p>
-            <h2 id="media-library-title">Cover shelves</h2>
+            <p className="admin-section-kicker">媒体库</p>
+            <h2 id="media-library-title">封面列表</h2>
           </div>
           <p className="admin-content-count">
-            {media.length} {media.length === 1 ? "object" : "objects"}
+            {media.length} 个对象
           </p>
         </div>
 
         {media.length > 0 && selectedMedia ? (
           <div className="admin-media-library-grid">
-            <ul className="admin-media-shelves" aria-label="Cover objects">
+            <ul className="admin-media-shelves" aria-label="封面对象">
               {media.map((item) => (
                 <li key={`${item.bucket}/${item.objectPath}`}>
                   <button
@@ -206,7 +206,7 @@ export function MediaWorkspace({
                       <strong>{item.displayName}</strong>
                       <small>
                         {formatBytes(item.sizeBytes)} · {item.referencedContentCount}{" "}
-                        content use{item.referencedContentCount === 1 ? "" : "s"}
+                        个内容引用
                       </small>
                     </span>
                     <StatusBadge status={item.referenceStatus} />
@@ -216,13 +216,13 @@ export function MediaWorkspace({
             </ul>
 
             <aside className="admin-media-inspector" aria-labelledby="media-inspector-title">
-              <p className="admin-section-kicker">Selected packet</p>
+              <p className="admin-section-kicker">已选对象</p>
               <h3 id="media-inspector-title">{selectedMedia.displayName}</h3>
               <StatusBadge status={selectedMedia.referenceStatus} />
 
               <dl>
                 <div>
-                  <dt>Object path</dt>
+                  <dt>对象路径</dt>
                   <dd><code>{selectedMedia.objectPath}</code></dd>
                 </div>
                 <div>
@@ -230,45 +230,45 @@ export function MediaWorkspace({
                   <dd>{selectedMedia.bucket}</dd>
                 </div>
                 <div>
-                  <dt>Referenced content</dt>
+                  <dt>引用内容</dt>
                   <dd>{selectedMedia.referencedContentCount}</dd>
                 </div>
                 <div>
-                  <dt>Total references</dt>
+                  <dt>总引用数</dt>
                   <dd>{selectedMedia.referenceCount}</dd>
                 </div>
                 <div>
-                  <dt>Usage</dt>
+                  <dt>使用情况</dt>
                   <dd>
-                    {selectedMedia.projectionReferenceCount} live ·{" "}
-                    {selectedMedia.revisionReferenceCount} workspace ·{" "}
-                    {selectedMedia.versionReferenceCount} history
+                    {selectedMedia.projectionReferenceCount} 个公开引用 ·{" "}
+                    {selectedMedia.revisionReferenceCount} 个工作区引用 ·{" "}
+                    {selectedMedia.versionReferenceCount} 个历史引用
                   </dd>
                 </div>
                 <div>
-                  <dt>Lifecycle state</dt>
+                  <dt>生命周期状态</dt>
                   <dd>{selectedMedia.lifecycleState}</dd>
                 </div>
                 <div>
-                  <dt>Storage presence</dt>
+                  <dt>Storage 状态</dt>
                   <dd>
                     {selectedMedia.physicalObjectExists
-                      ? "Object present"
-                      : "Reference only"}
+                      ? "对象存在"
+                      : "仅有引用"}
                   </dd>
                 </div>
               </dl>
 
               <p className="admin-media-safety-note">
-                Quarantine labels are awareness only. This workspace cannot purge or delete Storage objects.
+                隔离标签仅用于提示。此工作区不能清理或删除 Storage 对象。
               </p>
             </aside>
           </div>
         ) : (
           <div className="admin-content-empty">
             <span aria-hidden="true">籽</span>
-            <h3>The cover shelves are empty.</h3>
-            <p>Uploaded Draft covers and preserved references will gather here.</p>
+            <h3>当前没有封面对象。</h3>
+            <p>已上传的草稿封面和保留引用会显示在这里。</p>
           </div>
         )}
       </section>

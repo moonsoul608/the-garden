@@ -498,10 +498,10 @@ test("Growth Notes editor follows protected content editor patterns", () => {
   assert.doesNotMatch(actions, /supabase|\.from\(|\.rpc\(/i);
   assert.match(section, /["']use client["']/);
   assert.match(section, /useActionState/);
-  assert.match(section, /Create Growth Note/);
-  assert.match(section, /Update/);
-  assert.match(section, /Delete/);
-  assert.match(section, /Public timeline/);
+  assert.match(section, /创建 Growth Notes/);
+  assert.match(section, /更新/);
+  assert.match(section, /删除/);
+  assert.match(section, /在公开时间线显示/);
   assert.match(contracts, /INITIAL_GROWTH_NOTE_ACTION_STATE/);
   assert.match(adminIndex, /growth-notes-service/);
   assert.match(adminIndex, /growth-notes-repository/);

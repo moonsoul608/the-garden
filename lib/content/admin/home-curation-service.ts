@@ -28,13 +28,13 @@ const UUID_PATTERN =
 
 export class HomeCurationManagementUnavailableError extends Error {
   constructor() {
-    super("Home curation is temporarily unavailable.");
+    super("首页精选暂时不可用。");
     this.name = "HomeCurationManagementUnavailableError";
   }
 }
 
 export class HomeCurationInputError extends Error {
-  constructor(message = "Home curation selections are invalid.") {
+  constructor(message = "首页精选选择无效。") {
     super(message);
     this.name = "HomeCurationInputError";
   }
@@ -93,16 +93,16 @@ function normalizeSelections(
 
   for (const selection of input.selections) {
     if (!isHomeCurationSlot(selection.slot)) {
-      throw new HomeCurationInputError("Home curation slot is invalid.");
+      throw new HomeCurationInputError("首页精选位置无效。");
     }
 
     if (!UUID_PATTERN.test(selection.contentId)) {
-      throw new HomeCurationInputError("Selected content is invalid.");
+      throw new HomeCurationInputError("所选内容无效。");
     }
 
     if (seenContentIds.has(selection.contentId)) {
       throw new HomeCurationInputError(
-        "A content item can only appear once on the homepage.",
+        "同一内容只能在首页出现一次。",
       );
     }
 
@@ -143,7 +143,7 @@ function assertPublishedSelections(
 
   if (unpublished) {
     throw new HomeCurationInputError(
-      "Home curation can only include Published content.",
+      "首页精选只能包含已发布内容。",
     );
   }
 }

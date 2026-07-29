@@ -78,7 +78,7 @@ function StageSelect({
 }>) {
   return (
     <select name={name} defaultValue={defaultValue ?? ""}>
-      {allowEmpty ? <option value="">No previous stage</option> : null}
+      {allowEmpty ? <option value="">没有上一阶段</option> : null}
       {GROWTH_STAGES.map((stage) => (
         <option key={stage} value={stage}>
           {stage}
@@ -114,7 +114,7 @@ function NoteFields({
     <>
       <div className="admin-form-grid admin-form-grid--four">
         <label className="admin-form-field">
-          <span>From stage</span>
+          <span>起始阶段</span>
           <StageSelect
             name="fromStage"
             defaultValue={note?.fromStage ?? null}
@@ -122,11 +122,11 @@ function NoteFields({
           />
         </label>
         <label className="admin-form-field">
-          <span>To stage</span>
+          <span>目标阶段</span>
           <StageSelect name="toStage" defaultValue={note?.toStage ?? "Seed"} />
         </label>
         <label className="admin-form-field">
-          <span>Occurred at</span>
+          <span>发生时间</span>
           <input
             name="occurredAt"
             type="datetime-local"
@@ -136,14 +136,14 @@ function NoteFields({
           />
         </label>
         <label className="admin-form-field admin-checkbox-field">
-          <span>Visibility</span>
+          <span>可见性</span>
           <span className="admin-checkbox-control">
             <input
               name="isPublic"
               type="checkbox"
               defaultChecked={note?.isPublic ?? false}
             />
-            Public timeline
+            在公开时间线显示
           </span>
         </label>
       </div>
@@ -153,7 +153,7 @@ function NoteFields({
 
       <div className="admin-form-grid admin-form-grid--two">
         <label className="admin-form-field">
-          <span>Chinese note</span>
+          <span>中文备注</span>
           <textarea
             name="noteZh"
             rows={4}
@@ -162,7 +162,7 @@ function NoteFields({
           />
         </label>
         <label className="admin-form-field">
-          <span>English note</span>
+          <span>英文备注</span>
           <textarea name="noteEn" rows={4} defaultValue={note?.noteEn ?? ""} />
         </label>
       </div>
@@ -186,7 +186,7 @@ function CreateGrowthNoteForm({
       <NoteFields state={state} />
       <div className="admin-growth-note-actions">
         <button className="admin-primary-action" type="submit" disabled={pending}>
-          {pending ? "Creating..." : "Create Growth Note"}
+          {pending ? "创建中..." : "创建 Growth Notes"}
         </button>
         <ActionNotice state={state} />
       </div>
@@ -227,7 +227,7 @@ function ExistingGrowthNoteForm({
             type="submit"
             disabled={updatePending}
           >
-            {updatePending ? "Updating..." : "Update"}
+            {updatePending ? "更新中..." : "更新"}
           </button>
           <ActionNotice state={updateState} />
         </div>
@@ -244,7 +244,7 @@ function ExistingGrowthNoteForm({
           type="submit"
           disabled={deletePending}
         >
-          {deletePending ? "Deleting..." : "Delete"}
+          {deletePending ? "删除中..." : "删除"}
         </button>
         <ActionNotice state={deleteState} />
       </form>
@@ -267,7 +267,7 @@ export function GrowthNotesSection({
         <p>04</p>
         <div>
           <h2 id="growth-notes-title">Growth Notes</h2>
-          <span>Notes here support Growth Stage changes and public timeline visibility.</span>
+          <span>这里的记录用于支持 Growth Stage 变更和公开时间线显示。</span>
         </div>
       </div>
 
@@ -287,7 +287,7 @@ export function GrowthNotesSection({
           </div>
         ) : (
           <p className="admin-growth-note-empty">
-            No Growth Notes yet.
+            还没有 Growth Notes。
           </p>
         )}
       </div>

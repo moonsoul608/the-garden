@@ -407,7 +407,7 @@ test("publish confirmation handles idempotent success and safe failure", async (
 
   const success = await successHandlers.publishReview(idleState(), confirmed);
   assert.equal(success.status, "success");
-  assert.match(success.message, /will not create another version/);
+  assert.match(success.message, /不会创建新的版本/);
   assert.equal(success.destination, "/admin/content");
   assert.equal(publishCalls, 1);
 
@@ -435,7 +435,7 @@ test("publish confirmation handles idempotent success and safe failure", async (
   const stale = await staleHandlers.publishReview(idleState(), confirmed);
   assert.equal(stale.status, "conflict");
   assert.equal(stale.destination, null);
-  assert.match(stale.message, /Reload/);
+  assert.match(stale.message, /重新加载/);
 });
 
 test("review routes keep data and mutations behind server boundaries", () => {

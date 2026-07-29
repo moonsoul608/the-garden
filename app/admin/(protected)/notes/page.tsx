@@ -20,12 +20,12 @@ function NoteCard({ note }: Readonly<{ note: VisitorNoteListItem }>) {
       <header className="admin-note-card-header">
         <div>
           <p className="admin-section-kicker">
-            {note.status === "unread" ? "Unread note" : "Read note"}
+            {note.status === "unread" ? "未读留言" : "已读留言"}
           </p>
-          <h2>{note.name ?? "Anonymous visitor"}</h2>
+          <h2>{note.name ?? "匿名访客"}</h2>
         </div>
         <span className={`admin-note-status admin-note-status--${note.status}`}>
-          {note.status}
+          {note.status === "unread" ? "未读" : "已读"}
         </span>
       </header>
 
@@ -47,8 +47,8 @@ function EmptyState() {
       <p className="admin-empty-symbol" aria-hidden="true">
         ·
       </p>
-      <h2>No visitor notes yet.</h2>
-      <p>Private notes will gather here after visitors send them.</p>
+      <h2>还没有访客留言。</h2>
+      <p>访客发送的私密留言会显示在这里。</p>
     </section>
   );
 }
@@ -57,10 +57,9 @@ function UnavailableState() {
   return (
     <section className="admin-lifecycle-unavailable" role="alert">
       <span aria-hidden="true">·</span>
-      <h2>Visitor notes are quiet for now.</h2>
+      <h2>访客留言暂不可用。</h2>
       <p>
-        Private notes could not be loaded safely. No note details were exposed
-        and no action was run.
+        私密留言无法安全加载。留言详情未显示，也没有执行任何操作。
       </p>
     </section>
   );
@@ -84,8 +83,8 @@ export default async function AdminVisitorNotesPage() {
     <main id="admin-main" className="admin-main">
       <header className="admin-page-header">
         <p>Garden Keeper</p>
-        <h1>Visitor Notes</h1>
-        <span>Private notes sent from the public garden.</span>
+        <h1>访客留言</h1>
+        <span>从公开站点发送的私密留言。</span>
       </header>
 
       <div className="admin-notes-workspace">
@@ -97,17 +96,17 @@ export default async function AdminVisitorNotesPage() {
             >
               <div className="admin-section-heading admin-section-heading--compact">
                 <div>
-                  <p className="admin-section-kicker">Private inbox</p>
-                  <h2 id="visitor-notes-summary-title">Notes at a glance</h2>
+                  <p className="admin-section-kicker">私密收件箱</p>
+                  <h2 id="visitor-notes-summary-title">留言概览</h2>
                 </div>
               </div>
               <dl className="admin-note-summary-grid">
                 <div>
-                  <dt>Total</dt>
+                  <dt>总数</dt>
                   <dd>{notes.length}</dd>
                 </div>
                 <div>
-                  <dt>Unread</dt>
+                  <dt>未读</dt>
                   <dd>{unreadCount}</dd>
                 </div>
               </dl>
@@ -116,7 +115,7 @@ export default async function AdminVisitorNotesPage() {
             {notes.length === 0 ? (
               <EmptyState />
             ) : (
-              <section className="admin-note-list" aria-label="Visitor notes">
+              <section className="admin-note-list" aria-label="访客留言">
                 {notes.map((note) => (
                   <NoteCard key={note.id} note={note} />
                 ))}

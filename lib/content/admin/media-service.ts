@@ -35,14 +35,14 @@ type MediaDraftService = Pick<
 
 export class MediaWorkspaceUnavailableError extends Error {
   constructor() {
-    super("The media workspace is temporarily unavailable.");
+    super("媒体工作区暂时不可用。");
     this.name = "MediaWorkspaceUnavailableError";
   }
 }
 
 export class MediaDraftUnavailableError extends Error {
   constructor() {
-    super("This Draft is no longer available for a cover replacement.");
+    super("此草稿已不能替换封面。");
     this.name = "MediaDraftUnavailableError";
   }
 }
@@ -50,7 +50,7 @@ export class MediaDraftUnavailableError extends Error {
 export class MediaReferenceUpdateError extends Error {
   constructor() {
     super(
-      "The cover was uploaded but could not be attached. It remains unreferenced and was not deleted.",
+      "封面已上传但无法关联。它会保持未引用状态，且未被删除。",
     );
     this.name = "MediaReferenceUpdateError";
   }
@@ -89,7 +89,7 @@ export function mapMediaObjectItem(record: MediaObjectRecord): MediaObjectItem {
 }
 
 function preferredTitle(titleEn: string | null, titleZh: string | null): string {
-  return titleEn?.trim() || titleZh?.trim() || "Untitled Draft";
+  return titleEn?.trim() || titleZh?.trim() || "未命名草稿";
 }
 
 async function createDefaultRepository(): Promise<MediaRepository> {

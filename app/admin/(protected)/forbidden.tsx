@@ -5,11 +5,11 @@ export default function AdminForbidden() {
     <main id="admin-main" className="admin-access-page">
       <section className="admin-access-card" aria-labelledby="forbidden-title">
         <p className="admin-status-code">403</p>
-        <h1 id="forbidden-title">Garden Keeper access required</h1>
-        <p>This account cannot access the admin area.</p>
+        <h1 id="forbidden-title">需要 Garden Keeper 权限</h1>
+        <p>当前账号无法访问管理区域。</p>
         <div className="admin-access-actions">
           <Link className="admin-primary-action" href="/">
-            Return to The Garden
+            返回 The Garden
           </Link>
         </div>
       </section>

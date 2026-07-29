@@ -20,7 +20,7 @@ type AuthorizeContentManagementRequest = () => Promise<AuthenticatedUser>;
 
 export class ContentManagementUnavailableError extends Error {
   constructor() {
-    super("The content workbench is temporarily unavailable.");
+    super("内容工作区暂时不可用。");
     this.name = "ContentManagementUnavailableError";
   }
 }
@@ -35,7 +35,7 @@ function preferredTitle(
   titleEn: string | null,
   titleZh: string | null,
 ): string {
-  return titleEn?.trim() || titleZh?.trim() || "Untitled Draft";
+  return titleEn?.trim() || titleZh?.trim() || "未命名草稿";
 }
 
 export function mapAdminContentListItem(

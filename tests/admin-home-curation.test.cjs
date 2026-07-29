@@ -401,7 +401,7 @@ test("home curation route follows protected admin patterns", () => {
   assert.match(formSource, /useActionState/);
   assert.match(formSource, /Currently Growing/);
   assert.match(formSource, /Recently Planted/);
-  assert.match(formSource, /Add Selection/);
+  assert.match(formSource, /添加内容/);
   assert.match(formSource, /Remove/);
   assert.match(actions, /["']use server["']/);
   assert.match(actions, /revalidatePath\("\/"\)/);

@@ -29,7 +29,7 @@ const RELATION_TYPES = ["grewInto", "grewFrom", "relatedTo"] as const;
 
 export class ContentRelationsManagementUnavailableError extends Error {
   constructor() {
-    super("Content Relations are temporarily unavailable.");
+    super("Content Relations 暂时不可用。");
     this.name = "ContentRelationsManagementUnavailableError";
   }
 }
@@ -38,7 +38,7 @@ export class ContentRelationInputError extends Error {
   readonly field: string;
 
   constructor(field = "contentRelation") {
-    super("The Content Relation input is invalid.");
+    super("Content Relations 输入无效。");
     this.name = "ContentRelationInputError";
     this.field = field;
   }
@@ -48,7 +48,7 @@ export class ContentRelationContentUnavailableError extends Error {
   readonly field: string;
 
   constructor(field = "targetContentId") {
-    super("The selected content is unavailable.");
+    super("所选内容不可用。");
     this.name = "ContentRelationContentUnavailableError";
     this.field = field;
   }
@@ -56,14 +56,14 @@ export class ContentRelationContentUnavailableError extends Error {
 
 export class ContentRelationDuplicateError extends Error {
   constructor() {
-    super("That Content Relation already exists.");
+    super("该 Content Relations 已存在。");
     this.name = "ContentRelationDuplicateError";
   }
 }
 
 export class ContentRelationNotFoundError extends Error {
   constructor() {
-    super("The selected Content Relation is unavailable.");
+    super("所选 Content Relations 不可用。");
     this.name = "ContentRelationNotFoundError";
   }
 }

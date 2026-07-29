@@ -6,6 +6,8 @@ import {
   type DashboardLifecycle,
 } from "@/lib/content/admin";
 
+import { lifecycleLabel } from "./admin-labels";
+
 type RecentActivityItem = Readonly<{
   id: string;
   kind: "edit" | "publication" | "archive";
@@ -24,36 +26,36 @@ const recentActivity: readonly RecentActivityItem[] = [];
 
 const quickActions: readonly QuickAction[] = [
   {
-    label: "Create Content",
-    description: "Plant a new Draft in the Keeper workspace.",
+    label: "创建内容",
+    description: "在 Garden Keeper 工作区创建新的草稿。",
     marker: "01",
     href: "/admin/content/new",
   },
   {
-    label: "Review Queue",
-    description: "See work waiting for an editorial check.",
+    label: "审核队列",
+    description: "查看等待审核的内容。",
     marker: "02",
     href: "/admin/review",
   },
   {
-    label: "Media",
-    description: "Tend cover images and their details.",
+    label: "媒体库",
+    description: "管理封面图片及其详情。",
     marker: "03",
     href: "/admin/media",
   },
   {
-    label: "Lifecycle",
-    description: "Tend Published and Archived garden paths.",
+    label: "生命周期管理",
+    description: "管理已发布和已归档内容。",
     marker: "04",
     href: "/admin/lifecycle",
   },
 ];
 
 const lifecycleDescriptions: Record<DashboardLifecycle, string> = {
-  Draft: "Still being planted",
-  Review: "Waiting for a careful look",
-  Published: "Open in the garden",
-  Archived: "Resting out of discovery",
+  Draft: "仍在编辑",
+  Review: "等待审核",
+  Published: "已对外发布",
+  Archived: "已移出发现入口",
 };
 
 export default async function AdminDashboardPage() {
@@ -64,21 +66,21 @@ export default async function AdminDashboardPage() {
     <main id="admin-main" className="admin-main">
       <header className="admin-page-header">
         <p>Garden Keeper</p>
-        <h1>Keeper dashboard</h1>
-        <span>A quiet view of what is growing, waiting, and resting.</span>
+        <h1>工作台</h1>
+        <span>查看当前内容的编辑、审核、发布与归档状态。</span>
       </header>
 
       <div className="admin-dashboard">
         <section className="admin-overview" aria-labelledby="overview-title">
           <div className="admin-section-heading">
             <div>
-              <p className="admin-section-kicker">Overview</p>
-              <h2 id="overview-title">The garden at a glance</h2>
+              <p className="admin-section-kicker">概览</p>
+              <h2 id="overview-title">内容状态概览</h2>
             </div>
             <p className="admin-total">
               <strong>{summary.totalContent}</strong>
               <span>
-                {summary.totalContent === 1 ? "content item" : "content items"}
+                条内容
               </span>
             </p>
           </div>
@@ -93,7 +95,7 @@ export default async function AdminDashboardPage() {
                       aria-hidden="true"
                     />
                     <span>
-                      <strong>{lifecycle}</strong>
+                      <strong>{lifecycleLabel(lifecycle)}</strong>
                       <small>{lifecycleDescriptions[lifecycle]}</small>
                     </span>
                   </dt>
@@ -106,8 +108,8 @@ export default async function AdminDashboardPage() {
               <p className="admin-empty-symbol" aria-hidden="true">
                 ·
               </p>
-              <h3>Nothing has been planted here yet.</h3>
-              <p>Lifecycle counts will appear when content enters the workspace.</p>
+              <h3>还没有内容。</h3>
+              <p>内容进入工作区后，这里会显示生命周期统计。</p>
             </div>
           )}
         </section>
@@ -119,8 +121,8 @@ export default async function AdminDashboardPage() {
           >
             <div className="admin-section-heading admin-section-heading--compact">
               <div>
-                <p className="admin-section-kicker">Recent Activity</p>
-                <h2 id="activity-title">Tending notes</h2>
+                <p className="admin-section-kicker">近期活动</p>
+                <h2 id="activity-title">操作记录</h2>
               </div>
             </div>
 
@@ -138,10 +140,9 @@ export default async function AdminDashboardPage() {
               </ol>
             ) : (
               <div className="admin-inline-empty">
-                <p>No activity has been recorded.</p>
+                <p>还没有记录任何活动。</p>
                 <span>
-                  Recent edits, publications, and archive events will gather here
-                  in a later phase.
+                  后续阶段会在这里汇总编辑、发布和归档记录。
                 </span>
               </div>
             )}
@@ -153,8 +154,8 @@ export default async function AdminDashboardPage() {
           >
             <div className="admin-section-heading admin-section-heading--compact">
               <div>
-                <p className="admin-section-kicker">Quick Actions</p>
-                <h2 id="quick-actions-title">Paths to prepare</h2>
+                <p className="admin-section-kicker">快捷操作</p>
+                <h2 id="quick-actions-title">常用入口</h2>
               </div>
             </div>
 
@@ -173,7 +174,7 @@ export default async function AdminDashboardPage() {
                         <strong>{action.label}</strong>
                         <small>{action.description}</small>
                       </span>
-                      <span className="admin-action-ready">Open</span>
+                      <span className="admin-action-ready">打开</span>
                     </Link>
                   ) : (
                     <div className="admin-action-placeholder" aria-disabled="true">
@@ -184,7 +185,7 @@ export default async function AdminDashboardPage() {
                         <strong>{action.label}</strong>
                         <small>{action.description}</small>
                       </span>
-                      <span className="admin-coming-soon">Coming later</span>
+                      <span className="admin-coming-soon">稍后提供</span>
                     </div>
                   )}
                 </li>

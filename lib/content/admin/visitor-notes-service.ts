@@ -24,14 +24,14 @@ const UUID_PATTERN =
 
 export class VisitorNotesManagementUnavailableError extends Error {
   constructor() {
-    super("Visitor notes are temporarily unavailable.");
+    super("访客留言暂时不可用。");
     this.name = "VisitorNotesManagementUnavailableError";
   }
 }
 
 export class VisitorNoteInputError extends Error {
   constructor() {
-    super("The selected visitor note is unavailable.");
+    super("所选访客留言不可用。");
     this.name = "VisitorNoteInputError";
   }
 }

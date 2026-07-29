@@ -27,12 +27,12 @@ export class MediaValidationError extends Error {
   constructor(readonly code: MediaValidationErrorCode) {
     super(
       code === "file_too_large"
-        ? "Cover files must be 5 MiB or smaller."
+        ? "封面文件必须不超过 5 MiB。"
         : code === "unsupported_file_type"
-          ? "Choose a JPEG, PNG, or WebP cover."
+          ? "请选择 JPEG、PNG 或 WebP 封面。"
           : code === "empty_file" || code === "missing_file"
-            ? "Choose a cover file before uploading."
-            : "The cover upload details are invalid.",
+            ? "上传前请选择封面文件。"
+            : "封面上传信息无效。",
     );
     this.name = "MediaValidationError";
   }

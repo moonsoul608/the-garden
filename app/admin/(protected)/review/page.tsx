@@ -19,16 +19,15 @@ export default async function AdminReviewQueuePage() {
     return (
       <main id="admin-main" className="admin-main">
         <header className="admin-page-header">
-          <p>Review bench</p>
-          <h1>The Review queue is resting.</h1>
+          <p>审核队列</p>
+          <h1>审核队列暂不可用。</h1>
           <span>
-            The workspace is temporarily unavailable. No internal details were
-            revealed and no content was changed.
+            工作区暂时不可用。内部详情未显示，内容未被更改。
           </span>
         </header>
         <div className="admin-review-unavailable" role="status">
-          <p>Try opening the queue again in a moment.</p>
-          <Link href="/admin/review">Refresh the Review queue</Link>
+          <p>请稍后重新打开审核队列。</p>
+          <Link href="/admin/review">刷新审核队列</Link>
         </div>
       </main>
     );
@@ -38,33 +37,32 @@ export default async function AdminReviewQueuePage() {
     <main id="admin-main" className="admin-main admin-review-main">
       <header className="admin-page-header admin-page-header--with-action">
         <div>
-          <p>Review bench</p>
-          <h1>Work waiting for a careful look</h1>
+          <p>审核队列</p>
+          <h1>等待审核的内容</h1>
           <span>
-            Check readiness, return work for another pass, or open the path to
-            the garden.
+            检查准备情况、退回草稿，或发布内容。
           </span>
         </div>
         <p className="admin-review-count">
           <strong>{queue.length}</strong>
-          <span>{queue.length === 1 ? "Review" : "Reviews"}</span>
+          <span>待审核</span>
         </p>
       </header>
 
       <section className="admin-review-queue" aria-labelledby="review-queue-title">
         <div className="admin-section-heading admin-section-heading--compact">
           <div>
-            <p className="admin-section-kicker">Submitted work</p>
-            <h2 id="review-queue-title">On the bench</h2>
+            <p className="admin-section-kicker">已提交内容</p>
+            <h2 id="review-queue-title">审核列表</h2>
           </div>
         </div>
 
         {queue.length === 0 ? (
           <div className="admin-content-empty">
             <span aria-hidden="true">·</span>
-            <h3>The Review bench is clear.</h3>
-            <p>Drafts will gather here after they pass readiness checks.</p>
-            <Link href="/admin/content">Return to the content workbench</Link>
+            <h3>当前没有待审核内容。</h3>
+            <p>草稿通过准备情况检查后会显示在这里。</p>
+            <Link href="/admin/content">返回内容管理</Link>
           </div>
         ) : (
           <div className="admin-review-list" role="list">
@@ -76,11 +74,11 @@ export default async function AdminReviewQueuePage() {
                 </div>
                 <dl>
                   <div>
-                    <dt>Growth</dt>
-                    <dd>{item.growthStage ?? "Not growth-tracked"}</dd>
+                    <dt>Growth Stage</dt>
+                    <dd>{item.growthStage ?? "不跟踪 Growth Stage"}</dd>
                   </div>
                   <div>
-                    <dt>Submitted</dt>
+                    <dt>提交时间</dt>
                     <dd>
                       <time dateTime={item.submittedAt}>
                         {dateFormatter.format(new Date(item.submittedAt))}
@@ -88,20 +86,20 @@ export default async function AdminReviewQueuePage() {
                     </dd>
                   </div>
                   <div>
-                    <dt>Readiness</dt>
+                    <dt>准备情况</dt>
                     <dd>
                       <span
                         className={`admin-readiness-dot admin-readiness-dot--${item.ready ? "ready" : "attention"}`}
                         aria-hidden="true"
                       />
                       {item.ready
-                        ? "Ready"
-                        : `${item.attentionCount} to revisit`}
+                        ? "就绪"
+                        : `${item.attentionCount} 项需要处理`}
                     </dd>
                   </div>
                 </dl>
                 <Link href={`/admin/review/${item.revisionId}`}>
-                  Inspect <span aria-hidden="true">→</span>
+                  查看 <span aria-hidden="true">→</span>
                 </Link>
               </article>
             ))}

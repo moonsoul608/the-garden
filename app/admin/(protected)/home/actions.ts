@@ -39,13 +39,13 @@ function safeError(error: unknown): HomeCurationActionState {
   if (error instanceof HomeCurationManagementUnavailableError) {
     return actionState(
       "error",
-      "Home curation is temporarily unavailable. No homepage rows were changed.",
+      "首页精选暂时不可用。首页内容行未被更改。",
     );
   }
 
   return actionState(
     "error",
-    "Home curation could not be saved. No homepage rows were changed.",
+    "首页精选无法保存。首页内容行未被更改。",
   );
 }
 
@@ -70,7 +70,7 @@ export async function saveHomeCurationAction(
       ),
     });
     refreshHomeCuration();
-    return actionState("success", "Home curation saved.");
+    return actionState("success", "首页精选已保存。");
   } catch (error) {
     return safeError(error);
   }

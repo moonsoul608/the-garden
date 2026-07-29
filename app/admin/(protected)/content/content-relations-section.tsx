@@ -18,9 +18,9 @@ import {
 } from "./content-relation-action-contracts";
 
 const RELATION_TYPES = [
-  { value: "grewInto", label: "Grew into" },
-  { value: "grewFrom", label: "Grew from" },
-  { value: "relatedTo", label: "Related to" },
+  { value: "grewInto", label: "成长为" },
+  { value: "grewFrom", label: "源自" },
+  { value: "relatedTo", label: "相关" },
 ] as const satisfies ReadonlyArray<{ value: RelationType; label: string }>;
 
 function relationLabel(relationType: RelationType): string {
@@ -99,7 +99,7 @@ function CreateRelationForm({
       <HiddenIdentity sourceContentId={sourceContentId} revisionId={revisionId} />
       <div className="admin-form-grid admin-form-grid--two">
         <label className="admin-form-field">
-          <span>Target content</span>
+          <span>目标内容</span>
           <select
             name="targetContentId"
             defaultValue=""
@@ -111,7 +111,7 @@ function CreateRelationForm({
             }
           >
             <option value="" disabled>
-              Select content
+              选择内容
             </option>
             {targets.map((target) => (
               <option key={target.id} value={target.id}>
@@ -121,7 +121,7 @@ function CreateRelationForm({
           </select>
         </label>
         <label className="admin-form-field">
-          <span>Relation type</span>
+          <span>关系类型</span>
           <select
             name="relationType"
             defaultValue="relatedTo"
@@ -144,11 +144,11 @@ function CreateRelationForm({
 
       <div className="admin-form-grid admin-form-grid--two">
         <label className="admin-form-field">
-          <span>Chinese note</span>
+          <span>中文备注</span>
           <textarea name="noteZh" rows={3} lang="zh" />
         </label>
         <label className="admin-form-field">
-          <span>English note</span>
+          <span>英文备注</span>
           <textarea name="noteEn" rows={3} />
         </label>
       </div>
@@ -159,7 +159,7 @@ function CreateRelationForm({
           type="submit"
           disabled={pending || !hasTargets}
         >
-          {pending ? "Creating..." : "Create Content Relation"}
+          {pending ? "创建中..." : "创建 Content Relations"}
         </button>
         <ActionNotice state={state} />
       </div>
@@ -205,7 +205,7 @@ function ExistingRelation({
           type="submit"
           disabled={pending}
         >
-          {pending ? "Deleting..." : "Delete"}
+          {pending ? "删除中..." : "删除"}
         </button>
         <ActionNotice state={state} />
       </form>
@@ -233,7 +233,7 @@ export function ContentRelationsSection({
         <p>05</p>
         <div>
           <h2 id="content-relations-title">Content Relations</h2>
-          <span>Outgoing source-to-target links for public relation rendering.</span>
+          <span>管理公开关联渲染所需的源内容到目标内容链接。</span>
         </div>
       </div>
 
@@ -257,7 +257,7 @@ export function ContentRelationsSection({
           </div>
         ) : (
           <p className="admin-growth-note-empty">
-            No outgoing Content Relations yet.
+            还没有出站 Content Relations。
           </p>
         )}
       </div>

@@ -334,9 +334,9 @@ test("visitor notes route follows protected admin patterns", () => {
   assert.doesNotMatch(page, /supabase|\.from\(|\.rpc\(/i);
   assert.match(noteActions, /["']use client["']/);
   assert.match(noteActions, /useActionState/);
-  assert.match(noteActions, /Mark as read/);
-  assert.match(noteActions, /Mark as unread/);
-  assert.match(noteActions, /Delete/);
+  assert.match(noteActions, /标记为已读/);
+  assert.match(noteActions, /标记为未读/);
+  assert.match(noteActions, /删除/);
   assert.match(actions, /["']use server["']/);
   assert.match(actions, /revalidatePath\("\/admin\/notes"\)/);
   assert.doesNotMatch(actions, /supabase|\.from\(|\.rpc\(/i);

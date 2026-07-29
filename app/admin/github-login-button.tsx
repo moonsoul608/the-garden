@@ -4,7 +4,7 @@ export function GitHubLoginButton() {
       className="admin-primary-action"
       href="/auth/login/github?next=/admin"
     >
-      Continue with GitHub
+      使用 GitHub 继续
     </a>
   );
 }

@@ -9,7 +9,7 @@ const growthMarkers: Record<GrowthStage, string> = {
 };
 
 export type AdminGrowthPresentation = Readonly<{
-  label: GrowthStage | "Not growth-tracked";
+  label: GrowthStage | "不跟踪 Growth Stage";
   marker: string | null;
 }>;
 
@@ -18,5 +18,5 @@ export function getAdminGrowthPresentation(
 ): AdminGrowthPresentation {
   return growthStage
     ? { label: growthStage, marker: growthMarkers[growthStage] }
-    : { label: "Not growth-tracked", marker: null };
+    : { label: "不跟踪 Growth Stage", marker: null };
 }

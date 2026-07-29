@@ -208,7 +208,7 @@ test("lifecycle list exposes public identity and maps the last action", () => {
 
   assert.equal(item.canonicalRoute, "/garden/a-maintained-path");
   assert.equal(item.lifecycle, "Archived");
-  assert.equal(item.lastAction, "Archived");
+  assert.equal(item.lastAction, "已归档");
   assert.equal(item.sourceArchiveAt, updatedAt);
   assert.doesNotMatch(JSON.stringify(item), new RegExp(contentId));
   assert.doesNotMatch(JSON.stringify(item), new RegExp(sourceVersionId));
@@ -525,7 +525,7 @@ test("unsafe lifecycle transitions stop at the server boundary with safe errors"
   );
   assert.equal(stale.status, "conflict");
   assert.equal(stale.destination, null);
-  assert.match(stale.message, /Reload/);
+  assert.match(stale.message, /重新加载/);
 });
 
 test("lifecycle route keeps authorization, data, and mutations on the server", () => {
@@ -543,8 +543,8 @@ test("lifecycle route keeps authorization, data, and mutations on the server", (
   assert.match(actions, /createLifecycleManagementService\(\)/);
   assert.doesNotMatch(actions, /supabase|\.from\(|\.rpc\(/i);
   assert.match(panel, /name="deleteConfirmation"/);
-  assert.match(panel, /Storage objects are NOT immediately deleted/);
-  assert.match(panel, /Historical versions remain protected/);
+  assert.match(panel, /Storage 对象不会立即删除/);
+  assert.match(panel, /历史版本仍会保留保护/);
   assert.doesNotMatch(panel, /contentId|sourceVersionId|relationId|supabase|rpc/i);
 
   const archiveDialog = panel.slice(

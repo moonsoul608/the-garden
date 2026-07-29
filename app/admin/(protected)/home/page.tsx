@@ -10,10 +10,9 @@ function UnavailableState() {
   return (
     <section className="admin-lifecycle-unavailable" role="alert">
       <span aria-hidden="true">.</span>
-      <h2>Home curation is quiet for now.</h2>
+      <h2>首页精选暂不可用。</h2>
       <p>
-        Homepage curation could not be loaded safely. No homepage rows were
-        changed.
+        首页精选无法安全加载。首页内容行未被更改。
       </p>
     </section>
   );
@@ -34,17 +33,17 @@ function HomeCurationWorkspaceView({
       >
         <div className="admin-section-heading admin-section-heading--compact">
           <div>
-            <p className="admin-section-kicker">Homepage</p>
-            <h2 id="home-curation-summary-title">Curation at a glance</h2>
+            <p className="admin-section-kicker">首页</p>
+            <h2 id="home-curation-summary-title">精选概览</h2>
           </div>
         </div>
         <dl className="admin-note-summary-grid">
           <div>
-            <dt>Published options</dt>
+            <dt>可选已发布内容</dt>
             <dd>{workspace.options.length}</dd>
           </div>
           <div>
-            <dt>Selected rows</dt>
+            <dt>已选行</dt>
             <dd>{selectedCount}</dd>
           </div>
         </dl>
@@ -74,8 +73,8 @@ export default async function AdminHomeCurationPage() {
     <main id="admin-main" className="admin-main">
       <header className="admin-page-header">
         <p>Garden Keeper</p>
-        <h1>Home Curation</h1>
-        <span>Choose the Published content that appears on the homepage.</span>
+        <h1>首页精选</h1>
+        <span>选择要显示在首页的已发布内容。</span>
       </header>
 
       {workspace ? (

@@ -30,7 +30,7 @@ function errorState(error: unknown, fallback: string): ReviewActionState {
       return {
         status: "conflict",
         message:
-          "This revision changed while the page was open. Reload before continuing.",
+          "此修订在页面打开后发生了变更。请重新加载后继续。",
         destination: null,
         publishedAt: null,
       };
@@ -43,7 +43,7 @@ function errorState(error: unknown, fallback: string): ReviewActionState {
       return {
         status: "error",
         message:
-          "This review is no longer waiting here. Refresh the queue to see its current state.",
+          "此审核项已不在当前队列中。请刷新队列查看最新状态。",
         destination: "/admin/review",
         publishedAt: null,
       };
@@ -61,7 +61,7 @@ function errorState(error: unknown, fallback: string): ReviewActionState {
     return {
       status: "error",
       message:
-        "The readiness check changed. Review the checklist again before continuing.",
+        "准备情况检查已变化。请重新查看清单后继续。",
       destination: null,
       publishedAt: null,
     };
@@ -91,7 +91,7 @@ export function createReviewActionHandlers(service: ReviewActionService) {
         return {
           status: "error",
           message:
-            "This Draft is not ready for Review. Tend the checklist items before submitting it.",
+            "此草稿尚未准备好提交审核。请先处理清单中的项目。",
           destination: null,
           publishedAt: null,
         };
@@ -100,14 +100,14 @@ export function createReviewActionHandlers(service: ReviewActionService) {
       await service.submitForReview(input);
       return {
         status: "success",
-        message: "Submitted for Review.",
+        message: "已提交审核。",
         destination: `/admin/review/${input.revisionId}`,
         publishedAt: null,
       };
     } catch (error) {
       return errorState(
         error,
-        "The Draft could not be submitted for Review. Try again from this page.",
+        "草稿无法提交审核。请在当前页面重试。",
       );
     }
   }
@@ -120,7 +120,7 @@ export function createReviewActionHandlers(service: ReviewActionService) {
     if (!reason) {
       return {
         status: "error",
-        message: "Add a reason before returning this Review to Draft.",
+        message: "退回草稿前请填写原因。",
         destination: null,
         publishedAt: null,
       };
@@ -131,14 +131,14 @@ export function createReviewActionHandlers(service: ReviewActionService) {
       await service.returnToDraft(input);
       return {
         status: "success",
-        message: "Returned to Draft.",
+        message: "已退回草稿。",
         destination: `/admin/content/${input.revisionId}`,
         publishedAt: null,
       };
     } catch (error) {
       return errorState(
         error,
-        "The Review could not be returned to Draft. Try again from this page.",
+        "无法退回草稿。请在当前页面重试。",
       );
     }
   }
@@ -150,7 +150,7 @@ export function createReviewActionHandlers(service: ReviewActionService) {
     if (text(formData, "publishConfirmation") !== "confirmed") {
       return {
         status: "error",
-        message: "Confirm that this Review is ready to publish.",
+        message: "请确认此审核项可以发布。",
         destination: null,
         publishedAt: null,
       };
@@ -162,14 +162,14 @@ export function createReviewActionHandlers(service: ReviewActionService) {
       return {
         status: "success",
         message:
-          "Published safely. Repeating this confirmed request will not create another version.",
+          "已安全发布。重复提交此确认请求不会创建新的版本。",
         destination: "/admin/content",
         publishedAt: receipt.publishedAt,
       };
     } catch (error) {
       return errorState(
         error,
-        "Publishing could not be completed. The current published content was left unchanged.",
+        "发布无法完成。当前已发布内容未被更改。",
       );
     }
   }

@@ -40,7 +40,7 @@ type PublishedContentRow = Pick<
 
 export class HomeCurationRepositoryError extends Error {
   constructor() {
-    super("Home curation data could not complete the request.");
+    super("首页精选数据无法完成请求。");
     this.name = "HomeCurationRepositoryError";
   }
 }
@@ -54,7 +54,7 @@ export interface HomeCurationRepository {
 type HomeCurationRepositoryClient = SupabaseClient<ContentDatabase>;
 
 function preferredTitle(row: PublishedContentRow): string {
-  return row.title_en?.trim() || row.title_zh?.trim() || "Untitled";
+  return row.title_en?.trim() || row.title_zh?.trim() || "未命名";
 }
 
 function mapContentOption(row: PublishedContentRow): HomeCurationContentOption {

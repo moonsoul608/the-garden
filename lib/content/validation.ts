@@ -163,7 +163,7 @@ export function validateLifecycleTransition(
   return finish([
     error(
       "invalid_lifecycle_transition",
-      `Lifecycle cannot move directly from ${from} to ${to}.`,
+      `生命周期不能直接从 ${from} 变为 ${to}。`,
       { field: "lifecycle" },
     ),
   ]);
@@ -173,7 +173,7 @@ export function validateDraftLifecycleMutation(): ContentValidationResult {
   return finish([
     error(
       "invalid_lifecycle_transition",
-      "Draft lifecycle is server-managed and cannot be changed by a Draft update.",
+      "草稿生命周期由服务器管理，不能通过草稿更新更改。",
       { field: "lifecycle" },
     ),
   ]);
@@ -192,7 +192,7 @@ export function validateRequiredGrowthStage(
   return finish([
     error(
       "missing_growth_stage",
-      "Growth Stage is required and must be assigned manually.",
+      "必须手动指定 Growth Stage。",
       { field: "growthStage", ...context },
       "blocked",
     ),
@@ -220,7 +220,7 @@ export function validateStableSlug(
   return finish([
     error(
       "immutable_slug",
-      "Slug cannot change after first publication.",
+      "首次发布后 Slug 不能更改。",
       { field: "slug", contentId },
     ),
   ]);
@@ -239,7 +239,7 @@ export function validateStableRegion(
   return finish([
     error(
       "immutable_region",
-      "Region cannot change after first publication until redirects are supported.",
+      "支持重定向前，首次发布后区域不能更改。",
       { field: "region", contentId },
     ),
   ]);
@@ -256,7 +256,7 @@ export function validateSlugAvailability(
   return finish([
     error(
       "slug_conflict",
-      "The proposed Region and slug are already in use.",
+      "拟使用的区域和 Slug 已被占用。",
       { field: "slug", contentId },
     ),
   ]);
@@ -272,7 +272,7 @@ export function validateReviewTaxonomy(
     issues.push(
       error(
         "invalid_region_content_type",
-        `${content.region} content must use the ${taxonomy.contentType} content type.`,
+        `${content.region} 内容必须使用 ${taxonomy.contentType} 内容类型。`,
         { field: "contentType", contentId: content.id },
       ),
     );
@@ -283,7 +283,7 @@ export function validateReviewTaxonomy(
       issues.push(
         error(
           "invalid_primary_category",
-          `${category} is not an approved primary category for ${content.region}.`,
+          `${category} 不是 ${content.region} 的可用主分类。`,
           { field: "primaryCategories", contentId: content.id },
         ),
       );
@@ -304,7 +304,7 @@ export function validateTags(
     const trimmed = tag.trim();
     if (!trimmed) {
       issues.push(
-        error("invalid_tag", "A tag cannot be blank.", {
+        error("invalid_tag", "标签不能为空。", {
           field: "tags",
           contentId,
         }),
@@ -315,7 +315,7 @@ export function validateTags(
     const normalized = trimmed.toLocaleLowerCase();
     if (seen.has(normalized)) {
       issues.push(
-        error("duplicate_tag", "Duplicate tag variants are not allowed.", {
+        error("duplicate_tag", "不允许重复标签变体。", {
           field: "tags",
           contentId,
         }),
@@ -346,13 +346,13 @@ export function validateCoverRequirements(
     issues.push(
       error(
         "orphaned_cover_alt",
-        "Cover alt text cannot exist without a cover path.",
+        "没有封面路径时不能填写封面替代文本。",
         { field: "cover", ...context },
       ),
     );
   } else if (!hasPath) {
     issues.push(
-      error("missing_cover_path", "Cover path cannot be blank.", {
+      error("missing_cover_path", "封面路径不能为空。", {
         field: "cover.path",
         ...context,
       }),
@@ -371,7 +371,7 @@ export function validateCoverRequirements(
       issues.push(
         error(
           "missing_cover_alt",
-          "A cover requires alt text in the primary content language before Review or publication.",
+          "提交审核或发布前，封面需要使用主要内容语言填写替代文本。",
           { field: "cover", ...context },
         ),
       );
@@ -389,7 +389,7 @@ export function validatePublicationRequirements(
 
   if (!hasText(content.titleZh) && !hasText(content.titleEn)) {
     issues.push(
-      error("missing_title", "At least one title is required.", {
+      error("missing_title", "至少需要填写一个标题。", {
         field: "title",
         ...context,
       }),
@@ -398,7 +398,7 @@ export function validatePublicationRequirements(
 
   if (!hasText(content.summaryZh) && !hasText(content.summaryEn)) {
     issues.push(
-      error("missing_summary", "At least one summary is required.", {
+      error("missing_summary", "至少需要填写一个摘要。", {
         field: "summary",
         ...context,
       }),
@@ -409,7 +409,7 @@ export function validatePublicationRequirements(
     issues.push(
       error(
         "missing_body",
-        "A Markdown body or confirmed short-detail explanation is required.",
+        "需要 Markdown 正文或已确认的简短详情说明。",
         { field: "bodyMarkdown", ...context },
       ),
     );
@@ -417,14 +417,14 @@ export function validatePublicationRequirements(
 
   if (!hasText(content.slug)) {
     issues.push(
-      error("missing_slug", "A slug is required before Review or publication.", {
+      error("missing_slug", "提交审核或发布前需要填写 Slug。", {
         field: "slug",
         ...context,
       }),
     );
   } else if (!SLUG_PATTERN.test(content.slug)) {
     issues.push(
-      error("invalid_slug", "Slug must use lowercase kebab-case.", {
+      error("invalid_slug", "Slug 必须使用小写 kebab-case。", {
         field: "slug",
         ...context,
       }),
@@ -435,7 +435,7 @@ export function validatePublicationRequirements(
     issues.push(
       error(
         "missing_primary_category",
-        "At least one fixed primary category is required.",
+        "至少需要填写一个固定主分类。",
         { field: "primaryCategories", ...context },
       ),
     );
@@ -470,7 +470,7 @@ export function validateLifecycleRequirements(
 
   if (!hasText(content.titleZh) && !hasText(content.titleEn)) {
     issues.push(
-      error("missing_title", "At least one title is required.", {
+      error("missing_title", "至少需要填写一个标题。", {
         field: "title",
         contentId: content.id,
       }),
@@ -479,7 +479,7 @@ export function validateLifecycleRequirements(
 
   if (hasText(content.slug) && !SLUG_PATTERN.test(content.slug)) {
     issues.push(
-      error("invalid_slug", "Slug must use lowercase kebab-case.", {
+      error("invalid_slug", "Slug 必须使用小写 kebab-case。", {
         field: "slug",
         contentId: content.id,
       }),
@@ -488,7 +488,7 @@ export function validateLifecycleRequirements(
 
   if (lifecycle === "Archived" && !hasText(content.slug)) {
     issues.push(
-      error("missing_slug", "Archived content must retain its stable slug.", {
+      error("missing_slug", "已归档内容必须保留稳定 Slug。", {
         field: "slug",
         contentId: content.id,
       }),
@@ -520,7 +520,7 @@ export function validateContentRelation(
 
   if (relation.sourceContentId === relation.targetContentId) {
     issues.push(
-      error("self_relation", "Content cannot relate to itself.", {
+      error("self_relation", "内容不能关联到自身。", {
         field: "targetContentId",
         contentId: relation.sourceContentId,
       }),
@@ -534,7 +534,7 @@ export function validateContentRelation(
     issues.push(
       error(
         "invalid_relation_note",
-        "A provided relation note cannot be blank.",
+        "已填写的关系备注不能为空。",
         { field: "relationNote", contentId: relation.sourceContentId },
       ),
     );
@@ -548,7 +548,7 @@ export function validateContentRelation(
     issues.push(
       error(
         "unresolved_relation",
-        "Both relation endpoints must resolve to existing content.",
+        "关系两端都必须指向现有内容。",
         { field: "relation", contentId: relation.sourceContentId },
       ),
     );
@@ -563,7 +563,7 @@ export function validateContentRelation(
 
   if (duplicate) {
     issues.push(
-      error("duplicate_relation", "This content relation already exists.", {
+      error("duplicate_relation", "此内容关系已存在。", {
         field: "relation",
         contentId: relation.sourceContentId,
       }),
@@ -598,7 +598,7 @@ export function validateGrowthNote(
     issues.push(
       error(
         "missing_growth_stage",
-        "A Growth Note requires its destination Growth Stage.",
+        "Growth Notes 需要填写目标 Growth Stage。",
         { field: "toStage", contentId: note.contentId },
         "blocked",
       ),
@@ -609,7 +609,7 @@ export function validateGrowthNote(
     issues.push(
       error(
         "unchanged_growth_stage",
-        "A Growth Stage change must choose a different destination stage.",
+        "Growth Stage 变更必须选择不同的目标阶段。",
         { field: "toStage", contentId: note.contentId },
       ),
     );
@@ -619,7 +619,7 @@ export function validateGrowthNote(
     issues.push(
       error(
         "missing_growth_note",
-        "A Growth Stage change requires at least one Growth Note field.",
+        "Growth Stage 变更至少需要填写一个 Growth Notes 字段。",
         { field: "growthNote", contentId: note.contentId },
       ),
     );
@@ -656,7 +656,7 @@ export function validateGrowthStageConsistency(
   return finish([
     error(
       "missing_growth_note",
-      "A Growth Stage change requires a matching Growth Note before Review.",
+      "提交审核前，Growth Stage 变更需要匹配的 Growth Notes。",
       { field: "growthNote", contentId },
     ),
   ]);

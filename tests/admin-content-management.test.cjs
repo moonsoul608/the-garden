@@ -418,7 +418,7 @@ test("optimistic lock conflicts require a reload and never expose internals", as
   );
 
   assert.equal(result.status, "conflict");
-  assert.match(result.message, /Reload/);
+  assert.match(result.message, /重新加载/);
   assert.doesNotMatch(result.message, /content_revisions|lock_version|sql/i);
 });
 
@@ -435,16 +435,16 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.doesNotMatch(page, /["']use client["']/);
   assert.doesNotMatch(page, /supabase|\.from\(/i);
   assert.match(page, /await listAdminContent\(\)/);
-  assert.match(page, /Create Content/);
+  assert.match(page, /创建内容/);
   assert.match(page, /startDraftRevisionAction/);
   assert.match(page, /item\.projectionLifecycle === "Published"/);
   assert.match(page, /item\.revisionLifecycle === null/);
   assert.match(page, /item\.revisionId === null/);
-  assert.match(page, /Start Draft/);
-  assert.match(page, /The workbench is clear\./);
+  assert.match(page, /创建草稿/);
+  assert.match(page, /当前没有内容。/);
   assert.match(loading, /aria-busy="true"/);
-  assert.match(loading, /Loading content/);
-  assert.match(error, /No internal details were revealed/);
+  assert.match(loading, /正在加载内容/);
+  assert.match(error, /内部详情未显示/);
   assert.match(actions, /createAdminContentService\(\)/);
   assert.match(actions, /\.createDraft\(previousState, formData\)/);
   assert.match(actions, /\.saveDraft\(previousState, formData\)/);

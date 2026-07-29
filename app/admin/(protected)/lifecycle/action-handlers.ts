@@ -51,7 +51,7 @@ function safeError(error: unknown, fallback: string): LifecycleActionState {
   if (error instanceof LifecycleManagementUnavailableError) {
     return state(
       "error",
-      "The lifecycle workspace is unavailable. No garden record was changed.",
+      "生命周期工作区不可用。没有内容记录被更改。",
     );
   }
 
@@ -64,7 +64,7 @@ function safeError(error: unknown, fallback: string): LifecycleActionState {
     ) {
       return state(
         "conflict",
-        "This garden record changed while the confirmation was open. Reload before continuing.",
+        "此内容记录在确认窗口打开后发生了变更。请重新加载后继续。",
       );
     }
 
@@ -77,7 +77,7 @@ function safeError(error: unknown, fallback: string): LifecycleActionState {
     ) {
       return state(
         "conflict",
-        "This item is no longer in the required lifecycle state. Reload to see its current path.",
+        "此内容已不在所需生命周期状态。请重新加载查看当前状态。",
       );
     }
 
@@ -96,14 +96,14 @@ function safeError(error: unknown, fallback: string): LifecycleActionState {
 function unavailableTarget(): LifecycleActionState {
   return state(
     "conflict",
-    "This item is no longer available at that garden route. Reload before continuing.",
+    "此内容在该路由下已不可用。请重新加载后继续。",
   );
 }
 
 function wrongLifecycle(): LifecycleActionState {
   return state(
     "conflict",
-    "This item is no longer in the required lifecycle state. Reload to see its current path.",
+    "此内容已不在所需生命周期状态。请重新加载查看当前状态。",
   );
 }
 
@@ -131,14 +131,14 @@ export function createLifecycleActionHandlers({
 
       return state(
         "success",
-        "Archived safely. The public route now rests outside garden discovery.",
+        "已安全归档。公开路由现已移出发现入口。",
         null,
         "/admin/content",
       );
     } catch (error) {
       return safeError(
         error,
-        "Archiving could not be completed. The published garden record was left unchanged.",
+        "归档无法完成。已发布内容记录未被更改。",
       );
     }
   }
@@ -156,7 +156,7 @@ export function createLifecycleActionHandlers({
       if (!target.sourceArchiveVersionId) {
         return state(
           "error",
-          "The protected archive checkpoint is unavailable. No Draft was created.",
+          "受保护的归档检查点不可用。未创建草稿。",
         );
       }
 
@@ -169,14 +169,14 @@ export function createLifecycleActionHandlers({
 
       return state(
         "success",
-        "Restored into a private Draft with its archive provenance preserved.",
+        "已恢复为私有草稿，并保留归档来源凭据。",
         null,
         `/admin/content/${receipt.revisionId}`,
       );
     } catch (error) {
       return safeError(
         error,
-        "The archive could not be restored. No Draft was created.",
+        "归档无法恢复。未创建草稿。",
       );
     }
   }
@@ -198,7 +198,7 @@ export function createLifecycleActionHandlers({
       if (impact.contentId !== target.contentId) {
         return state(
           "error",
-          "The deletion preview could not be verified. No garden record was changed.",
+          "删除预览无法验证。没有内容记录被更改。",
         );
       }
 
@@ -210,7 +210,7 @@ export function createLifecycleActionHandlers({
 
       return state(
         "preview",
-        "Impact preview prepared. Review every effect before confirming.",
+        "影响预览已生成。确认前请检查所有影响。",
         {
           canonicalRoute: impact.canonicalRoute,
           affectedRoutes,
@@ -227,7 +227,7 @@ export function createLifecycleActionHandlers({
     } catch (error) {
       return safeError(
         error,
-        "The deletion impact could not be prepared. No garden record was changed.",
+        "无法生成删除影响预览。没有内容记录被更改。",
       );
     }
   }
@@ -239,7 +239,7 @@ export function createLifecycleActionHandlers({
     if (text(formData, "deleteConfirmation") !== "DELETE") {
       return state(
         "error",
-        "Type DELETE exactly before confirming this irreversible action.",
+        "请准确输入 DELETE 后再确认此不可逆操作。",
       );
     }
 
@@ -259,12 +259,12 @@ export function createLifecycleActionHandlers({
 
       return state(
         "success",
-        "The live garden record was permanently removed and its routes were made terminal. Protected history remains intact.",
+        "实时内容记录已永久删除，其路由已设为终止状态。受保护历史仍保持完整。",
       );
     } catch (error) {
       return safeError(
         error,
-        "Permanent deletion could not be completed. The archived garden record was left unchanged.",
+        "永久删除无法完成。已归档内容记录未被更改。",
       );
     }
   }

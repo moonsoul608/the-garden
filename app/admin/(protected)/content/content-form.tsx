@@ -16,6 +16,7 @@ import type {
 
 import type { ContentFormState } from "./form-contracts";
 import { INITIAL_CONTENT_FORM_STATE } from "./form-contracts";
+import { contentLanguageLabels, detailLevelLabels } from "../admin-labels";
 
 type EditableDraft = Readonly<{
   contentId: string;
@@ -61,10 +62,10 @@ const LANGUAGE_OPTIONS: ReadonlyArray<{
   value: ContentLanguage;
   label: string;
 }> = [
-  { value: "en", label: "English" },
-  { value: "zh", label: "Chinese" },
-  { value: "bilingual", label: "Bilingual" },
-  { value: "mixed", label: "Mixed language" },
+  { value: "en", label: contentLanguageLabels.en },
+  { value: "zh", label: contentLanguageLabels.zh },
+  { value: "bilingual", label: contentLanguageLabels.bilingual },
+  { value: "mixed", label: contentLanguageLabels.mixed },
 ];
 
 function SubmitButton({
@@ -79,7 +80,7 @@ function SubmitButton({
       type="submit"
       disabled={pending || conflict}
     >
-      {pending ? "Saving…" : label}
+      {pending ? "保存中…" : label}
     </button>
   );
 }
@@ -155,10 +156,10 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
           role={state.status === "success" ? "status" : "alert"}
           aria-live="polite"
         >
-          <strong>{state.status === "success" ? "Saved" : "Save paused"}</strong>
+          <strong>{state.status === "success" ? "已保存" : "保存暂停"}</strong>
           <span>{state.message}</span>
           {state.status === "conflict" && draft ? (
-            <Link href={`/admin/content/${draft.revisionId}`}>Reload Draft</Link>
+            <Link href={`/admin/content/${draft.revisionId}`}>重新加载草稿</Link>
           ) : null}
         </div>
       ) : null}
@@ -167,14 +168,14 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
         <div className="admin-editor-section-heading">
           <p>01</p>
           <div>
-            <h2 id="identity-fields">Identity and placement</h2>
-            <span>Give the Draft a clear place before tending its details.</span>
+            <h2 id="identity-fields">身份与位置</h2>
+            <span>先确认草稿的基本位置，再编辑内容详情。</span>
           </div>
         </div>
 
         <div className="admin-form-grid admin-form-grid--two">
           <label className="admin-form-field">
-            <span>English title</span>
+            <span>英文标题</span>
             <input
               name="titleEn"
               type="text"
@@ -183,7 +184,7 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             />
           </label>
           <label className="admin-form-field">
-            <span>Chinese title</span>
+            <span>中文标题</span>
             <input
               name="titleZh"
               type="text"
@@ -206,10 +207,10 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
               defaultValue={draft?.slug ?? ""}
               aria-describedby={slugErrors ? "slug-error" : "slug-hint"}
             />
-            <small id="slug-hint">Optional in Draft. Use lowercase kebab-case.</small>
+            <small id="slug-hint">草稿阶段可选。请使用小写 kebab-case。</small>
           </label>
           <label className="admin-form-field">
-            <span>Language mode</span>
+            <span>语言模式</span>
             <select
               name="contentLanguage"
               defaultValue={draft?.contentLanguage ?? "en"}
@@ -226,7 +227,7 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
 
         <div className="admin-form-grid admin-form-grid--four">
           <label className="admin-form-field">
-            <span>Region</span>
+            <span>区域</span>
             <select
               name="region"
               value={region}
@@ -240,7 +241,7 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             </select>
           </label>
           <label className="admin-form-field">
-            <span>Content type</span>
+            <span>内容类型</span>
             <select
               name="contentType"
               value={contentType}
@@ -254,18 +255,18 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             </select>
           </label>
           <label className="admin-form-field">
-            <span>Detail level</span>
+            <span>详细程度</span>
             <select
               name="detailLevel"
               defaultValue={draft?.detailLevel ?? "short"}
             >
               {DETAIL_LEVELS.map((detailLevel) => (
-                <option key={detailLevel}>{detailLevel}</option>
+                <option key={detailLevel}>{detailLevelLabels[detailLevel]}</option>
               ))}
             </select>
           </label>
           <label className="admin-form-field">
-            <span>Growth stage{growthStageRequired ? "" : " (optional)"}</span>
+            <span>Growth Stage{growthStageRequired ? "" : "（可选）"}</span>
             <select
               name="growthStage"
               value={growthStage ?? ""}
@@ -281,7 +282,7 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
               }
             >
               {!growthStageRequired ? (
-                <option value="">Not growth-tracked</option>
+                <option value="">不跟踪 Growth Stage</option>
               ) : null}
               {GROWTH_STAGES.map((growthStage) => (
                 <option key={growthStage}>{growthStage}</option>
@@ -289,7 +290,7 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             </select>
             {!growthStageRequired ? (
               <small id="growth-stage-hint">
-                Lake Reflections may remain outside growth tracking.
+                Lake Reflections 可以不启用 Growth Stage 跟踪。
               </small>
             ) : null}
           </label>
@@ -301,14 +302,14 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
         <div className="admin-editor-section-heading">
           <p>02</p>
           <div>
-            <h2 id="content-fields">Structured content</h2>
-            <span>Plain fields only. Rich editing and preview belong to a later phase.</span>
+            <h2 id="content-fields">结构化内容</h2>
+            <span>当前仅提供纯文本字段。富文本编辑和预览将在后续阶段处理。</span>
           </div>
         </div>
 
         <div className="admin-form-grid admin-form-grid--two">
           <label className="admin-form-field">
-            <span>English summary</span>
+            <span>英文摘要</span>
             <textarea
               name="summaryEn"
               rows={4}
@@ -317,7 +318,7 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             />
           </label>
           <label className="admin-form-field">
-            <span>Chinese summary</span>
+            <span>中文摘要</span>
             <textarea
               name="summaryZh"
               rows={4}
@@ -331,7 +332,7 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
 
         <div className="admin-form-grid admin-form-grid--two">
           <label className="admin-form-field">
-            <span>English body</span>
+            <span>英文正文</span>
             <textarea
               name="bodyEnMarkdown"
               rows={12}
@@ -340,7 +341,7 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             />
           </label>
           <label className="admin-form-field">
-            <span>Chinese body</span>
+            <span>中文正文</span>
             <textarea
               name="bodyZhMarkdown"
               rows={12}
@@ -357,14 +358,14 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
         <div className="admin-editor-section-heading">
           <p>03</p>
           <div>
-            <h2 id="taxonomy-fields">Taxonomy</h2>
-            <span>Use comma-separated values; service validation remains authoritative.</span>
+            <h2 id="taxonomy-fields">分类</h2>
+            <span>请使用英文逗号分隔多个值；最终以服务端校验为准。</span>
           </div>
         </div>
 
         <div className="admin-form-grid admin-form-grid--two">
           <label className="admin-form-field">
-            <span>Primary categories</span>
+            <span>主分类</span>
             <input
               name="primaryCategories"
               type="text"
@@ -374,10 +375,10 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
                 categoryErrors ? "category-error" : "category-hint"
               }
             />
-            <small id="category-hint">Fixed category validation runs before Review.</small>
+            <small id="category-hint">提交审核前会校验固定分类。</small>
           </label>
           <label className="admin-form-field">
-            <span>Tags</span>
+            <span>标签</span>
             <input
               name="tags"
               type="text"
@@ -393,13 +394,13 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
 
       <div className="admin-editor-actions">
         <SubmitButton
-          label={mode === "create" ? "Create Draft" : "Save changes"}
+          label={mode === "create" ? "创建草稿" : "保存更改"}
           conflict={state.status === "conflict"}
         />
-        <Link href="/admin/content">Return to content</Link>
+        <Link href="/admin/content">返回内容管理</Link>
         {state.status === "success" && state.updatedAt ? (
           <time dateTime={state.updatedAt}>
-            Saved {new Date(state.updatedAt).toLocaleString()}
+            已保存 {new Date(state.updatedAt).toLocaleString()}
           </time>
         ) : null}
       </div>

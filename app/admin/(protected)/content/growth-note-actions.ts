@@ -36,37 +36,37 @@ function actionState(
 }
 
 function fieldError(field: string, message: string): GrowthNoteActionState {
-  return actionState("error", "Some Growth Note fields need attention.", {
+  return actionState("error", "部分 Growth Notes 字段需要处理。", {
     [field]: [message],
   });
 }
 
 function safeError(error: unknown): GrowthNoteActionState {
   if (error instanceof GrowthNoteInputError) {
-    return fieldError(error.field, "Check this Growth Note field.");
+    return fieldError(error.field, "请检查这个 Growth Notes 字段。");
   }
 
   if (error instanceof GrowthNoteContentUnavailableError) {
     return actionState(
       "error",
-      "This content item cannot accept Growth Notes.",
+      "此内容不能添加 Growth Notes。",
     );
   }
 
   if (error instanceof GrowthNoteNotFoundError) {
-    return actionState("error", "That Growth Note is no longer available.");
+    return actionState("error", "此 Growth Notes 已不可用。");
   }
 
   if (error instanceof GrowthNotesManagementUnavailableError) {
     return actionState(
       "error",
-      "Growth Notes are temporarily unavailable. No note was changed.",
+      "Growth Notes 暂时不可用。没有记录被更改。",
     );
   }
 
   return actionState(
     "error",
-    "The Growth Note could not be changed. No private details were exposed.",
+    "Growth Notes 无法更改。未显示任何内部详情。",
   );
 }
 
@@ -98,7 +98,7 @@ export async function createGrowthNoteAction(
       ...editableFields(formData),
     });
     refreshGrowthNotes(formData);
-    return actionState("success", "Growth Note created.");
+    return actionState("success", "Growth Notes 已创建。");
   } catch (error) {
     return safeError(error);
   }
@@ -115,7 +115,7 @@ export async function updateGrowthNoteAction(
       ...editableFields(formData),
     });
     refreshGrowthNotes(formData);
-    return actionState("success", "Growth Note updated.");
+    return actionState("success", "Growth Notes 已更新。");
   } catch (error) {
     return safeError(error);
   }
@@ -131,7 +131,7 @@ export async function deleteGrowthNoteAction(
       noteId: text(formData, "noteId"),
     });
     refreshGrowthNotes(formData);
-    return actionState("success", "Growth Note deleted.");
+    return actionState("success", "Growth Notes 已删除。");
   } catch (error) {
     return safeError(error);
   }

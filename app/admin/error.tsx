@@ -6,11 +6,10 @@ export default function AdminError({ reset }: { reset: () => void }) {
   return (
     <main id="admin-main" className="admin-access-page">
       <section className="admin-access-card" aria-labelledby="admin-error-title">
-        <p className="admin-status-code">Workspace unavailable</p>
-        <h1 id="admin-error-title">The Keeper workspace is taking a pause</h1>
+        <p className="admin-status-code">工作区暂不可用</p>
+        <h1 id="admin-error-title">Garden Keeper 工作区暂时无法打开</h1>
         <p>
-          The protected workspace could not be opened. No internal details were
-          revealed.
+          受保护的工作区无法打开。内部错误详情未显示。
         </p>
         <div className="admin-access-actions">
           <button
@@ -18,9 +17,9 @@ export default function AdminError({ reset }: { reset: () => void }) {
             type="button"
             onClick={reset}
           >
-            Try again
+            重试
           </button>
-          <Link href="/">Return to The Garden</Link>
+          <Link href="/">返回 The Garden</Link>
         </div>
       </section>
     </main>

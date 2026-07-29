@@ -16,7 +16,6 @@ import { INITIAL_LIFECYCLE_ACTION_STATE } from "./action-contracts";
 import {
   archiveContentAction,
   deleteContentAction,
-  previewDeletionAction,
   restoreContentAction,
 } from "./actions";
 
@@ -234,15 +233,10 @@ function DeleteDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
   const dialogTitleId = useId();
   const confirmationId = useId();
   const router = useRouter();
-  const [previewState, previewAction, previewPending] = useActionState(
-    previewDeletionAction,
-    INITIAL_LIFECYCLE_ACTION_STATE,
-  );
   const [deleteState, deleteAction, deletePending] = useActionState(
     deleteContentAction,
     INITIAL_LIFECYCLE_ACTION_STATE,
   );
-  const preview = previewState.preview;
 
   useEffect(() => {
     if (deleteState.status === "success") router.refresh();
@@ -267,120 +261,66 @@ function DeleteDialog({ item }: Readonly<{ item: LifecycleListItem }>) {
           <h2 id={dialogTitleId}>永久删除此内容记录？</h2>
           <Identity item={item} />
 
-          {!preview ? (
-            <>
-              <div className="admin-lifecycle-warning" role="note">
-                <strong>此操作无法撤销。</strong>
-                <span>
-                  最终确认前，请先生成最新的服务器影响预览。
-                </span>
-              </div>
-              <form action={previewAction}>
-                <input
-                  type="hidden"
-                  name="canonicalRoute"
-                  value={item.canonicalRoute ?? ""}
-                />
-                <div className="admin-lifecycle-dialog-actions">
-                  <button
-                    type="button"
-                    className="admin-secondary-action"
-                    onClick={() => closeDialog(dialogRef)}
-                  >
-                    保持已归档
-                  </button>
-                  <button type="submit" disabled={previewPending}>
-                    {previewPending ? "准备影响预览中…" : "预览删除影响"}
-                  </button>
-                </div>
-              </form>
-              <ActionNotice state={previewState} />
-            </>
-          ) : (
-            <>
-              <div className="admin-deletion-preview" aria-live="polite">
-                <section>
-                  <h3>受影响路由</h3>
-                  <ul>
-                    {preview.affectedRoutes.map((route) => (
-                      <li key={route}><code>{route}</code></li>
-                    ))}
-                  </ul>
-                  <p>包含 {preview.redirectReferenceCount} 个重定向引用。</p>
-                </section>
-                <section>
-                  <h3>关系影响</h3>
-                  <p>
-                    将移除 {preview.inboundRelationCount} 个入站和{" "}
-                    {preview.outboundRelationCount} 个出站实时关系。
-                  </p>
-                </section>
-                <section>
-                  <h3>版本保留</h3>
-                  <p>
-                    {preview.versionCount} 个历史版本会继续受保护，不会被删除。
-                  </p>
-                </section>
-                <section>
-                  <h3>存储行为</h3>
-                  <p>
-                    已记录 {preview.storageReferenceCount} 个 Storage 引用。
-                    Storage 对象不会立即删除。
-                  </p>
-                </section>
-              </div>
-              <div className="admin-lifecycle-warning" role="alert">
-                <strong>不可逆的实时记录删除</strong>
-                <span>
-                  路由会变为终止状态，实时投影无法恢复。历史版本仍会保留保护。
-                </span>
-              </div>
-              <form className="admin-delete-confirmation" action={deleteAction}>
-                <input
-                  type="hidden"
-                  name="canonicalRoute"
-                  value={item.canonicalRoute ?? ""}
-                />
-                <input
-                  type="hidden"
-                  name="expectedArchivedToken"
-                  value={preview.expectedArchivedToken}
-                />
-                <input
-                  type="hidden"
-                  name="impactDigest"
-                  value={preview.impactDigest}
-                />
-                <label htmlFor={confirmationId}>
-                  输入 <strong>DELETE</strong> 确认
-                </label>
-                <input
-                  id={confirmationId}
-                  name="deleteConfirmation"
-                  autoComplete="off"
-                  required
-                  pattern="DELETE"
-                />
-                <div className="admin-lifecycle-dialog-actions">
-                  <button
-                    type="button"
-                    className="admin-secondary-action"
-                    onClick={() => closeDialog(dialogRef)}
-                  >
-                    保留此归档
-                  </button>
-                  <button
-                    type="submit"
-                    className="admin-destructive-confirmation"
-                    disabled={deletePending}
-                  >
-                    {deletePending ? "删除记录中…" : "永久删除"}
-                  </button>
-                </div>
-              </form>
-              <ActionNotice state={deleteState} />
-            </>
-          )}
+          <div className="admin-deletion-preview" aria-live="polite">
+            <section>
+              <h3>受影响路由</h3>
+              <p>
+                当前公开路由会变为终止状态，相关历史路由会由服务器一并处理。
+              </p>
+            </section>
+            <section>
+              <h3>关系影响</h3>
+              <p>服务器会在删除时移除此内容的实时关系。</p>
+            </section>
+            <section>
+              <h3>版本保留</h3>
+              <p>历史版本会继续受保护，不会被删除。</p>
+            </section>
+            <section>
+              <h3>存储行为</h3>
+              <p>Storage 对象不会立即删除。</p>
+            </section>
+          </div>
+          <div className="admin-lifecycle-warning" role="alert">
+            <strong>不可逆的实时记录删除</strong>
+            <span>
+              路由会变为终止状态，实时投影无法恢复。历史版本仍会保留保护。
+            </span>
+          </div>
+          <form className="admin-delete-confirmation" action={deleteAction}>
+            <input
+              type="hidden"
+              name="canonicalRoute"
+              value={item.canonicalRoute ?? ""}
+            />
+            <label htmlFor={confirmationId}>
+              输入 <strong>DELETE</strong> 确认
+            </label>
+            <input
+              id={confirmationId}
+              name="deleteConfirmation"
+              autoComplete="off"
+              required
+              pattern="DELETE"
+            />
+            <div className="admin-lifecycle-dialog-actions">
+              <button
+                type="button"
+                className="admin-secondary-action"
+                onClick={() => closeDialog(dialogRef)}
+              >
+                保留此归档
+              </button>
+              <button
+                type="submit"
+                className="admin-destructive-confirmation"
+                disabled={deletePending}
+              >
+                {deletePending ? "删除记录中…" : "永久删除"}
+              </button>
+            </div>
+          </form>
+          <ActionNotice state={deleteState} />
         </div>
       </dialog>
     </>

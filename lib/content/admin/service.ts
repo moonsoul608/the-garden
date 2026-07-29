@@ -845,8 +845,9 @@ export function createAdminContentService(
     }
 
     if (
-      !input.expectedArchivedToken ||
-      !Number.isFinite(Date.parse(input.expectedArchivedToken))
+      input.expectedArchivedToken != null &&
+      (!input.expectedArchivedToken ||
+        !Number.isFinite(Date.parse(input.expectedArchivedToken)))
     ) {
       throw new ContentMutationError(
         "invalid_concurrency_token",
@@ -854,7 +855,10 @@ export function createAdminContentService(
       );
     }
 
-    if (!/^[0-9a-f]{32}$/.test(input.impactDigest)) {
+    if (
+      input.impactDigest != null &&
+      !/^[0-9a-f]{32}$/.test(input.impactDigest)
+    ) {
       throw new ContentMutationError(
         "impact_digest_invalid",
         "deleteArchivedContent",

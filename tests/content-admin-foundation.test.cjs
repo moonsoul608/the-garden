@@ -77,6 +77,10 @@ const deleteSafetyMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260716030000_phase_04d_delete_safety_foundation.sql",
 );
+const deleteWithoutPreviewMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260729230000_allow_delete_without_preview.sql",
+);
 const originalLoad = Module._load;
 const originalResolveFilename = Module._resolveFilename;
 
@@ -2258,6 +2262,31 @@ test("Keeper previews impact and deletes Archived content through the narrow rep
   ]);
 });
 
+test("Keeper can delete Archived content without a generated preview", async () => {
+  const deleteRequest = deleteInput({
+    expectedArchivedToken: null,
+    impactDigest: null,
+  });
+  const receipt = deletionReceipt();
+  let received;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    sourceMode: "database",
+    deletionRepository: {
+      previewDeletionImpact: async () => {
+        throw new Error("preview should not be required");
+      },
+      deleteArchivedContent: async (input) => {
+        received = input;
+        return receipt;
+      },
+    },
+  });
+
+  assert.deepEqual(await service.deleteArchivedContent(deleteRequest), receipt);
+  assert.deepEqual(received, deleteRequest);
+});
+
 test("deletion service validates confirmation inputs before repository access", async () => {
   let repositoryCalls = 0;
   const service = createAdminContentService({
@@ -2369,6 +2398,29 @@ test("deletion repository calls only server-owned preview and delete RPCs", asyn
       },
     ],
   ]);
+});
+
+test("deletion repository sends null preview fields for direct confirmed deletion", async () => {
+  const input = deleteInput({
+    expectedArchivedToken: undefined,
+    impactDigest: undefined,
+  });
+  let received;
+  const repository = createDeletionRepository({
+    rpc: async (_name, args) => {
+      received = args;
+      return { data: deletionReceipt(), error: null };
+    },
+  });
+
+  await repository.deleteArchivedContent(input);
+
+  assert.deepEqual(received, {
+    p_content_id: input.contentId,
+    p_expected_archived_token: null,
+    p_impact_digest: null,
+    p_operation_id: input.operationId,
+  });
 });
 
 test("deletion repository accepts typed already-completed receipts and rejects malformed data", async () => {
@@ -2500,4 +2552,43 @@ test("Delete safety migration preserves history and orders one atomic terminal w
     /grant execute on function public\.delete_archived_content[\s\S]*?to authenticated/i,
   );
   assert.doesNotMatch(migration, /disable row level security/i);
+});
+
+test("delete-without-preview migration derives impact server-side and stays scoped", () => {
+  const migration = fs.readFileSync(deleteWithoutPreviewMigrationPath, "utf8");
+  const functionStart = migration.search(
+    /create or replace function public\.delete_archived_content/i,
+  );
+  const functionEnd = migration.indexOf(
+    "comment on function public.delete_archived_content",
+    functionStart,
+  );
+
+  assert.notEqual(functionStart, -1);
+  assert.ok(functionEnd > functionStart);
+  const deleteFunction = migration.slice(functionStart, functionEnd);
+  const projectionDelete = deleteFunction.search(
+    /delete from public\.contents as projection/i,
+  );
+
+  assert.match(deleteFunction, /security definer/i);
+  assert.match(deleteFunction, /private\.is_garden_keeper\(\)/i);
+  assert.match(deleteFunction, /p_expected_archived_token timestamptz default null/i);
+  assert.match(deleteFunction, /p_impact_digest text default null/i);
+  assert.match(deleteFunction, /impact := private\.analyze_archived_content_deletion\(p_content_id\)/i);
+  assert.match(deleteFunction, /effective_archived_token := coalesce/i);
+  assert.match(deleteFunction, /effective_impact_digest := coalesce/i);
+  assert.match(deleteFunction, /p_expected_archived_token is not null[\s\S]*?delete_conflict/i);
+  assert.match(deleteFunction, /p_impact_digest is not null[\s\S]*?impact_digest_mismatch/i);
+  assert.match(deleteFunction, /where projection\.id = p_content_id/i);
+  assert.ok(projectionDelete >= 0);
+  assert.doesNotMatch(
+    deleteFunction,
+    /(?:update|delete\s+from)\s+public\.content_versions/i,
+  );
+  assert.doesNotMatch(deleteFunction, /(?:delete|update)\s+(?:from\s+)?storage\./i);
+  assert.match(
+    migration,
+    /grant execute on function public\.delete_archived_content[\s\S]*?to authenticated/i,
+  );
 });

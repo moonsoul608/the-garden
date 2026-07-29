@@ -98,8 +98,8 @@ export type PreviewDeletionImpactInput = {
 
 export type DeleteArchivedContentInput = {
   contentId: string;
-  expectedArchivedToken: string;
-  impactDigest: string;
+  expectedArchivedToken?: string | null;
+  impactDigest?: string | null;
   operationId: string;
 };
 

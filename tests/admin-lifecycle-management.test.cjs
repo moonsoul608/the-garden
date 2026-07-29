@@ -361,7 +361,7 @@ test("restore keeps version identity server-side and preserves the archive token
   });
 });
 
-test("delete requires a safe impact preview and explicit destructive confirmation", async () => {
+test("delete supports impact preview and explicit destructive confirmation", async () => {
   let deleteCalls = 0;
   let deletionInput;
   const impactDigest = "0123456789abcdef0123456789abcdef";
@@ -460,6 +460,88 @@ test("delete requires a safe impact preview and explicit destructive confirmatio
   });
 });
 
+test("delete can proceed after preview generation fails", async () => {
+  let deleteCalls = 0;
+  let deletionInput;
+  const handlers = createLifecycleActionHandlers({
+    lifecycle: {
+      getLifecycleCommandContext: async () =>
+        commandContext({
+          lifecycle: "Archived",
+          sourceArchiveVersionId: sourceVersionId,
+        }),
+    },
+    mutations: mutationStubs({
+      previewDeletionImpact: async () => {
+        throw new Error("production preview RPC failure");
+      },
+      deleteArchivedContent: async (input) => {
+        deleteCalls += 1;
+        deletionInput = input;
+        return {};
+      },
+    }),
+    createOperationId: () => "00000000-0000-4000-8000-000000005d24",
+  });
+
+  const preview = await handlers.previewDeletion(
+    idleState(),
+    form({ canonicalRoute: "/garden/a-maintained-path" }),
+  );
+  assert.equal(preview.status, "error");
+  assert.equal(preview.preview, null);
+  assert.doesNotMatch(preview.message, /production|rpc/i);
+
+  const confirmed = await handlers.deleteContent(
+    idleState(),
+    form({
+      canonicalRoute: "/garden/a-maintained-path",
+      deleteConfirmation: "DELETE",
+    }),
+  );
+  assert.equal(confirmed.status, "success", JSON.stringify(confirmed));
+  assert.equal(deleteCalls, 1);
+  assert.deepEqual(deletionInput, {
+    contentId,
+    expectedArchivedToken: null,
+    impactDigest: null,
+    operationId: "00000000-0000-4000-8000-000000005d24",
+  });
+});
+
+test("delete database failure does not report success", async () => {
+  const handlers = createLifecycleActionHandlers({
+    lifecycle: {
+      getLifecycleCommandContext: async () =>
+        commandContext({
+          lifecycle: "Archived",
+          sourceArchiveVersionId: sourceVersionId,
+        }),
+    },
+    mutations: mutationStubs({
+      deleteArchivedContent: async () => {
+        throw new ContentMutationError(
+          "repository_failure",
+          "deleteArchivedContent",
+        );
+      },
+    }),
+  });
+
+  const result = await handlers.deleteContent(
+    idleState(),
+    form({
+      canonicalRoute: "/garden/a-maintained-path",
+      deleteConfirmation: "DELETE",
+    }),
+  );
+
+  assert.equal(result.status, "error");
+  assert.equal(result.destination, null);
+  assert.equal(result.preview, null);
+  assert.match(result.message, /永久删除无法完成/);
+});
+
 test("unsafe lifecycle transitions stop at the server boundary with safe errors", async () => {
   let archiveCalls = 0;
   const handlers = createLifecycleActionHandlers({
@@ -543,6 +625,8 @@ test("lifecycle route keeps authorization, data, and mutations on the server", (
   assert.match(actions, /createLifecycleManagementService\(\)/);
   assert.doesNotMatch(actions, /supabase|\.from\(|\.rpc\(/i);
   assert.match(panel, /name="deleteConfirmation"/);
+  assert.doesNotMatch(panel, /previewDeletionAction/);
+  assert.doesNotMatch(panel, /预览删除影响/);
   assert.match(panel, /Storage 对象不会立即删除/);
   assert.match(panel, /历史版本仍会保留保护/);
   assert.doesNotMatch(panel, /contentId|sourceVersionId|relationId|supabase|rpc/i);

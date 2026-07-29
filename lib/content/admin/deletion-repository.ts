@@ -292,10 +292,10 @@ export function createDeletionRepository(
     ): Promise<DeletionReceipt> {
       const result = await client.rpc("delete_archived_content", {
         p_content_id: input.contentId,
-        p_expected_archived_token: input.expectedArchivedToken,
-        p_impact_digest: input.impactDigest,
+        p_expected_archived_token: input.expectedArchivedToken ?? null,
+        p_impact_digest: input.impactDigest ?? null,
         p_operation_id: input.operationId,
-      });
+      } as never);
 
       if (result.error) {
         throw mapContentMutationDatabaseError(

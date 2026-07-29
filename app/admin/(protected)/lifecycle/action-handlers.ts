@@ -93,6 +93,18 @@ function safeError(error: unknown, fallback: string): LifecycleActionState {
   return state("error", fallback);
 }
 
+function logLifecycleActionError(
+  operation: keyof LifecycleMutationService,
+  route: string,
+  error: unknown,
+): void {
+  console.error("[admin:lifecycle]", {
+    operation,
+    route,
+    error,
+  });
+}
+
 function unavailableTarget(): LifecycleActionState {
   return state(
     "conflict",
@@ -185,9 +197,10 @@ export function createLifecycleActionHandlers({
     _previousState: LifecycleActionState,
     formData: FormData,
   ): Promise<LifecycleActionState> {
+    const route = text(formData, "canonicalRoute");
     try {
       const target = await lifecycle.getLifecycleCommandContext(
-        text(formData, "canonicalRoute"),
+        route,
       );
       if (!target) return unavailableTarget();
       if (target.lifecycle !== "Archived") return wrongLifecycle();
@@ -225,6 +238,7 @@ export function createLifecycleActionHandlers({
         },
       );
     } catch (error) {
+      logLifecycleActionError("previewDeletionImpact", route, error);
       return safeError(
         error,
         "无法生成删除影响预览。没有内容记录被更改。",
@@ -236,6 +250,7 @@ export function createLifecycleActionHandlers({
     _previousState: LifecycleActionState,
     formData: FormData,
   ): Promise<LifecycleActionState> {
+    const route = text(formData, "canonicalRoute");
     if (text(formData, "deleteConfirmation") !== "DELETE") {
       return state(
         "error",
@@ -245,15 +260,15 @@ export function createLifecycleActionHandlers({
 
     try {
       const target = await lifecycle.getLifecycleCommandContext(
-        text(formData, "canonicalRoute"),
+        route,
       );
       if (!target) return unavailableTarget();
       if (target.lifecycle !== "Archived") return wrongLifecycle();
 
       await mutations.deleteArchivedContent({
         contentId: target.contentId,
-        expectedArchivedToken: text(formData, "expectedArchivedToken"),
-        impactDigest: text(formData, "impactDigest"),
+        expectedArchivedToken: text(formData, "expectedArchivedToken") || null,
+        impactDigest: text(formData, "impactDigest") || null,
         operationId: createOperationId(),
       });
 
@@ -262,6 +277,7 @@ export function createLifecycleActionHandlers({
         "实时内容记录已永久删除，其路由已设为终止状态。受保护历史仍保持完整。",
       );
     } catch (error) {
+      logLifecycleActionError("deleteArchivedContent", route, error);
       return safeError(
         error,
         "永久删除无法完成。已归档内容记录未被更改。",

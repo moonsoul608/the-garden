@@ -1,3 +1,5 @@
+import type { RegionName } from "@/types";
+
 export type ReviewActionStatus =
   | "idle"
   | "success"
@@ -9,6 +11,8 @@ export type ReviewActionState = Readonly<{
   message: string | null;
   destination: string | null;
   publishedAt: string | null;
+  publishedRegion?: RegionName | null;
+  publishedSlug?: string | null;
 }>;
 
 export const INITIAL_REVIEW_ACTION_STATE: ReviewActionState = {
@@ -16,4 +20,6 @@ export const INITIAL_REVIEW_ACTION_STATE: ReviewActionState = {
   message: null,
   destination: null,
   publishedAt: null,
+  publishedRegion: null,
+  publishedSlug: null,
 };

@@ -805,6 +805,8 @@ begin
   if first_receipt is distinct from retry_receipt
      or first_receipt ->> 'contentId' <> '00000000-0000-4000-8000-000000004e01'
      or first_receipt ->> 'revisionId' <> '00000000-0000-4000-8000-000000004f01'
+     or first_receipt ->> 'region' <> 'Garden'
+     or first_receipt ->> 'slug' <> 'phase-04d-atomic-publish'
      or (first_receipt ->> 'sourceLockVersion')::bigint <> 2
      or first_receipt ->> 'publishedBy' <> '00000000-0000-4000-8000-000000004d01'
      or nullif(first_receipt ->> 'versionId', '') is null

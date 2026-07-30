@@ -77,6 +77,8 @@ begin
       'contentId', publication_version.content_id,
       'revisionId', publication_version.source_revision_id,
       'versionId', publication_version.id,
+      'region', content.region,
+      'slug', content.slug,
       'sourceLockVersion', publication_version.source_lock_version,
       'publishedAt', publication_version.created_at,
       'publishedBy', publication_version.created_by
@@ -547,6 +549,8 @@ begin
     'contentId', publication_version.content_id,
     'revisionId', publication_version.source_revision_id,
     'versionId', publication_version.id,
+    'region', content.region,
+    'slug', content.slug,
     'sourceLockVersion', publication_version.source_lock_version,
     'publishedAt', publication_version.created_at,
     'publishedBy', publication_version.created_by

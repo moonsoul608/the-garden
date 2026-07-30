@@ -38,6 +38,9 @@ const protectedLayoutPath = path.join(
 );
 const originalLoad = Module._load;
 const originalResolveFilename = Module._resolveFilename;
+let mockAdminIndex = null;
+let revalidatedPaths = [];
+let redirectedTo = null;
 
 Module._resolveFilename = function resolveProjectAlias(
   request,
@@ -59,6 +62,21 @@ Module._resolveFilename = function resolveProjectAlias(
 
 Module._load = function loadWithReviewMocks(request, parent, isMain) {
   if (request === "server-only") return {};
+  if (request === "next/cache") {
+    return {
+      revalidatePath: (...args) => revalidatedPaths.push(args),
+    };
+  }
+  if (request === "next/navigation") {
+    return {
+      redirect: (destination) => {
+        redirectedTo = destination;
+      },
+    };
+  }
+  if (request === "@/lib/content/admin" && mockAdminIndex) {
+    return mockAdminIndex;
+  }
   if (request === "@/lib/auth") {
     return {
       requireGardenKeeper: async () => ({
@@ -396,6 +414,8 @@ test("publish confirmation handles idempotent success and safe failure", async (
         contentId: reviewRevision().contentId,
         revisionId: reviewRevision().revisionId,
         versionId: "00000000-0000-4000-8000-000000005c31",
+        region: "Garden",
+        slug: "a-careful-review",
         sourceLockVersion: 4,
         publishedAt: "2026-07-16T11:00:00.000Z",
         publishedBy: "00000000-0000-4000-8000-000000005c01",
@@ -436,6 +456,53 @@ test("publish confirmation handles idempotent success and safe failure", async (
   assert.equal(stale.status, "conflict");
   assert.equal(stale.destination, null);
   assert.match(stale.message, /重新加载/);
+});
+
+test("publish action revalidates public publication surfaces from receipt route", async () => {
+  const confirmed = transitionFormData();
+  confirmed.set("publishConfirmation", "confirmed");
+  revalidatedPaths = [];
+  redirectedTo = null;
+  mockAdminIndex = {
+    createAdminContentService: () => ({
+      prepareReview: async () => readinessReport(),
+      submitForReview: async () => reviewRevision(),
+      returnToDraft: async () => reviewRevision(),
+      publishReview: async () => ({
+        contentId: reviewRevision().contentId,
+        revisionId: reviewRevision().revisionId,
+        versionId: "00000000-0000-4000-8000-000000005c32",
+        region: "Garden",
+        slug: "a-careful-review",
+        sourceLockVersion: 4,
+        publishedAt: "2026-07-16T11:00:00.000Z",
+        publishedBy: "00000000-0000-4000-8000-000000005c01",
+      }),
+    }),
+  };
+  delete require.cache[actionsPath];
+  const { publishReviewAction } = require(actionsPath);
+
+  const result = await publishReviewAction(idleState(), confirmed);
+
+  assert.equal(result.status, "success");
+  assert.equal(redirectedTo, "/admin/content");
+  assert.deepEqual(
+    revalidatedPaths.map(([route]) => route),
+    [
+      "/admin",
+      "/admin/content",
+      "/admin/review",
+      `/admin/review/${reviewRevision().revisionId}`,
+      "/garden",
+      "/garden/a-careful-review",
+      "/garden-index",
+      "/your-paths",
+      "/sitemap.xml",
+      "/",
+    ],
+  );
+  mockAdminIndex = null;
 });
 
 test("review routes keep data and mutations behind server boundaries", () => {

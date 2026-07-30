@@ -165,6 +165,8 @@ export function createReviewActionHandlers(service: ReviewActionService) {
           "已安全发布。重复提交此确认请求不会创建新的版本。",
         destination: "/admin/content",
         publishedAt: receipt.publishedAt,
+        publishedRegion: receipt.region,
+        publishedSlug: receipt.slug,
       };
     } catch (error) {
       return errorState(

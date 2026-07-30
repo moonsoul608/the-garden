@@ -222,6 +222,8 @@ function publicationReceipt(overrides = {}) {
     contentId: "content-id",
     revisionId: "revision-id",
     versionId: "version-id",
+    region: "Garden",
+    slug: "published-seed",
     sourceLockVersion: 4,
     publishedAt: "2026-07-15T12:00:00.000Z",
     publishedBy: keeper.id,

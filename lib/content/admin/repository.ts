@@ -181,6 +181,8 @@ function mapPublicationReceipt(value: Json): PublicationReceipt {
     contentId,
     revisionId,
     versionId,
+    region,
+    slug,
     sourceLockVersion,
     publishedAt,
     publishedBy,
@@ -190,6 +192,8 @@ function mapPublicationReceipt(value: Json): PublicationReceipt {
     typeof contentId !== "string" ||
     typeof revisionId !== "string" ||
     typeof versionId !== "string" ||
+    typeof region !== "string" ||
+    typeof slug !== "string" ||
     !Number.isSafeInteger(sourceLockVersion) ||
     (sourceLockVersion as number) < 1 ||
     typeof publishedAt !== "string" ||
@@ -202,6 +206,8 @@ function mapPublicationReceipt(value: Json): PublicationReceipt {
     contentId,
     revisionId,
     versionId,
+    region: region as PublicationReceipt["region"],
+    slug,
     sourceLockVersion: sourceLockVersion as number,
     publishedAt,
     publishedBy,

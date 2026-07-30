@@ -199,6 +199,8 @@ export type PublicationReceipt = Readonly<{
   contentId: string;
   revisionId: string;
   versionId: string;
+  region: RegionName;
+  slug: string;
   sourceLockVersion: number;
   publishedAt: string;
   publishedBy: string;

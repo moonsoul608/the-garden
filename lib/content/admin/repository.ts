@@ -267,9 +267,32 @@ function throwRepositoryError(
   error: unknown,
   operation: ContentMutationOperation,
 ): never {
+  const databaseError =
+    error && typeof error === "object"
+      ? (error as {
+          code?: unknown;
+          message?: unknown;
+          details?: unknown;
+          hint?: unknown;
+          name?: unknown;
+          stack?: unknown;
+        })
+      : null;
+
   console.error("[content-admin-repository] mutation failed", {
     operation,
-    error,
+    error:
+      databaseError === null
+        ? error
+        : {
+            name: databaseError.name,
+            code: databaseError.code,
+            message: databaseError.message,
+            details: databaseError.details,
+            hint: databaseError.hint,
+            stack: databaseError.stack,
+            raw: { ...databaseError },
+          },
   });
   throw mapContentMutationDatabaseError(error, operation);
 }

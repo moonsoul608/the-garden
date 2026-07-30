@@ -434,6 +434,44 @@ test("save accepts Chinese markdown, categories, and tags for an existing Draft"
   assert.deepEqual(received.changes.tags, ["笔记", "learning", "笔记"]);
 });
 
+test("save submits canonical detail level enum values", async () => {
+  const received = [];
+  const handlers = createContentFormHandlers({
+    createDraft: async () => {
+      throw new Error("not used");
+    },
+    updateDraft: async (input) => {
+      received.push(input.changes.detailLevel);
+      return draftRevision({ lockVersion: 8, detailLevel: input.changes.detailLevel });
+    },
+  });
+
+  for (const detailLevel of ["short", "full"]) {
+    const formData = validFormData();
+    formData.set("contentId", draftRevision().contentId);
+    formData.set("revisionId", draftRevision().revisionId);
+    formData.set("expectedLockVersion", "7");
+    formData.set("detailLevel", detailLevel);
+
+    const result = await handlers.saveDraft(
+      {
+        status: "idle",
+        message: null,
+        fieldErrors: {},
+        revisionId: null,
+        lockVersion: null,
+        updatedAt: null,
+      },
+      formData,
+    );
+
+    assert.equal(result.status, "success");
+  }
+
+  assert.deepEqual(received, ["short", "full"]);
+  assert.notDeepEqual(received, ["简短", "完整"]);
+});
+
 test("optimistic lock conflicts require a reload and never expose internals", async () => {
   const handlers = createContentFormHandlers({
     createDraft: async () => {
@@ -545,6 +583,11 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.match(actions, /\.saveDraft\(previousState, formData\)/);
   assert.match(actions, /\.startDraftRevision\(\{/);
   assert.match(actions, /redirect\(`\/admin\/content\/\$\{revision\.revisionId\}`\)/);
+  assert.match(form, /const DETAIL_LEVELS = \["short", "full"\] as const/);
+  assert.match(form, /defaultValue=\{draft\?\.detailLevel \?\? "short"\}/);
+  assert.match(form, /<option key=\{detailLevel\} value=\{detailLevel\}>/);
+  assert.match(form, /\{detailLevelLabels\[detailLevel\]\}/);
+  assert.doesNotMatch(form, /<option key=\{detailLevel\}>\{detailLevelLabels\[detailLevel\]\}<\/option>/);
   assert.ok(
     form.indexOf("admin-editor-action-row") <
       form.indexOf("admin-form-notice"),

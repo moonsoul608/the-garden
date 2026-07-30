@@ -247,7 +247,9 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
               defaultValue={draft?.detailLevel ?? "short"}
             >
               {DETAIL_LEVELS.map((detailLevel) => (
-                <option key={detailLevel}>{detailLevelLabels[detailLevel]}</option>
+                <option key={detailLevel} value={detailLevel}>
+                  {detailLevelLabels[detailLevel]}
+                </option>
               ))}
             </select>
           </label>

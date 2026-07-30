@@ -1721,6 +1721,79 @@ test("Draft update repository calls the narrow update RPC", async () => {
   });
 });
 
+test("Draft update RPC payload keeps detail level canonical", async () => {
+  const current = draftRevision({ lockVersion: 4 });
+  const received = [];
+  const repository = createContentWriteRepository({
+    rpc: async (_name, args) => {
+      received.push(args.p_draft.detailLevel);
+      return {
+        data: {
+          id: current.revisionId,
+          content_id: current.contentId,
+          lifecycle: "Draft",
+          slug: "first-draft",
+          region: "Garden",
+          content_type: "Seed",
+          detail_level: args.p_draft.detailLevel,
+          growth_stage: "Seed",
+          title_zh: null,
+          title_en: "First draft",
+          summary_zh: null,
+          summary_en: null,
+          body_zh_markdown: null,
+          body_en_markdown: null,
+          content_language: "en",
+          primary_categories: [],
+          tags: [],
+          cover_image_path: null,
+          cover_image_alt_zh: null,
+          cover_image_alt_en: null,
+          featured: false,
+          manual_order: null,
+          source_version_id: null,
+          base_content_updated_at: null,
+          review_submitted_at: null,
+          returned_to_draft_at: null,
+          lock_version: 5,
+          created_at: current.createdAt,
+          updated_at: "2026-07-15T10:05:00.000Z",
+        },
+        error: null,
+      };
+    },
+  });
+
+  for (const detailLevel of ["short", "full"]) {
+    await repository.updateDraft(
+      current,
+      {
+        slug: "first-draft",
+        region: "Garden",
+        contentType: "Seed",
+        detailLevel,
+        growthStage: "Seed",
+        titleZh: null,
+        titleEn: "First draft",
+        summaryZh: null,
+        summaryEn: null,
+        bodyZhMarkdown: null,
+        bodyEnMarkdown: null,
+        contentLanguage: "en",
+        primaryCategories: [],
+        tags: [],
+        cover: null,
+        featured: false,
+        manualOrder: null,
+      },
+      4,
+    );
+  }
+
+  assert.deepEqual(received, ["short", "full"]);
+  assert.ok(received.every((detailLevel) => !["简短", "完整"].includes(detailLevel)));
+});
+
 test("Draft update repository maps stale and database failures safely", async () => {
   for (const [databaseError, expectedCode] of [
     [{ code: "40001", message: "revision_conflict" }, "revision_conflict"],

@@ -649,9 +649,15 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.match(actions, /\.startDraftRevision\(\{/);
   assert.match(actions, /redirect\(`\/admin\/content\/\$\{revision\.revisionId\}`\)/);
   assert.match(form, /const DETAIL_LEVELS = \["short", "full"\] as const/);
-  assert.match(form, /defaultValue=\{draft\?\.detailLevel \?\? "short"\}/);
+  assert.match(form, /const \[detailLevel, setDetailLevel\] = useState<DetailLevel>/);
+  assert.match(form, /setRegion\(draftRegion\)/);
+  assert.match(form, /setContentType\(draftContentType\)/);
+  assert.match(form, /setDetailLevel\(draftDetailLevel\)/);
+  assert.match(form, /setGrowthStage\(draftGrowthStage \?\? null\)/);
   assert.match(form, /<option key=\{region\} value=\{region\}>/);
   assert.match(form, /<option key=\{contentType\} value=\{contentType\}>/);
+  assert.match(form, /value=\{detailLevel\}/);
+  assert.match(form, /setDetailLevel\(event\.target\.value as DetailLevel\)/);
   assert.match(form, /<option key=\{detailLevel\} value=\{detailLevel\}>/);
   assert.match(form, /<option key=\{growthStage\} value=\{growthStage\}>/);
   assert.match(form, /\{detailLevelLabels\[detailLevel\]\}/);

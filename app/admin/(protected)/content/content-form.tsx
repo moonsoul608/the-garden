@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { requiresGrowthStage } from "@/lib/content/validation";
@@ -110,14 +110,30 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
   const categoryErrors = state.fieldErrors.primaryCategories;
   const tagErrors = state.fieldErrors.tags;
   const growthStageErrors = state.fieldErrors.growthStage;
+  const draftRegion = draft?.region;
+  const draftContentType = draft?.contentType;
+  const draftDetailLevel = draft?.detailLevel;
+  const draftGrowthStage = draft?.growthStage;
   const [region, setRegion] = useState<RegionName>(draft?.region ?? "Garden");
   const [contentType, setContentType] = useState<ContentType>(
     draft?.contentType ?? "Seed",
+  );
+  const [detailLevel, setDetailLevel] = useState<DetailLevel>(
+    draft?.detailLevel ?? "short",
   );
   const [growthStage, setGrowthStage] = useState<GrowthStage | null>(
     draft ? draft.growthStage : "Seed",
   );
   const growthStageRequired = requiresGrowthStage(region, contentType);
+
+  useEffect(() => {
+    if (!draftRegion || !draftContentType || !draftDetailLevel) return;
+
+    setRegion(draftRegion);
+    setContentType(draftContentType);
+    setDetailLevel(draftDetailLevel);
+    setGrowthStage(draftGrowthStage ?? null);
+  }, [draftRegion, draftContentType, draftDetailLevel, draftGrowthStage]);
 
   function updatePlacement(
     nextRegion: RegionName,
@@ -248,7 +264,10 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
             <span>详细程度</span>
             <select
               name="detailLevel"
-              defaultValue={draft?.detailLevel ?? "short"}
+              value={detailLevel}
+              onChange={(event) =>
+                setDetailLevel(event.target.value as DetailLevel)
+              }
             >
               {DETAIL_LEVELS.map((detailLevel) => (
                 <option key={detailLevel} value={detailLevel}>

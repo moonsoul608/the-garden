@@ -38,6 +38,7 @@ export async function saveDraftAction(
     revalidatePath("/admin/content");
     revalidatePath("/admin/content/[revisionId]", "page");
     revalidatePath(`/admin/content/${result.revisionId}`);
+    redirect(`/admin/content/${result.revisionId}`);
   }
 
   return result;

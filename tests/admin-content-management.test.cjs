@@ -649,6 +649,7 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.match(actions, /\.startDraftRevision\(\{/);
   assert.match(actions, /redirect\(`\/admin\/content\/\$\{revision\.revisionId\}`\)/);
   assert.match(actions, /revalidatePath\("\/admin\/content\/\[revisionId\]", "page"\)/);
+  assert.match(actions, /redirect\(`\/admin\/content\/\$\{result\.revisionId\}`\)/);
   assert.match(form, /const DETAIL_LEVELS = \["short", "full"\] as const/);
   assert.match(form, /const \[detailLevel, setDetailLevel\] = useState<DetailLevel>/);
   assert.match(form, /setRegion\(draftRegion\)/);
@@ -673,4 +674,30 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.match(form, /保存失败/);
   assert.doesNotMatch(form, /supabase|requireGardenKeeper|createdBy|updatedBy/i);
   assert.doesNotMatch(form, /Publish|Archive|Delete|Upload/);
+});
+
+test("successful save redirects to reload saved Draft values without client refresh", () => {
+  const editPage = fs.readFileSync(
+    path.join(projectRoot, "app/admin/(protected)/content/[revisionId]/page.tsx"),
+    "utf8",
+  );
+  const actions = fs.readFileSync(contentActionsPath, "utf8");
+  const form = fs.readFileSync(contentFormPath, "utf8");
+
+  const saveSuccessBlock = actions.match(
+    /if \(result\.status === "success" && result\.revisionId\) \{[\s\S]*?\n  \}/,
+  );
+  assert.ok(saveSuccessBlock);
+  assert.match(
+    saveSuccessBlock[0],
+    /redirect\(`\/admin\/content\/\$\{result\.revisionId\}`\)/,
+  );
+  assert.match(actions, /\n\n  return result;\n\}/);
+  assert.ok(
+    actions.indexOf('if (result.status === "success" && result.revisionId)') <
+      actions.indexOf("return result;"),
+  );
+  assert.match(editPage, /const draft = await createAdminContentService\(\)\.getDraftById\(revisionId\)/);
+  assert.match(editPage, /<ContentForm mode="edit" action=\{saveDraftAction\} draft=\{draft\} \/>/);
+  assert.doesNotMatch(form, /router\.refresh|useRouter/);
 });

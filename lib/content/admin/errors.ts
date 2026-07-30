@@ -161,6 +161,28 @@ export function mapContentMutationDatabaseError(
     }
   }
 
+  if (operation === "updateDraft") {
+    if (code === "P0002" && message === "revision_not_found") {
+      return new ContentMutationError("revision_not_found", operation);
+    }
+
+    if (code === "40001" && message === "revision_conflict") {
+      return new ContentMutationError("revision_conflict", operation);
+    }
+
+    if (code === "22023") {
+      const knownCode =
+        message === "invalid_concurrency_token" ||
+        message === "invalid_revision_state"
+          ? message
+          : null;
+
+      if (knownCode) {
+        return new ContentMutationError(knownCode, operation);
+      }
+    }
+  }
+
   if (operation === "archiveContent") {
     if (code === "P0002" && message === "content_not_found") {
       return new ContentMutationError("content_not_found", operation);

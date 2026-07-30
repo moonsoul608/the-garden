@@ -75,7 +75,7 @@ function validationState(error: ContentValidationError): ContentFormState {
 
   return {
     status: "error",
-    message: "部分字段需要处理后才能保存草稿。",
+    message: "保存失败：内容校验未通过。",
     fieldErrors,
     revisionId: null,
     lockVersion: null,
@@ -88,7 +88,45 @@ function mutationState(error: ContentMutationError): ContentFormState {
     return {
       status: "conflict",
       message:
-        "此草稿在编辑器打开后发生了变更。请重新加载后再保存。",
+        "保存失败：当前内容状态已发生变化，请刷新后重试。",
+      fieldErrors: {},
+      revisionId: null,
+      lockVersion: null,
+      updatedAt: null,
+    };
+  }
+
+  if (
+    error.code === "revision_not_editable" ||
+    error.code === "invalid_revision_state" ||
+    error.code === "revision_not_found" ||
+    error.code === "invalid_concurrency_token"
+  ) {
+    return {
+      status: "error",
+      message: "保存失败：当前内容状态已发生变化，请刷新后重试。",
+      fieldErrors: {},
+      revisionId: null,
+      lockVersion: null,
+      updatedAt: null,
+    };
+  }
+
+  if (error.code === "mutation_denied") {
+    return {
+      status: "error",
+      message: "保存失败：没有权限更新内容。",
+      fieldErrors: {},
+      revisionId: null,
+      lockVersion: null,
+      updatedAt: null,
+    };
+  }
+
+  if (error.code === "repository_failure") {
+    return {
+      status: "error",
+      message: "保存失败：服务器未能完成内容更新。",
       fieldErrors: {},
       revisionId: null,
       lockVersion: null,
@@ -98,7 +136,7 @@ function mutationState(error: ContentMutationError): ContentFormState {
 
   return {
     status: "error",
-    message: error.message,
+    message: `保存失败：${error.message}`,
     fieldErrors: {},
     revisionId: null,
     lockVersion: null,
@@ -109,7 +147,7 @@ function mutationState(error: ContentMutationError): ContentFormState {
 function unknownFailureState(): ContentFormState {
   return {
     status: "error",
-    message: "草稿无法保存。请不要离开当前页面并重试。",
+    message: "保存失败：服务器未能完成内容更新。",
     fieldErrors: {},
     revisionId: null,
     lockVersion: null,
@@ -121,6 +159,18 @@ function safelyMapError(error: unknown): ContentFormState {
   if (error instanceof ContentValidationError) return validationState(error);
   if (error instanceof ContentMutationError) return mutationState(error);
   return unknownFailureState();
+}
+
+function logSaveFailure(
+  operation: "createDraft" | "updateDraft",
+  error: unknown,
+  context: Record<string, string | number | null>,
+): void {
+  console.error("[admin-content-form] save failed", {
+    operation,
+    ...context,
+    error,
+  });
 }
 
 export function createContentFormHandlers(service: ContentFormService) {
@@ -139,6 +189,10 @@ export function createContentFormHandlers(service: ContentFormService) {
         updatedAt: revision.updatedAt,
       };
     } catch (error) {
+      logSaveFailure("createDraft", error, {
+        contentId: null,
+        revisionId: null,
+      });
       return safelyMapError(error);
     }
   }
@@ -169,6 +223,21 @@ export function createContentFormHandlers(service: ContentFormService) {
         updatedAt: revision.updatedAt,
       };
     } catch (error) {
+      logSaveFailure("updateDraft", error, {
+        contentId:
+          typeof formData.get("contentId") === "string"
+            ? String(formData.get("contentId"))
+            : null,
+        revisionId:
+          typeof formData.get("revisionId") === "string"
+            ? String(formData.get("revisionId"))
+            : null,
+        expectedLockVersion: Number(
+          typeof formData.get("expectedLockVersion") === "string"
+            ? formData.get("expectedLockVersion")
+            : NaN,
+        ),
+      });
       return safelyMapError(error);
     }
   }

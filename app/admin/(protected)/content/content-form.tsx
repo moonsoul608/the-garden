@@ -150,20 +150,6 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
         </>
       ) : null}
 
-      {state.message ? (
-        <div
-          className={`admin-form-notice admin-form-notice--${state.status}`}
-          role={state.status === "success" ? "status" : "alert"}
-          aria-live="polite"
-        >
-          <strong>{state.status === "success" ? "已保存" : "保存暂停"}</strong>
-          <span>{state.message}</span>
-          {state.status === "conflict" && draft ? (
-            <Link href={`/admin/content/${draft.revisionId}`}>重新加载草稿</Link>
-          ) : null}
-        </div>
-      ) : null}
-
       <section className="admin-editor-section" aria-labelledby="identity-fields">
         <div className="admin-editor-section-heading">
           <p>01</p>
@@ -393,15 +379,31 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
       </section>
 
       <div className="admin-editor-actions">
-        <SubmitButton
-          label={mode === "create" ? "创建草稿" : "保存更改"}
-          conflict={state.status === "conflict"}
-        />
-        <Link href="/admin/content">返回内容管理</Link>
-        {state.status === "success" && state.updatedAt ? (
-          <time dateTime={state.updatedAt}>
-            已保存 {new Date(state.updatedAt).toLocaleString()}
-          </time>
+        <div className="admin-editor-action-row">
+          <SubmitButton
+            label={mode === "create" ? "创建草稿" : "保存更改"}
+            conflict={state.status === "conflict"}
+          />
+          <Link href="/admin/content">返回内容管理</Link>
+          {state.status === "success" && state.updatedAt ? (
+            <time dateTime={state.updatedAt}>
+              已保存 {new Date(state.updatedAt).toLocaleString()}
+            </time>
+          ) : null}
+        </div>
+        {state.message ? (
+          <div
+            className={`admin-form-notice admin-form-notice--${state.status}`}
+            role={state.status === "success" ? "status" : "alert"}
+            aria-live={state.status === "success" ? "polite" : "assertive"}
+            tabIndex={state.status === "success" ? undefined : -1}
+          >
+            <strong>{state.status === "success" ? "已保存" : "保存失败"}</strong>
+            <span>{state.message}</span>
+            {state.status === "conflict" && draft ? (
+              <Link href={`/admin/content/${draft.revisionId}`}>重新加载草稿</Link>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </form>

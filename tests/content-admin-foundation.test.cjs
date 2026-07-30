@@ -69,6 +69,10 @@ const productionCompatibleRestoreMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260724140000_restore_production_compatible_restore_to_draft.sql",
 );
+const updateContentDraftMigrationPath = path.join(
+  projectRoot,
+  "supabase/migrations/20260730160000_add_update_content_draft_rpc.sql",
+);
 const archivedPublishCompatibilityMigrationPath = path.join(
   projectRoot,
   "supabase/migrations/20260724150000_restore_archived_publish_compatibility.sql",
@@ -1621,6 +1625,150 @@ test("maps repository database errors to safe typed mutation errors", async () =
       assert.doesNotMatch(error.message, /private|constraint|duplicate key/i);
       return true;
     },
+  );
+});
+
+test("Draft update repository calls the narrow update RPC", async () => {
+  const current = draftRevision({ lockVersion: 4 });
+  const fields = {
+    slug: "first-draft",
+    region: "Garden",
+    contentType: "Seed",
+    detailLevel: "short",
+    growthStage: "Seed",
+    titleZh: "中文标题",
+    titleEn: "First draft",
+    summaryZh: null,
+    summaryEn: "Summary",
+    bodyZhMarkdown: "## 中文正文",
+    bodyEnMarkdown: null,
+    contentLanguage: "zh",
+    primaryCategories: ["Coding", "AI"],
+    tags: ["笔记", "learning"],
+    cover: null,
+    featured: false,
+    manualOrder: null,
+  };
+  let received;
+  const repository = createContentWriteRepository({
+    rpc: async (name, args) => {
+      received = { name, args };
+      return {
+        data: {
+          id: current.revisionId,
+          content_id: current.contentId,
+          lifecycle: "Draft",
+          slug: fields.slug,
+          region: fields.region,
+          content_type: fields.contentType,
+          detail_level: fields.detailLevel,
+          growth_stage: fields.growthStage,
+          title_zh: fields.titleZh,
+          title_en: fields.titleEn,
+          summary_zh: fields.summaryZh,
+          summary_en: fields.summaryEn,
+          body_zh_markdown: fields.bodyZhMarkdown,
+          body_en_markdown: fields.bodyEnMarkdown,
+          content_language: fields.contentLanguage,
+          primary_categories: fields.primaryCategories,
+          tags: fields.tags,
+          cover_image_path: null,
+          cover_image_alt_zh: null,
+          cover_image_alt_en: null,
+          featured: false,
+          manual_order: null,
+          source_version_id: null,
+          base_content_updated_at: null,
+          review_submitted_at: null,
+          returned_to_draft_at: null,
+          lock_version: 5,
+          created_at: current.createdAt,
+          updated_at: "2026-07-15T10:05:00.000Z",
+        },
+        error: null,
+      };
+    },
+  });
+
+  await repository.updateDraft(current, fields, 4);
+
+  assert.equal(received.name, "update_content_draft");
+  assert.deepEqual(received.args, {
+    p_content_id: current.contentId,
+    p_revision_id: current.revisionId,
+    p_expected_lock_version: 4,
+    p_draft: {
+      slug: "first-draft",
+      region: "Garden",
+      contentType: "Seed",
+      detailLevel: "short",
+      growthStage: "Seed",
+      titleZh: "中文标题",
+      titleEn: "First draft",
+      summaryZh: null,
+      summaryEn: "Summary",
+      bodyZhMarkdown: "## 中文正文",
+      bodyEnMarkdown: null,
+      contentLanguage: "zh",
+      primaryCategories: ["Coding", "AI"],
+      tags: ["笔记", "learning"],
+      coverImagePath: null,
+      coverImageAltZh: null,
+      coverImageAltEn: null,
+      featured: false,
+      manualOrder: null,
+    },
+  });
+});
+
+test("Draft update repository maps stale and database failures safely", async () => {
+  for (const [databaseError, expectedCode] of [
+    [{ code: "40001", message: "revision_conflict" }, "revision_conflict"],
+    [{ code: "42501", message: "private policy detail" }, "mutation_denied"],
+    [{ code: "XX000", message: "public.content_revisions SQL detail" }, "repository_failure"],
+  ]) {
+    const repository = createContentWriteRepository({
+      rpc: async () => ({ data: null, error: databaseError }),
+    });
+
+    await assert.rejects(
+      repository.updateDraft(draftRevision(), draftRevision(), 1),
+      (error) => {
+        assert.ok(error instanceof ContentMutationError);
+        assert.equal(error.code, expectedCode);
+        assert.equal(error.operation, "updateDraft");
+        assert.doesNotMatch(error.message, /private|public\.|content_revisions|sql/i);
+        return true;
+      },
+    );
+  }
+});
+
+test("Draft update RPC migration keeps saving server-owned and scoped", () => {
+  const migration = fs.readFileSync(updateContentDraftMigrationPath, "utf8");
+  const functionStart = migration.search(
+    /create or replace function public\.update_content_draft/i,
+  );
+  const functionEnd = migration.indexOf(
+    "comment on function public.update_content_draft",
+    functionStart,
+  );
+
+  assert.notEqual(functionStart, -1);
+  assert.ok(functionEnd > functionStart);
+  const updateFunction = migration.slice(functionStart, functionEnd);
+
+  assert.match(updateFunction, /security definer/i);
+  assert.match(updateFunction, /private\.is_garden_keeper\(\)/i);
+  assert.match(updateFunction, /for update/i);
+  assert.match(updateFunction, /revision\.lifecycle <> 'Draft'/i);
+  assert.match(updateFunction, /revision\.lock_version <> p_expected_lock_version/i);
+  assert.match(updateFunction, /update public\.content_revisions/i);
+  assert.doesNotMatch(updateFunction, /update public\.contents/i);
+  assert.doesNotMatch(updateFunction, /insert into public\.content_versions/i);
+  assert.match(
+    migration,
+    /grant execute on function public\.update_content_draft[\s\S]*?to authenticated/i,
   );
 });
 

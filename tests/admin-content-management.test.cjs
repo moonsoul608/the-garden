@@ -391,6 +391,49 @@ test("save preserves the optimistic lock token and reports the next revision", a
   assert.equal(result.lockVersion, 8);
 });
 
+test("save accepts Chinese markdown, categories, and tags for an existing Draft", async () => {
+  let received;
+  const handlers = createContentFormHandlers({
+    createDraft: async () => {
+      throw new Error("not used");
+    },
+    updateDraft: async (input) => {
+      received = input;
+      return draftRevision({
+        lockVersion: 8,
+        bodyZhMarkdown: input.changes.bodyZhMarkdown,
+        primaryCategories: input.changes.primaryCategories,
+        tags: input.changes.tags,
+      });
+    },
+  });
+  const formData = validFormData();
+  formData.set("contentId", draftRevision().contentId);
+  formData.set("revisionId", draftRevision().revisionId);
+  formData.set("expectedLockVersion", "7");
+  formData.set("contentLanguage", "zh");
+  formData.set("bodyZhMarkdown", "## 一段中文\n\n这里有 **Markdown** 正文。");
+  formData.set("primaryCategories", " Coding, AI ");
+  formData.set("tags", " 笔记, learning, 笔记 ");
+
+  const result = await handlers.saveDraft(
+    {
+      status: "idle",
+      message: null,
+      fieldErrors: {},
+      revisionId: null,
+      lockVersion: null,
+      updatedAt: null,
+    },
+    formData,
+  );
+
+  assert.equal(result.status, "success");
+  assert.equal(received.changes.bodyZhMarkdown, "## 一段中文\n\n这里有 **Markdown** 正文。");
+  assert.deepEqual(received.changes.primaryCategories, ["Coding", "AI"]);
+  assert.deepEqual(received.changes.tags, ["笔记", "learning", "笔记"]);
+});
+
 test("optimistic lock conflicts require a reload and never expose internals", async () => {
   const handlers = createContentFormHandlers({
     createDraft: async () => {
@@ -418,8 +461,60 @@ test("optimistic lock conflicts require a reload and never expose internals", as
   );
 
   assert.equal(result.status, "conflict");
-  assert.match(result.message, /重新加载/);
+  assert.match(result.message, /当前内容状态已发生变化/);
   assert.doesNotMatch(result.message, /content_revisions|lock_version|sql/i);
+});
+
+test("database failures and authorization failures never report a successful save", async () => {
+  const formData = validFormData();
+  formData.set("contentId", draftRevision().contentId);
+  formData.set("revisionId", draftRevision().revisionId);
+  formData.set("expectedLockVersion", "2");
+
+  const failedHandlers = createContentFormHandlers({
+    createDraft: async () => {
+      throw new Error("not used");
+    },
+    updateDraft: async () => {
+      throw new ContentMutationError("repository_failure", "updateDraft");
+    },
+  });
+  const deniedHandlers = createContentFormHandlers({
+    createDraft: async () => {
+      throw new Error("not used");
+    },
+    updateDraft: async () => {
+      throw new ContentMutationError("mutation_denied", "updateDraft");
+    },
+  });
+
+  const failed = await failedHandlers.saveDraft(
+    {
+      status: "idle",
+      message: null,
+      fieldErrors: {},
+      revisionId: null,
+      lockVersion: null,
+      updatedAt: null,
+    },
+    formData,
+  );
+  const denied = await deniedHandlers.saveDraft(
+    {
+      status: "idle",
+      message: null,
+      fieldErrors: {},
+      revisionId: null,
+      lockVersion: null,
+      updatedAt: null,
+    },
+    formData,
+  );
+
+  assert.equal(failed.status, "error");
+  assert.equal(failed.message, "保存失败：服务器未能完成内容更新。");
+  assert.equal(denied.status, "error");
+  assert.equal(denied.message, "保存失败：没有权限更新内容。");
 });
 
 test("content routes keep authorization, loading, error, and service boundaries", () => {
@@ -450,6 +545,14 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.match(actions, /\.saveDraft\(previousState, formData\)/);
   assert.match(actions, /\.startDraftRevision\(\{/);
   assert.match(actions, /redirect\(`\/admin\/content\/\$\{revision\.revisionId\}`\)/);
+  assert.ok(
+    form.indexOf("admin-editor-action-row") <
+      form.indexOf("admin-form-notice"),
+  );
+  assert.match(form, /role=\{state\.status === "success" \? "status" : "alert"\}/);
+  assert.match(form, /aria-live=\{state\.status === "success" \? "polite" : "assertive"\}/);
+  assert.doesNotMatch(form, /保存暂停/);
+  assert.match(form, /保存失败/);
   assert.doesNotMatch(form, /supabase|requireGardenKeeper|createdBy|updatedBy/i);
   assert.doesNotMatch(form, /Publish|Archive|Delete|Upload/);
 });

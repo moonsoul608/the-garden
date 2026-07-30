@@ -8,7 +8,6 @@ import type {
   ContentDatabaseRow,
   ContentRelationDatabaseRow,
   ContentRevisionDatabaseRow,
-  ContentRevisionDatabaseUpdate,
   GrowthNoteDatabaseRow,
   Json,
 } from "@/types/database";
@@ -264,37 +263,14 @@ function toDraftRpcPayload(fields: DraftContentFields): Json {
   };
 }
 
-function toRevisionUpdate(
-  fields: DraftContentFields,
-): ContentRevisionDatabaseUpdate {
-  return {
-    lifecycle: "Draft",
-    slug: fields.slug,
-    region: fields.region,
-    content_type: fields.contentType,
-    detail_level: fields.detailLevel,
-    growth_stage: fields.growthStage,
-    title_zh: fields.titleZh,
-    title_en: fields.titleEn,
-    summary_zh: fields.summaryZh,
-    summary_en: fields.summaryEn,
-    body_zh_markdown: fields.bodyZhMarkdown,
-    body_en_markdown: fields.bodyEnMarkdown,
-    content_language: fields.contentLanguage,
-    primary_categories: fields.primaryCategories,
-    tags: fields.tags,
-    cover_image_path: fields.cover?.path ?? null,
-    cover_image_alt_zh: fields.cover?.altZh ?? null,
-    cover_image_alt_en: fields.cover?.altEn ?? null,
-    featured: fields.featured,
-    manual_order: fields.manualOrder,
-  };
-}
-
 function throwRepositoryError(
   error: unknown,
   operation: ContentMutationOperation,
 ): never {
+  console.error("[content-admin-repository] mutation failed", {
+    operation,
+    error,
+  });
   throw mapContentMutationDatabaseError(error, operation);
 }
 
@@ -444,15 +420,12 @@ export function createContentWriteRepository(
     fields: DraftContentFields,
     expectedLockVersion: number,
   ): Promise<DraftRevision> {
-    const result = await client
-      .from("content_revisions")
-      .update(toRevisionUpdate(fields))
-      .eq("content_id", current.contentId)
-      .eq("id", current.revisionId)
-      .eq("lifecycle", "Draft")
-      .eq("lock_version", expectedLockVersion)
-      .select(REVISION_COLUMNS)
-      .maybeSingle();
+    const result = await client.rpc("update_content_draft", {
+      p_content_id: current.contentId,
+      p_revision_id: current.revisionId,
+      p_expected_lock_version: expectedLockVersion,
+      p_draft: toDraftRpcPayload(fields),
+    });
 
     if (result.error) throwRepositoryError(result.error, "updateDraft");
     if (!result.data) {

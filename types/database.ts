@@ -475,6 +475,15 @@ export type ContentDatabase = {
         Args: { p_draft: Json };
         Returns: ContentRevisionDatabaseRow;
       };
+      update_content_draft: {
+        Args: {
+          p_content_id: string;
+          p_revision_id: string;
+          p_expected_lock_version: number;
+          p_draft: Json;
+        };
+        Returns: ContentRevisionDatabaseRow;
+      };
       start_content_draft_revision: {
         Args: { p_content_id: string };
         Returns: ContentRevisionDatabaseRow;

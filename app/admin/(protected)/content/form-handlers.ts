@@ -33,6 +33,18 @@ function textList(formData: FormData, key: string): string[] {
     .filter(Boolean);
 }
 
+function selectFieldDiagnostics(fields: Pick<
+  CreateDraftInput,
+  "region" | "contentType" | "detailLevel" | "growthStage"
+>) {
+  return {
+    region: fields.region,
+    contentType: fields.contentType,
+    detailLevel: fields.detailLevel,
+    growthStage: fields.growthStage,
+  };
+}
+
 function editableFields(formData: FormData): CreateDraftInput {
   return {
     slug: optionalText(formData, "slug"),
@@ -207,11 +219,19 @@ export function createContentFormHandlers(service: ContentFormService) {
       const expectedLockVersion = Number(
         requiredText(formData, "expectedLockVersion"),
       );
+      const changes = editableFields(formData) as Partial<DraftContentFields>;
+      console.info("[admin-content-form] updateDraft select payload", {
+        source: "formData",
+        contentId,
+        revisionId,
+        expectedLockVersion,
+        selectFields: selectFieldDiagnostics(changes as CreateDraftInput),
+      });
       const revision = await service.updateDraft({
         contentId,
         revisionId,
         expectedLockVersion,
-        changes: editableFields(formData) as Partial<DraftContentFields>,
+        changes,
       });
 
       return {

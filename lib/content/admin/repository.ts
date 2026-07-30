@@ -263,6 +263,18 @@ function toDraftRpcPayload(fields: DraftContentFields): Json {
   };
 }
 
+function selectFieldDiagnostics(fields: Pick<
+  DraftContentFields,
+  "region" | "contentType" | "detailLevel" | "growthStage"
+>) {
+  return {
+    region: fields.region,
+    contentType: fields.contentType,
+    detailLevel: fields.detailLevel,
+    growthStage: fields.growthStage,
+  };
+}
+
 function throwRepositoryError(
   error: unknown,
   operation: ContentMutationOperation,
@@ -443,11 +455,19 @@ export function createContentWriteRepository(
     fields: DraftContentFields,
     expectedLockVersion: number,
   ): Promise<DraftRevision> {
+    const draftPayload = toDraftRpcPayload(fields);
+    console.info("[content-admin-repository] updateDraft select payload", {
+      source: "rpcInput",
+      contentId: current.contentId,
+      revisionId: current.revisionId,
+      expectedLockVersion,
+      selectFields: selectFieldDiagnostics(fields),
+    });
     const result = await client.rpc("update_content_draft", {
       p_content_id: current.contentId,
       p_revision_id: current.revisionId,
       p_expected_lock_version: expectedLockVersion,
-      p_draft: toDraftRpcPayload(fields),
+      p_draft: draftPayload,
     });
 
     if (result.error) throwRepositoryError(result.error, "updateDraft");
@@ -455,9 +475,17 @@ export function createContentWriteRepository(
       throw new ContentMutationError("revision_conflict", "updateDraft");
     }
 
-    return mapRevision(
+    const revision = mapRevision(
       result.data as unknown as ContentRevisionDatabaseRow,
     );
+    console.info("[content-admin-repository] updateDraft select payload", {
+      source: "rpcResult",
+      contentId: revision.contentId,
+      revisionId: revision.revisionId,
+      lockVersion: revision.lockVersion,
+      selectFields: selectFieldDiagnostics(revision),
+    });
+    return revision;
   }
 
   async function getReviewPreparationContext(

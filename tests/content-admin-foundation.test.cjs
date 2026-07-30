@@ -658,6 +658,75 @@ test("updates only the active Draft with the expected lock version", async () =>
   assert.equal(received.fields.titleEn, "Changed title");
 });
 
+test("updates every editable Draft field before repository persistence", async () => {
+  const current = draftRevision({
+    lockVersion: 4,
+    cover: {
+      path: "covers/current.webp",
+      altZh: "旧封面",
+      altEn: "Old cover",
+    },
+    featured: true,
+    manualOrder: 3,
+  });
+  const changes = {
+    slug: "  Changed-Draft  ",
+    region: "Lake",
+    contentType: "Reflection",
+    detailLevel: "full",
+    growthStage: null,
+    titleZh: "  改过的中文标题  ",
+    titleEn: "  Changed English title  ",
+    summaryZh: "  改过的摘要  ",
+    summaryEn: "  Changed summary  ",
+    bodyZhMarkdown: "  ## 改过的正文  ",
+    bodyEnMarkdown: "  ## Changed body  ",
+    contentLanguage: "bilingual",
+    primaryCategories: [" Reflection ", "Journal"],
+    tags: [" lake ", "札记"],
+  };
+  let received;
+  const service = createAdminContentService({
+    authorize: async () => keeper,
+    repository: repositoryStub({
+      getDraftRevision: async () => current,
+      updateDraft: async (_activeDraft, fields, expectedLockVersion) => {
+        received = { fields, expectedLockVersion };
+        return draftRevision({ ...current, ...fields, lockVersion: 5 });
+      },
+    }),
+  });
+
+  const result = await service.updateDraft({
+    contentId: current.contentId,
+    revisionId: current.revisionId,
+    expectedLockVersion: 4,
+    changes,
+  });
+
+  assert.equal(result.lockVersion, 5);
+  assert.equal(received.expectedLockVersion, 4);
+  assert.deepEqual(received.fields, {
+    slug: "changed-draft",
+    region: "Lake",
+    contentType: "Reflection",
+    detailLevel: "full",
+    growthStage: null,
+    titleZh: "改过的中文标题",
+    titleEn: "Changed English title",
+    summaryZh: "改过的摘要",
+    summaryEn: "Changed summary",
+    bodyZhMarkdown: "## 改过的正文",
+    bodyEnMarkdown: "## Changed body",
+    contentLanguage: "bilingual",
+    primaryCategories: ["Reflection", "Journal"],
+    tags: ["lake", "札记"],
+    cover: current.cover,
+    featured: true,
+    manualOrder: 3,
+  });
+});
+
 test("returns revision_conflict for a stale Draft lock version", async () => {
   const current = draftRevision({ lockVersion: 5 });
   const service = createAdminContentService({
@@ -1792,6 +1861,123 @@ test("Draft update RPC payload keeps detail level canonical", async () => {
 
   assert.deepEqual(received, ["short", "full"]);
   assert.ok(received.every((detailLevel) => !["简短", "完整"].includes(detailLevel)));
+});
+
+test("Draft update RPC persists and reloads every editable field", async () => {
+  const current = draftRevision({ lockVersion: 4 });
+  const fields = {
+    slug: "changed-draft",
+    region: "Lake",
+    contentType: "Reflection",
+    detailLevel: "full",
+    growthStage: null,
+    titleZh: "改过的中文标题",
+    titleEn: "Changed English title",
+    summaryZh: "改过的摘要",
+    summaryEn: "Changed summary",
+    bodyZhMarkdown: "## 改过的正文",
+    bodyEnMarkdown: "## Changed body",
+    contentLanguage: "bilingual",
+    primaryCategories: ["Reflection", "Journal"],
+    tags: ["lake", "札记"],
+    cover: {
+      path: "covers/changed.webp",
+      altZh: "中文封面",
+      altEn: "English cover",
+    },
+    featured: true,
+    manualOrder: 9,
+  };
+  let payload;
+  const repository = createContentWriteRepository({
+    rpc: async (_name, args) => {
+      payload = args.p_draft;
+      return {
+        data: {
+          id: current.revisionId,
+          content_id: current.contentId,
+          lifecycle: "Draft",
+          slug: fields.slug,
+          region: fields.region,
+          content_type: fields.contentType,
+          detail_level: fields.detailLevel,
+          growth_stage: fields.growthStage,
+          title_zh: fields.titleZh,
+          title_en: fields.titleEn,
+          summary_zh: fields.summaryZh,
+          summary_en: fields.summaryEn,
+          body_zh_markdown: fields.bodyZhMarkdown,
+          body_en_markdown: fields.bodyEnMarkdown,
+          content_language: fields.contentLanguage,
+          primary_categories: fields.primaryCategories,
+          tags: fields.tags,
+          cover_image_path: fields.cover.path,
+          cover_image_alt_zh: fields.cover.altZh,
+          cover_image_alt_en: fields.cover.altEn,
+          featured: fields.featured,
+          manual_order: fields.manualOrder,
+          source_version_id: null,
+          base_content_updated_at: null,
+          review_submitted_at: null,
+          returned_to_draft_at: null,
+          lock_version: 5,
+          created_at: current.createdAt,
+          updated_at: "2026-07-15T10:05:00.000Z",
+        },
+        error: null,
+      };
+    },
+  });
+
+  const reopened = await repository.updateDraft(current, fields, 4);
+
+  assert.deepEqual(payload, {
+    slug: "changed-draft",
+    region: "Lake",
+    contentType: "Reflection",
+    detailLevel: "full",
+    growthStage: null,
+    titleZh: "改过的中文标题",
+    titleEn: "Changed English title",
+    summaryZh: "改过的摘要",
+    summaryEn: "Changed summary",
+    bodyZhMarkdown: "## 改过的正文",
+    bodyEnMarkdown: "## Changed body",
+    contentLanguage: "bilingual",
+    primaryCategories: ["Reflection", "Journal"],
+    tags: ["lake", "札记"],
+    coverImagePath: "covers/changed.webp",
+    coverImageAltZh: "中文封面",
+    coverImageAltEn: "English cover",
+    featured: true,
+    manualOrder: 9,
+  });
+  assert.deepEqual(
+    {
+      slug: reopened.slug,
+      region: reopened.region,
+      contentType: reopened.contentType,
+      detailLevel: reopened.detailLevel,
+      growthStage: reopened.growthStage,
+      titleZh: reopened.titleZh,
+      titleEn: reopened.titleEn,
+      summaryZh: reopened.summaryZh,
+      summaryEn: reopened.summaryEn,
+      bodyZhMarkdown: reopened.bodyZhMarkdown,
+      bodyEnMarkdown: reopened.bodyEnMarkdown,
+      contentLanguage: reopened.contentLanguage,
+      primaryCategories: reopened.primaryCategories,
+      tags: reopened.tags,
+      cover: reopened.cover,
+      featured: reopened.featured,
+      manualOrder: reopened.manualOrder,
+    },
+    fields,
+  );
+  assert.ok(
+    [payload.region, payload.contentType, payload.detailLevel, payload.growthStage]
+      .every((value) => !["区域", "内容类型", "简短", "完整", "不跟踪 Growth Stage"].includes(value)),
+  );
 });
 
 test("Draft update repository maps stale and database failures safely", async () => {

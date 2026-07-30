@@ -472,6 +472,71 @@ test("save submits canonical detail level enum values", async () => {
   assert.notDeepEqual(received, ["简短", "完整"]);
 });
 
+test("save submits every editable field with canonical select values", async () => {
+  let received;
+  const handlers = createContentFormHandlers({
+    createDraft: async () => {
+      throw new Error("not used");
+    },
+    updateDraft: async (input) => {
+      received = input.changes;
+      return draftRevision({ lockVersion: 8, ...input.changes });
+    },
+  });
+  const formData = validFormData();
+  formData.set("contentId", draftRevision().contentId);
+  formData.set("revisionId", draftRevision().revisionId);
+  formData.set("expectedLockVersion", "7");
+  formData.set("slug", "  Changed-Draft  ");
+  formData.set("region", "Lake");
+  formData.set("contentType", "Reflection");
+  formData.set("detailLevel", "full");
+  formData.set("growthStage", "");
+  formData.set("contentLanguage", "bilingual");
+  formData.set("titleEn", "  Changed English title  ");
+  formData.set("titleZh", "  改过的中文标题  ");
+  formData.set("summaryEn", "  Changed summary  ");
+  formData.set("summaryZh", "  改过的摘要  ");
+  formData.set("bodyEnMarkdown", "  ## Changed body  ");
+  formData.set("bodyZhMarkdown", "  ## 改过的正文  ");
+  formData.set("primaryCategories", " Reflection, Journal ");
+  formData.set("tags", " lake, 札记 ");
+
+  const result = await handlers.saveDraft(
+    {
+      status: "idle",
+      message: null,
+      fieldErrors: {},
+      revisionId: null,
+      lockVersion: null,
+      updatedAt: null,
+    },
+    formData,
+  );
+
+  assert.equal(result.status, "success");
+  assert.deepEqual(received, {
+    slug: "Changed-Draft",
+    region: "Lake",
+    contentType: "Reflection",
+    detailLevel: "full",
+    growthStage: null,
+    titleZh: "改过的中文标题",
+    titleEn: "Changed English title",
+    summaryZh: "改过的摘要",
+    summaryEn: "Changed summary",
+    bodyZhMarkdown: "## 改过的正文",
+    bodyEnMarkdown: "## Changed body",
+    contentLanguage: "bilingual",
+    primaryCategories: ["Reflection", "Journal"],
+    tags: ["lake", "札记"],
+  });
+  assert.ok(
+    [received.region, received.contentType, received.detailLevel, received.growthStage]
+      .every((value) => !["区域", "内容类型", "简短", "完整", "不跟踪 Growth Stage"].includes(value)),
+  );
+});
+
 test("optimistic lock conflicts require a reload and never expose internals", async () => {
   const handlers = createContentFormHandlers({
     createDraft: async () => {
@@ -585,7 +650,10 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.match(actions, /redirect\(`\/admin\/content\/\$\{revision\.revisionId\}`\)/);
   assert.match(form, /const DETAIL_LEVELS = \["short", "full"\] as const/);
   assert.match(form, /defaultValue=\{draft\?\.detailLevel \?\? "short"\}/);
+  assert.match(form, /<option key=\{region\} value=\{region\}>/);
+  assert.match(form, /<option key=\{contentType\} value=\{contentType\}>/);
   assert.match(form, /<option key=\{detailLevel\} value=\{detailLevel\}>/);
+  assert.match(form, /<option key=\{growthStage\} value=\{growthStage\}>/);
   assert.match(form, /\{detailLevelLabels\[detailLevel\]\}/);
   assert.doesNotMatch(form, /<option key=\{detailLevel\}>\{detailLevelLabels\[detailLevel\]\}<\/option>/);
   assert.ok(

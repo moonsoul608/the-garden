@@ -222,7 +222,9 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
               }
             >
               {REGIONS.map((region) => (
-                <option key={region}>{region}</option>
+                <option key={region} value={region}>
+                  {region}
+                </option>
               ))}
             </select>
           </label>
@@ -236,7 +238,9 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
               }
             >
               {CONTENT_TYPES.map((contentType) => (
-                <option key={contentType}>{contentType}</option>
+                <option key={contentType} value={contentType}>
+                  {contentType}
+                </option>
               ))}
             </select>
           </label>
@@ -273,7 +277,9 @@ export function ContentForm({ mode, action, draft }: ContentFormProps) {
                 <option value="">不跟踪 Growth Stage</option>
               ) : null}
               {GROWTH_STAGES.map((growthStage) => (
-                <option key={growthStage}>{growthStage}</option>
+                <option key={growthStage} value={growthStage}>
+                  {growthStage}
+                </option>
               ))}
             </select>
             {!growthStageRequired ? (

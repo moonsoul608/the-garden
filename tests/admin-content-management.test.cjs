@@ -648,6 +648,7 @@ test("content routes keep authorization, loading, error, and service boundaries"
   assert.match(actions, /\.saveDraft\(previousState, formData\)/);
   assert.match(actions, /\.startDraftRevision\(\{/);
   assert.match(actions, /redirect\(`\/admin\/content\/\$\{revision\.revisionId\}`\)/);
+  assert.match(actions, /revalidatePath\("\/admin\/content\/\[revisionId\]", "page"\)/);
   assert.match(form, /const DETAIL_LEVELS = \["short", "full"\] as const/);
   assert.match(form, /const \[detailLevel, setDetailLevel\] = useState<DetailLevel>/);
   assert.match(form, /setRegion\(draftRegion\)/);
